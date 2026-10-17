@@ -1,0 +1,19 @@
+package com.createicbm.lib.saving.nodes;
+
+import com.createicbm.lib.saving.NbtSaveNode;
+import net.minecraft.nbt.ByteTag;
+
+import java.util.Optional;
+import java.util.function.BiConsumer;
+import java.util.function.Function;
+
+public class SaveNodeByte<E> extends NbtSaveNode<E, ByteTag>
+{
+    public SaveNodeByte(final String name, Function<E, Byte> save, BiConsumer<E, Byte> load)
+    {
+        super(name,
+            (obj) -> Optional.ofNullable(save.apply(obj)).map(ByteTag::valueOf).orElse(null),
+            (obj, data) -> load.accept(obj, data.getAsByte())
+        );
+    }
+}

@@ -1,0 +1,20 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "G": {
+      "item": "create:metal_girder"
+    },
+    "B": {
+      "item": "create:brass_sheet"
+    }
+  },
+  "pattern": [
+    "GBG",
+    "GBG"
+  ],
+  "result": {
+    "count": 1,
+    "id": "create_icbm:launcherframe"
+  }
+}

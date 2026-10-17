@@ -1,0 +1,30 @@
+{
+	"parent": "minecraft:block/block",
+	"textures": {"c": "create_icbm:block/launch_connector", "particle": "create:block/brass_casing"},
+	"elements": [
+		{
+			"name": "pipe",
+			"from": [1.5, 5, 5],
+			"to": [4, 11, 11],
+			"faces": {
+				"north": {"uv": [0, 0, 2.5, 6], "texture": "#c"},
+				"south": {"uv": [0, 0, 2.5, 6], "texture": "#c"},
+				"up": {"uv": [0, 0, 2.5, 6], "texture": "#c"},
+				"down": {"uv": [0, 0, 2.5, 6], "texture": "#c"}
+			}
+		},
+		{
+			"name": "coupling",
+			"from": [0, 4.5, 4.5],
+			"to": [1.5, 11.5, 11.5],
+			"faces": {
+				"north": {"uv": [0, 6, 1.5, 13], "texture": "#c"},
+				"east": {"uv": [8, 6, 15, 13], "texture": "#c"},
+				"south": {"uv": [0, 6, 1.5, 13], "texture": "#c"},
+				"west": {"uv": [8, 6, 15, 13], "texture": "#c", "cullface": "west"},
+				"up": {"uv": [0, 6, 1.5, 13], "texture": "#c"},
+				"down": {"uv": [0, 6, 1.5, 13], "texture": "#c"}
+			}
+		}
+	]
+}

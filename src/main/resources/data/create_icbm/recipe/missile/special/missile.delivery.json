@@ -1,0 +1,30 @@
+{
+  "type": "create:mechanical_crafting",
+  "accept_mirrored": true,
+  "category": "misc",
+  "key": {
+    "C": {
+      "item": "minecraft:chest"
+    },
+    "A": {
+      "item": "create:andesite_alloy"
+    },
+    "M": {
+      "type": "neoforge:components",
+      "items": "create_icbm:explosive_missile",
+      "components": {
+        "create_icbm:explosive": "create_icbm:missile"
+      }
+    }
+  },
+  "pattern": [
+    "C",
+    "A",
+    "M"
+  ],
+  "result": {
+    "count": 1,
+    "id": "create_icbm:delivery_missile"
+  },
+  "show_notification": false
+}

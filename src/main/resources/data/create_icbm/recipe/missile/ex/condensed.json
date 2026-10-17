@@ -1,0 +1,27 @@
+{
+  "type": "create:deploying",
+  "ingredients": [
+    {
+      "type": "neoforge:components",
+      "items": "create_icbm:explosive_missile",
+      "components": {
+        "create_icbm:explosive": "create_icbm:missile"
+      }
+    },
+    {
+      "type": "neoforge:components",
+      "items": "create_icbm:explosives",
+      "components": {
+        "create_icbm:explosive": "create_icbm:condensed"
+      }
+    }
+  ],
+  "results": [
+    {
+      "id": "create_icbm:explosive_missile",
+      "components": {
+        "create_icbm:explosive": "create_icbm:condensed"
+      }
+    }
+  ]
+}

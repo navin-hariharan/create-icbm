@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "B": {
+      "item": "create:brass_sheet"
+    },
+    "C": {
+      "item": "create:copper_sheet"
+    }
+  },
+  "pattern": [
+    " B ",
+    "C C",
+    "C C"
+  ],
+  "result": {
+    "count": 1,
+    "id": "create_icbm:missile_casing"
+  }
+}

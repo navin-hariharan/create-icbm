@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "equipment",
+  "ingredients": [
+    {
+      "item": "create_icbm:rocketlauncher"
+    },
+    {
+      "item": "create_icbm:launcherscreen"
+    }
+  ],
+  "result": {
+    "count": 1,
+    "id": "create_icbm:ballisticlauncher"
+  }
+}

@@ -1,0 +1,30 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "key": {
+    "N": {
+      "item": "create:nixie_tube"
+    },
+    "E": {
+      "item": "create:electron_tube"
+    },
+    "C": {
+      "item": "create:brass_casing"
+    },
+    "L": {
+      "item": "create:analog_lever"
+    },
+    "K": {
+      "item": "create:copper_sheet"
+    }
+  },
+  "pattern": [
+    " N ",
+    "ECL",
+    "KKK"
+  ],
+  "result": {
+    "count": 1,
+    "id": "create_icbm:launcherscreen"
+  }
+}

@@ -1,0 +1,25 @@
+package com.createicbm.command.sub;
+
+import com.createicbm.command.system.SubCommand;
+import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.server.MinecraftServer;
+
+import javax.annotation.Nonnull;
+
+/**
+ * Created by Robin Seifert on 1/6/20.
+ */
+public class CommandHelp extends SubCommand
+{
+
+    public CommandHelp()
+    {
+        super("help");
+    }
+
+    @Override
+    public void handleCommand(@Nonnull MinecraftServer server, @Nonnull CommandSourceStack sender, @Nonnull String[] args)
+    {
+        parent.getSubCommands().forEach(command -> command.displayHelp(sender));
+    }
+}

@@ -1,0 +1,31 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "I": {
+      "item": "minecraft:packed_ice"
+    },
+    "S": {
+      "item": "minecraft:snow_block"
+    },
+    "T": {
+      "type": "neoforge:components",
+      "items": "create_icbm:explosives",
+      "components": {
+        "create_icbm:explosive": "create_icbm:thermobaric"
+      }
+    }
+  },
+  "pattern": [
+    "ISI",
+    "STS",
+    "ISI"
+  ],
+  "result": {
+    "count": 1,
+    "id": "create_icbm:explosives",
+    "components": {
+      "create_icbm:explosive": "create_icbm:endothermic"
+    }
+  }
+}

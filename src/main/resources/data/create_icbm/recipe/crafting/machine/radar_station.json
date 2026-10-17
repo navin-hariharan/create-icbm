@@ -1,0 +1,33 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "key": {
+    "G": {
+      "item": "create:golden_sheet"
+    },
+    "B": {
+      "item": "create:brass_sheet"
+    },
+    "E": {
+      "item": "create:electron_tube"
+    },
+    "S": {
+      "item": "create_icbm:launcherscreen"
+    },
+    "K": {
+      "item": "create:copper_casing"
+    },
+    "C": {
+      "item": "create:cogwheel"
+    }
+  },
+  "pattern": [
+    "GBG",
+    "ESE",
+    "KCK"
+  ],
+  "result": {
+    "count": 1,
+    "id": "create_icbm:radarstation"
+  }
+}

@@ -1,0 +1,50 @@
+package com.createicbm.lib.buildable;
+
+import com.createicbm.api.reg.obj.IBuildableObject;
+import com.createicbm.api.reg.obj.IBuilderRegistry;
+import com.createicbm.lib.saving.NbtSaveHandler;
+import lombok.AccessLevel;
+import lombok.Getter;
+import net.minecraft.core.HolderLookup;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.resources.ResourceLocation;
+
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+
+/**
+ * Template for creating new buildable object types
+ * @param <T> this
+ */
+public abstract class BuildableObject<T extends IBuildableObject, B extends IBuilderRegistry> implements IBuildableObject {
+
+    @Getter @Nonnull
+    private final ResourceLocation registryKey;
+    @Getter @Nonnull
+    private final B registry;
+    @Getter(value = AccessLevel.PROTECTED) @Nullable
+    private final NbtSaveHandler<T> saveHandler;
+
+    /**
+     * Required constructor to feed in references.
+     *
+     * @param registryKey used to register this type with {@link #registry}, should be static value pass through
+     * @param registry used to register the type, should be static value pass through
+     * @param saveHandler to use for save/load handling, optional and should be static value pass through
+     */
+    public BuildableObject(@Nonnull ResourceLocation registryKey, @Nonnull B registry, @Nullable NbtSaveHandler<T> saveHandler) {
+        this.registryKey = registryKey;
+        this.registry = registry;
+        this.saveHandler = saveHandler;
+    }
+
+    public CompoundTag serializeNBT(HolderLookup.Provider provider) {
+        return saveHandler != null ? saveHandler.save((T) this) : null;
+    }
+
+    public void deserializeNBT(HolderLookup.Provider provider, CompoundTag nbt) {
+        if(saveHandler != null) {
+            saveHandler.load((T) this, nbt);
+        }
+    }
+}

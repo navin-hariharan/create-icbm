@@ -1,0 +1,29 @@
+{
+  "type": "create:mechanical_crafting",
+  "accept_mirrored": true,
+  "category": "misc",
+  "key": {
+    "S": {
+      "item": "create:iron_sheet"
+    },
+    "T": {
+      "item": "create:transmitter"
+    },
+    "P": {
+      "item": "create:precision_mechanism"
+    },
+    "B": {
+      "tag": "minecraft:wooden_buttons"
+    }
+  },
+  "pattern": [
+    "STS",
+    "SPS",
+    "SBS"
+  ],
+  "result": {
+    "count": 1,
+    "id": "create_icbm:remotedetonator"
+  },
+  "show_notification": false
+}

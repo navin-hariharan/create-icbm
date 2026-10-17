@@ -1,0 +1,98 @@
+package com.createicbm.content.missile.logic.flight.prefab;
+
+import com.createicbm.CreateICBM;
+import com.createicbm.api.CreateICBMAPI;
+import com.createicbm.api.missiles.IMissile;
+import com.createicbm.api.missiles.parts.IMissileFlightLogic;
+import com.createicbm.api.missiles.parts.IMissileFlightLogicStep;
+import com.createicbm.api.reg.obj.IBuilderRegistry;
+import com.createicbm.config.ConfigDebug;
+import com.createicbm.lib.saving.NbtSaveHandler;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.experimental.Accessors;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.core.HolderLookup;
+import net.minecraft.nbt.CompoundTag;
+import net.neoforged.neoforge.common.util.INBTSerializable;
+
+import javax.annotation.Nonnull;
+import java.util.function.Consumer;
+
+public abstract class FlightLogic  implements IMissileFlightLogic, IMissileFlightLogicStep, INBTSerializable<CompoundTag> {
+
+    @Getter @Setter @Accessors(chain = true)
+    private IMissileFlightLogic nextStep;
+
+    @Override
+    public void start(Entity entity, IMissile missile) {
+        if(!isValid()) {
+            CreateICBM.logger().error(this + ": was not setup correctly. Setting flight logic to next step or null to avoid problems. Issue is likely due to custom properties set into the missile.");
+            missile.switchFlightLogic(getNextStep());
+        }
+
+        if(ConfigDebug.DEBUG_MISSILE_LOGIC) {
+            dumpInformation((str) -> CreateICBM.logger().info(str));
+        }
+    }
+
+    protected void dumpInformation(Consumer<String> outputLines) {
+        outputLines.accept(this + ": Debug Info");
+        outputLines.accept("\tNext: " + nextStep);
+    }
+
+    @Override
+    public void onEntityTick(Entity entity, IMissile missile, int ticksInAir)
+    {
+        if(isDone() && !entity.level().isClientSide()) {
+            missile.switchFlightLogic(getNextStep());
+        }
+    }
+
+    @Override
+    public <V> V predictPosition(Entity entity, VecBuilderFunc<V> builder, int ticks) {
+        return null;
+    }
+
+    @Override
+    public boolean shouldDecreaseMotion(Entity entity) {
+        return !isValid();
+    }
+
+    /**
+     * Checks if the missile was setup correctly and is in a valid state
+     *
+     * @return true if invalid and should cause the missile to fail
+     */
+    public boolean isValid() {
+        return true;
+    }
+
+    /**
+     * Checks if the step is done and we should move to the next
+     *
+     * @return true if complete
+     */
+    public abstract boolean isDone();
+
+    @Override
+    public CompoundTag serializeNBT(HolderLookup.Provider provider) {
+        return SAVE_LOGIC.save(this);
+    }
+
+    @Override
+    public void deserializeNBT(HolderLookup.Provider provider, CompoundTag nbt) {
+        SAVE_LOGIC.load(this, nbt);
+    }
+
+    @Nonnull
+    @Override
+    public IBuilderRegistry<IMissileFlightLogic> getRegistry() {
+        return CreateICBMAPI.MISSILE_FLIGHT_LOGIC_REGISTRY;
+    }
+
+    private static final NbtSaveHandler<FlightLogic> SAVE_LOGIC = new NbtSaveHandler<FlightLogic>()
+        .mainRoot()
+        /* */.nodeBuildableObject("next", () -> CreateICBMAPI.MISSILE_FLIGHT_LOGIC_REGISTRY, FlightLogic::getNextStep, FlightLogic::setNextStep)
+        .base();
+}

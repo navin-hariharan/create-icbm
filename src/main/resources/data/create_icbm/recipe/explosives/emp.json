@@ -1,0 +1,45 @@
+{
+  "type": "create:mixing",
+  "heat_requirement": "superheated",
+  "ingredients": [
+    {
+      "type": "neoforge:components",
+      "items": "create_icbm:explosives",
+      "components": {
+        "create_icbm:explosive": "create_icbm:repulsive"
+      }
+    },
+    {
+      "item": "create:copper_sheet"
+    },
+    {
+      "item": "create:copper_sheet"
+    },
+    {
+      "item": "create:copper_sheet"
+    },
+    {
+      "item": "create:copper_sheet"
+    },
+    {
+      "item": "create:copper_sheet"
+    },
+    {
+      "item": "minecraft:redstone"
+    },
+    {
+      "item": "minecraft:redstone"
+    },
+    {
+      "item": "minecraft:redstone_block"
+    }
+  ],
+  "results": [
+    {
+      "id": "create_icbm:explosives",
+      "components": {
+        "create_icbm:explosive": "create_icbm:emp"
+      }
+    }
+  ]
+}

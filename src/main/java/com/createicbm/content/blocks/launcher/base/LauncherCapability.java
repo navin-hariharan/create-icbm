@@ -1,0 +1,322 @@
+package com.createicbm.content.blocks.launcher.base;
+
+import com.createicbm.api.CreateICBMAPI;
+import com.createicbm.api.actions.cause.IActionCause;
+import com.createicbm.api.actions.status.IActionStatus;
+import com.createicbm.api.events.LauncherEvent;
+import com.createicbm.api.launcher.ILauncherSolution;
+import com.createicbm.api.missiles.ICapabilityMissileStack;
+import com.createicbm.api.missiles.IMissile;
+import com.createicbm.api.missiles.parts.IMissileFlightLogic;
+import com.createicbm.api.missiles.parts.IMissileFlightLogicStep;
+import com.createicbm.api.missiles.parts.IMissileTarget;
+import com.createicbm.api.missiles.parts.IMissileTargetDelayed;
+import com.createicbm.config.machines.ConfigLauncher;
+import com.createicbm.config.missile.ConfigMissile;
+import com.createicbm.content.blocks.launcher.FiringPackage;
+import com.createicbm.content.blocks.launcher.LauncherBaseCapability;
+import com.createicbm.content.blocks.launcher.status.FiringWithDelay;
+import com.createicbm.content.blocks.launcher.status.LaunchedWithMissile;
+import com.createicbm.content.blocks.launcher.status.LauncherStatus;
+import com.createicbm.content.missile.logic.flight.ArcFlightLogic;
+import com.createicbm.content.missile.logic.flight.WarmupFlightLogic;
+import com.createicbm.content.missile.logic.flight.move.MoveByFacingLogic;
+import com.createicbm.content.missile.logic.source.ActionSource;
+import com.createicbm.content.missile.logic.source.cause.CausedByBlock;
+import com.createicbm.content.missile.logic.targeting.BallisticTargetingData;
+import com.createicbm.content.reg.ItemReg;
+import com.createicbm.lib.transform.rotation.EulerAngle;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import net.minecraft.core.Direction;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.phys.Vec3;
+import net.neoforged.neoforge.common.NeoForge;
+
+import javax.annotation.Nullable;
+import java.util.List;
+
+@EqualsAndHashCode(callSuper = true)
+@Data
+@AllArgsConstructor
+public class LauncherCapability extends LauncherBaseCapability {
+
+    public static final int PAD_WARM_UP_TIME = 20 * 2; //TODO add config
+    public static final double MISSILE_CLIMB_HEIGHT = 2; //TODO add config
+
+    private static final EulerAngle angle = new EulerAngle(0, 0, 0);
+    private static final Vec3[] SPAWN_OFFSETS = new Vec3[] {
+        //DOWN
+        new Vec3(0, -3.1f, 0),
+        //UP
+        new Vec3(0, 2.6f, 0),
+        //NORTH
+        new Vec3(0, -0.2f, -2.8f),
+        //SOUTH
+        new Vec3(0, -0.2f, 2.8f),
+        //WEST
+        new Vec3(-2.8f, -0.2f, 0),
+        //EAST
+        new Vec3(2.8f, -0.2f, 0)
+    };
+    private final TileLauncherBase host;
+
+    @Override
+    public IActionStatus getStatus() {
+        // Min power check
+        if(!host.energyStorage.consumePower(host.getFiringCost(), true)) {
+            return LauncherStatus.ERROR_POWER;
+        }
+        // No missile stack
+        else if(host.missileHolder.getMissileStack().isEmpty()) {
+            return LauncherStatus.ERROR_EMPTY_STACK;
+        }
+        // Missile in process of firing, but is delayed
+        else if(host.getFiringPackage() != null && host.getFiringPackage().getCountDown() > 0) {
+            return new FiringWithDelay(host.getFiringPackage().getCountDown());
+        }
+        return LauncherStatus.READY;
+    }
+
+    @Override
+    public IActionStatus preCheckLaunch(IMissileTarget targetData, @Nullable IActionCause cause) {
+        // Validate target data
+        if(targetData == null || targetData.getPosition() == null) {
+            return LauncherStatus.ERROR_TARGET_NULL;
+        }
+        // User safety, yes they will shoot themselves
+        else if(isTargetTooClose(targetData.getPosition())) {
+            return LauncherStatus.ERROR_MIN_RANGE;
+        }
+        // Max range TODO once fuel is added make this a warning that can be bypassed
+        else if(isTargetTooFar(targetData.getPosition())) {
+            return LauncherStatus.ERROR_MAX_RANGE;
+        }
+        //TODO if firing package countdown finishes, validate it triggered the launch... if not return QUEUED
+        return getStatus();
+    }
+
+    @Override
+    public IActionStatus launch(ILauncherSolution solution, @Nullable IActionCause cause, boolean simulate) { //TODO rework to intentionally used IActionSolution
+
+        final IMissileTarget targetData = solution.getTarget(this);
+
+        // Check current status, if blocking stop launch and return
+        final IActionStatus preCheck = preCheckLaunch(targetData, cause);
+        if(preCheck.isBlocking()) {
+            return preCheck;
+        }
+
+        // Setup source and cause
+        final CausedByBlock selfCause = new CausedByBlock(host.getLevel(), host.getBlockPos(), host.getBlockState()); // TODO add more information about launcher
+        selfCause.setPreviousCause(cause);
+
+        final Vec3 spawnPosition = SPAWN_OFFSETS[host.getLaunchDirection().ordinal()].add(host.getBlockPos().getX() + 0.5, host.getBlockPos().getY() + 0.5, host.getBlockPos().getZ() + 0.5);
+        final ActionSource source = new ActionSource(host.getLevel(), spawnPosition, selfCause);
+
+        //Allow canceling missile launches
+        final LauncherEvent.PreLaunch event = new LauncherEvent.PreLaunch(source, this, host.missileHolder, targetData, simulate);
+        if (NeoForge.EVENT_BUS.post(event).isCanceled())
+        {
+            if(event.cancelReason != null) {
+                return event.cancelReason;
+            }
+            return LauncherStatus.CANCELED;
+        }
+
+        final ItemStack stack = host.missileHolder.getMissileStack();
+        final ICapabilityMissileStack missileStack = stack.getCapability(CreateICBMAPI.MISSILE_STACK_CAPABILITY);
+        if (missileStack != null)
+        {
+            // TODO we may need to walk cause history to get correct launcher count info
+            final Vec3 target = applyInaccuracy(targetData.getPosition(), Math.max(1, solution.getFiringCount()));
+
+            //TODO add distance check? --- something seems to be missing
+
+            // Ignore delay if we are currently using a firing package
+            if(host.getFiringPackage() == null) {
+                // Check if we have a delay before firing
+                int delay = host.getFiringDelay();
+                if(targetData instanceof IMissileTargetDelayed) {
+                    delay += ((IMissileTargetDelayed) targetData).getFiringDelay();
+                }
+
+                // If delay, store firing information and return
+                if(delay > 0) {
+                    if(!simulate) {
+                        host.setFiringPackage(new FiringPackage(targetData, cause, delay));
+                    }
+                    return new FiringWithDelay(delay); //TODO provide callback for when missile finishes launching
+                }
+            }
+
+            // Return launched on client or if we are simulating
+            if(!getHost().isServer() || simulate) {
+                return LauncherStatus.LAUNCHED;
+            }
+
+            final IMissile missile = missileStack.newMissile(host.getLevel());
+            return fireMissile(missile, source, target);
+        }
+        return LauncherStatus.ERROR_INVALID_STACK;
+    }
+
+    private IActionStatus fireMissile(IMissile missile, ActionSource source, Vec3 target) {
+
+        // Should always work but in rare cases capability might have failed
+        if(!host.missileHolder.consumeMissile()) {
+            return LauncherStatus.ERROR_INVALID_STACK;
+        }
+
+        final Entity entity = missile.getMissileEntity();
+        entity.setXRot(host.getMissilePitch(false));
+        entity.xRotO = entity.getXRot();
+        entity.setYRot(host.getMissileYaw(false));
+        entity.yRotO = entity.getYRot();
+
+        // TODO raytrace to make sure we don't teleport through the ground
+        //  raytrace for missile spawn area
+        //  raytrace to check for blockage in silo path... players will be happy about this
+        entity.setPos(source.getPosition().x, source.getPosition().y, source.getPosition().z);
+
+        //Trigger launch event
+        missile.setTargetData(new BallisticTargetingData(target, 2)); //TODO pull from targeting data
+        missile.setFlightLogic(buildFLightPath());
+        missile.setMissileSource(source); //TODO encode player that built launcher, firing method (laser, remote, redstone), and other useful data
+        missile.launch();
+
+        //Spawn entity
+        if(!host.getLevel().addFreshEntity(entity)) {
+            return LauncherStatus.ERROR_SPAWN;
+        }
+
+        // Check power again, with firing delay things could change
+        if(!host.energyStorage.consumePower(host.getFiringCost(), true)) {
+            return LauncherStatus.ERROR_POWER;
+        }
+        host.energyStorage.consumePower(host.getFiringCost(), false);
+
+        //Grab rider
+        if (host.seat != null && !host.seat.getPassengers().isEmpty()) //TODO add hook to disable riding some missiles
+        {
+            final List<Entity> riders = List.copyOf(host.seat.getPassengers());
+            riders.forEach(r -> {
+                entity.stopRiding();
+                r.startRiding(entity);
+            });
+        }
+
+        return new LaunchedWithMissile().setMissile(missile);
+    }
+
+    public IMissileFlightLogic buildFLightPath() {
+
+        if(host.getLaunchDirection() != Direction.UP) {
+
+            IMissileFlightLogicStep stepLockHeight = new MoveByFacingLogic()
+                .setDistance(host.getLockHeight())
+                .setRelative(false)
+                .setDirection(host.getLaunchDirection())
+                .setAcceleration(0.2);
+
+            IMissileFlightLogic arcFlight = new ArcFlightLogic();
+
+            return new WarmupFlightLogic()
+                .setTimer(PAD_WARM_UP_TIME)
+                .addStep(stepLockHeight)
+                .addStep(arcFlight);
+        }
+
+        IMissileFlightLogicStep stepSlowClimb = new MoveByFacingLogic()
+            .setDistance(MISSILE_CLIMB_HEIGHT)
+            .setRelative(false)
+            .setDirection(host.getLaunchDirection())
+            .setAcceleration(0.005);
+
+        IMissileFlightLogicStep stepLockHeight = new MoveByFacingLogic()
+            .setDistance(host.getLockHeight() - MISSILE_CLIMB_HEIGHT)
+            .setRelative(false)
+            .setDirection(host.getLaunchDirection())
+            .setAcceleration(0.1);
+
+        IMissileFlightLogic arcFlight = new ArcFlightLogic();
+
+        return new WarmupFlightLogic()
+            .setTimer(PAD_WARM_UP_TIME)
+            .addStep(stepSlowClimb)
+            .addStep(stepLockHeight)
+            .addStep(arcFlight);
+    }
+
+    @Override
+    public float getInaccuracy(Vec3 target, int launcherCount) {
+        final double distance = host.getDistanceSq(target.x, target.y, target.z);
+        return calculateInaccuracy(distance, launcherCount);
+    }
+
+    /**
+     * Calculates inaccuracy to apply to target before firing the missile.
+     *
+     * @param distanceSq from the target squared
+     * @param missiles fired in the same cluster
+     * @return inaccuracy to apply to the target
+     */
+    public static float calculateInaccuracy(double distanceSq, int missiles) {
+
+        // Min amount
+        float inaccuracy = (float)ConfigLauncher.MIN_INACCURACY;
+
+        // Range drift
+        final double scale = distanceSq / (ConfigLauncher.RANGE * ConfigLauncher.RANGE);
+        inaccuracy += (float) (scale * ConfigLauncher.SCALED_INACCURACY_DISTANCE);
+
+        // Add inaccuracy for each launcher fired in circuit
+        if(missiles > 1) {
+            inaccuracy += (float) ((missiles - 1) * ConfigLauncher.SCALED_INACCURACY_LAUNCHERS);
+        }
+        return inaccuracy;
+    }
+
+    protected Vec3 applyInaccuracy(Vec3 target, int launcherCount)
+    {
+
+        //Randomize distance
+        float inaccuracy = getInaccuracy(target, launcherCount) * host.getLevel().random.nextFloat();
+
+        //Randomize radius drop
+        angle.setYaw(host.getLevel().random.nextFloat() * 360); //TODO fix to use a normal distribution from ICBM 2
+
+        //Apply inaccuracy to target position and return
+        return new Vec3(target.x + angle.x() * inaccuracy, target.y, target.z + angle.z() * inaccuracy);
+    }
+
+    /**
+     * Checks to see if the target is too close.
+     *
+     * @param target
+     * @return
+     */
+    public boolean isTargetTooClose(Vec3 target)
+    {
+        final int minDistance = 10; //TODO config driven and user driven
+        final double deltaX = Math.abs(target.x - (host.getBlockPos().getX() + 0.5));
+        final double  deltaZ = Math.abs(target.z - (host.getBlockPos().getZ() + 0.5));
+        return deltaX < minDistance && deltaZ < minDistance;
+    }
+
+    public boolean isTargetTooFar(Vec3 target)
+    {
+        final double deltaX = Math.abs(target.x - (host.getBlockPos().getX() + 0.5));
+        final double  deltaZ = Math.abs(target.z - (host.getBlockPos().getZ() + 0.5));
+        return deltaX > ConfigLauncher.RANGE || deltaZ > ConfigLauncher.RANGE;
+    }
+
+    @Override
+    public float getPayloadVelocity() {
+        // TODO find a way to get this from the missile stack
+        return host.missileHolder.getMissileStack().getItem() == ItemReg.itemSAM.get()
+            ? ConfigMissile.SAM_MISSILE.FLIGHT_SPEED : ConfigMissile.DIRECT_FLIGHT_SPEED;
+    }
+}

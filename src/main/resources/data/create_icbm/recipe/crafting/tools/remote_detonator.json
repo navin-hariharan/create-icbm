@@ -1,0 +1,27 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "L": {
+      "item": "create:redstone_link"
+    },
+    "S": {
+      "item": "create:iron_sheet"
+    },
+    "E": {
+      "item": "create:electron_tube"
+    },
+    "B": {
+      "tag": "minecraft:wooden_buttons"
+    }
+  },
+  "pattern": [
+    " L ",
+    "SES",
+    "SBS"
+  ],
+  "result": {
+    "count": 1,
+    "id": "create_icbm:remotedetonator"
+  }
+}

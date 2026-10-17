@@ -1,0 +1,194 @@
+{
+  "antimatter": {
+    "category": "block",
+    "subtitle": "subtitle.create_icbm:explosion.antimatter",
+    "sounds": [
+      {
+        "name": "create_icbm:antimatter",
+        "stream": false
+      }
+    ]
+  },
+  "beamcharging": {
+    "category": "block",
+    "subtitle": "subtitle.create_icbm:beam.charge",
+    "sounds": [
+      {
+        "name": "create_icbm:beamcharging",
+        "stream": false
+      }
+    ]
+  },
+  "collapse": {
+    "category": "block",
+    "subtitle": "subtitle.create_icbm:explosion.collapse",
+    "sounds": [
+      {
+        "name": "create_icbm:collapse1",
+        "stream": false
+      },
+      {
+        "name": "create_icbm:collapse2",
+        "stream": false
+      },
+      {
+        "name": "create_icbm:collapse3",
+        "stream": false
+      },
+      {
+        "name": "create_icbm:collapse4",
+        "stream": false
+      },
+      {
+        "name": "create_icbm:collapse5",
+        "stream": false
+      },
+      {
+        "name": "create_icbm:collapse6",
+        "stream": false
+      },
+      {
+        "name": "create_icbm:collapse7",
+        "stream": false
+      },
+      {
+        "name": "create_icbm:collapse8",
+        "stream": false
+      }
+    ]
+  },
+  "debilitation": {
+    "category": "block",
+    "subtitle": "subtitle.create_icbm:explosion.debilitation",
+    "sounds": [
+      {
+        "name": "create_icbm:debilitation",
+        "stream": false
+      }
+    ]
+  },
+  "emp": {
+    "category": "block",
+    "subtitle": "subtitle.create_icbm:explosion.emp",
+    "sounds": [
+      {
+        "name": "create_icbm:emp",
+        "stream": false
+      }
+    ]
+  },
+  "explosion": {
+    "category": "block",
+    "subtitle": "subtitle.create_icbm:explosion",
+    "sounds": [
+      {
+        "name": "create_icbm:explosion1",
+        "stream": false
+      }
+    ]
+  },
+  "explosionfire": {
+    "category": "block",
+    "subtitle": "subtitle.create_icbm:explosion.fire",
+    "sounds": [
+      {
+        "name": "create_icbm:explosionfire",
+        "stream": false
+      }
+    ]
+  },
+  "gasleak": {
+    "category": "block",
+    "subtitle": "subtitle.create_icbm:gas.leak",
+    "sounds": [
+      {
+        "name": "create_icbm:gasleak",
+        "stream": false
+      }
+    ]
+  },
+  "machinehum": {
+    "category": "block",
+    "subtitle": "subtitle.create_icbm:machine.hum",
+    "sounds": [
+      {
+        "name": "create_icbm:machinehum",
+        "stream": false
+      }
+    ]
+  },
+  "missileinair": {
+    "category": "block",
+    "subtitle": "subtitle.create_icbm:missile.movement",
+    "sounds": [
+      {
+        "name": "create_icbm:missileinair_short",
+        "stream": false
+      }
+    ]
+  },
+  "missilelaunch": {
+    "category": "block",
+    "subtitle": "subtitle.create_icbm:missile.launch",
+    "sounds": [
+      {
+        "name": "create_icbm:missilelaunch1",
+        "stream": false
+      },
+      {
+        "name": "create_icbm:missilelaunch2",
+        "stream": false
+      }
+    ]
+  },
+  "powerdown": {
+    "category": "block",
+    "subtitle": "subtitle.create_icbm:power.down",
+    "sounds": [
+      {
+        "name": "create_icbm:powerdown",
+        "stream": false
+      }
+    ]
+  },
+  "redmatter": {
+    "category": "block",
+    "subtitle": "subtitle.create_icbm:explosion.redmatter",
+    "sounds": [
+      {
+        "name": "create_icbm:redmatter",
+        "stream": false
+      }
+    ]
+  },
+  "sonicwave": {
+    "category": "block",
+    "subtitle": "subtitle.create_icbm:explosion.sonicwave",
+    "sounds": [
+      {
+        "name": "create_icbm:sonicwave",
+        "stream": false
+      }
+    ]
+  },
+  "meep": {
+    "category": "block",
+    "subtitle": "subtitle.create_icbm:meep",
+    "sounds": [
+      {
+        "name": "create_icbm:meep",
+        "stream": false
+      }
+    ]
+  },
+  "radioactive_tick": {
+    "category": "block",
+    "subtitle": "subtitle.create_icbm:radioactive_tick",
+    "sounds": [
+      {
+        "name": "create_icbm:radioactive_tick",
+        "stream": false
+      }
+    ]
+  }
+}

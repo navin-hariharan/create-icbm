@@ -1,0 +1,33 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "key": {
+    "K": {
+      "item": "create:copper_sheet"
+    },
+    "Q": {
+      "item": "create:polished_rose_quartz"
+    },
+    "C": {
+      "item": "create:copper_casing"
+    },
+    "P": {
+      "item": "create:precision_mechanism"
+    },
+    "I": {
+      "item": "create:industrial_iron_block"
+    },
+    "S": {
+      "item": "create:shaft"
+    }
+  },
+  "pattern": [
+    "KQK",
+    "CPC",
+    "ISI"
+  ],
+  "result": {
+    "count": 1,
+    "id": "create_icbm:emptower"
+  }
+}

@@ -1,0 +1,49 @@
+{
+  "type": "create:mixing",
+  "ingredients": [
+    [
+      {
+        "item": "minecraft:melon_seeds"
+      },
+      {
+        "item": "minecraft:pumpkin_seeds"
+      },
+      {
+        "item": "minecraft:wheat_seeds"
+      }
+    ],
+    [
+      {
+        "item": "minecraft:melon_seeds"
+      },
+      {
+        "item": "minecraft:pumpkin_seeds"
+      },
+      {
+        "item": "minecraft:wheat_seeds"
+      }
+    ],
+    [
+      {
+        "item": "minecraft:melon_seeds"
+      },
+      {
+        "item": "minecraft:pumpkin_seeds"
+      },
+      {
+        "item": "minecraft:wheat_seeds"
+      }
+    ],
+    {
+      "type": "neoforge:tag",
+      "amount": 250,
+      "tag": "c:milk"
+    }
+  ],
+  "results": [
+    {
+      "id": "create_icbm:antidote",
+      "count": 6
+    }
+  ]
+}

@@ -1,0 +1,70 @@
+package com.createicbm.config;
+
+import com.createicbm.ICBMConstants;
+import com.createicbm.content.actions.emp.EmpHandler;
+import com.createicbm.content.entity.flyingblock.FlyingBlock;
+import com.createicbm.content.gas.ProtectiveArmorHandler;
+import com.createicbm.content.radioactive.RadioactiveHandler;
+import com.createicbm.lib.config.Config;
+
+/**
+ * Settings class for various configuration settings.
+ *
+ * @author Calclavia, DarkCow
+ */
+@Config(modid = ICBMConstants.DOMAIN, name = "create_icbm/main")
+@Config.LangKey("config.create_icbm:main.title")
+public class ConfigMain
+{
+    @Config.Name("use_energy")
+    @Config.Comment("Machines need rotation from a shaft to run. Set to false to let them run without rotation.")
+    public static boolean REQUIRES_POWER = true;
+
+    @Config.Name("protective_armor")
+    @Config.Comment("Settings for setting protection support on armor items")
+    public static ProtectiveArmorConfig protectiveArmor = new ProtectiveArmorConfig();
+
+    public static class ProtectiveArmorConfig {
+
+        @Config.Name("min_chemical_gas_protection")
+        @Config.Comment("Minimal percentage of protection required to start guarding from chemical attacks")
+        @Config.RangeDouble(min = 0, max = 1)
+        public float minProtectionChemicalGas = 0.5f;
+
+        @Config.Name("min_viral_gas_protection")
+        @Config.Comment("Minimal percentage of protection required to start guarding from viral attacks")
+        @Config.RangeDouble(min = 0, max = 1)
+        public float minProtectionViralGas = 0.8f;
+
+        @Config.Name("min_radiation_protection")
+        @Config.Comment("Minimal percentage of protection required to start guarding from radiation attacks")
+        @Config.RangeDouble(min = 0, max = 1)
+        public float minProtectionRadiation = 1f;
+
+        @Config.Name("min_debilitation_gas_protection")
+        @Config.Comment("Minimal percentage of protection required to start guarding from debilitation attacks")
+        @Config.RangeDouble(min = 0, max = 1)
+        public float minProtectionDebilitationGas = 0.1f;
+
+        @Config.Name("require_helmet")
+        @Config.Comment("Is head slot required to count as protection")
+        public boolean requireHelmet = true;
+
+        //TODO once on latest MC rethinking gas protection to be per weapon system.
+        @Config.Name("item_ratings")
+        @Config.Comment("Item/ItemStack to percentage protection between 0.0 to 1.0 'domain:resource=floating_point', ex: 'minecraft:iron_helmet=0.02'")
+        public String[] ITEMS = new String[]{};
+    }
+
+    /** Called by {@link com.createicbm.lib.config.ConfigLoader} after any ICBM config is loaded or reloaded */
+    public static void onConfigReloaded()
+    {
+        {
+            // Reload config so we can convert to easier to hash lists
+            FlyingBlock.loadFromConfig();
+            RadioactiveHandler.loadFromConfig();
+            ProtectiveArmorHandler.loadFromConfig();
+            EmpHandler.loadFromConfig();
+        }
+    }
+}

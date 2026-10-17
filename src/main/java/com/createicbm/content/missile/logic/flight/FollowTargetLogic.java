@@ -1,0 +1,77 @@
+package com.createicbm.content.missile.logic.flight;
+
+import com.createicbm.ICBMConstants;
+import com.createicbm.api.missiles.IMissile;
+import com.createicbm.config.missile.ConfigMissile;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.Mth;
+
+import javax.annotation.Nonnull;
+
+/**
+ * Follows the location of the target data
+ *
+ * Created by Robin Seifert on 10/8/2022.
+ */
+public class FollowTargetLogic extends DeadFlightLogic
+{
+    public static final ResourceLocation REG_NAME = ResourceLocation.fromNamespaceAndPath(ICBMConstants.DOMAIN, "direct.follow");
+
+    public FollowTargetLogic() {
+        //For save/load
+    }
+
+    public FollowTargetLogic(int fuel) {
+        super(fuel);
+    }
+
+    @Override
+    public float engineSmokeRed(Entity entity) {
+        return 1;
+    }
+
+    @Override
+    public float engineSmokeGreen(Entity entity) {
+        return 0.5f;
+    }
+
+    @Override
+    public float engineSmokeBlue(Entity entity) {
+        return 0.5f;
+    }
+
+    @Override
+    public void onEntityTick(Entity entity, IMissile missile, int ticksInAir)
+    {
+        super.onEntityTick(entity, missile, ticksInAir);
+        if(!entity.level().isClientSide() && hasFuel(entity) && missile.getTargetData() != null) //TODO if we have no target data have missile fly around in random directions until it hits something
+        {
+            double motionX = missile.getTargetData().getX() - entity.getX();
+            double motionY = missile.getTargetData().getY() - entity.getY();
+            double motionZ = missile.getTargetData().getZ() - entity.getZ();
+
+            float velocity = (float) Math.sqrt(motionX * motionX + motionY * motionY + motionZ * motionZ);
+            motionX /= velocity;
+            motionY /= velocity;
+            motionZ /= velocity;
+
+            //Set motion
+            MotionHelper.setMotionX(entity, motionX * ConfigMissile.SAM_MISSILE.FLIGHT_SPEED);
+            MotionHelper.setMotionY(entity, motionY * ConfigMissile.SAM_MISSILE.FLIGHT_SPEED);
+            MotionHelper.setMotionZ(entity, motionZ * ConfigMissile.SAM_MISSILE.FLIGHT_SPEED);
+
+            //Update rotation
+            float f3 = (float) Math.sqrt(motionX * motionX + motionZ * motionZ);
+            MotionHelper.setYawAndPrev(entity, (float) (Math.atan2(motionX, motionZ) * 180.0D / Math.PI));
+            MotionHelper.setPitchAndPrev(entity, (float) (Math.atan2(motionY, (double) f3) * 180.0D / Math.PI));
+        }
+    }
+
+    @Nonnull
+    @Override
+    public ResourceLocation getRegistryKey()
+    {
+        return REG_NAME;
+    }
+}

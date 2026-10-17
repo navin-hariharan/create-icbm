@@ -1,0 +1,29 @@
+{
+  "type": "create:mechanical_crafting",
+  "accept_mirrored": true,
+  "category": "misc",
+  "key": {
+    "R": {
+      "item": "create_icbm:radargun"
+    },
+    "Q": {
+      "item": "create:polished_rose_quartz"
+    },
+    "P": {
+      "item": "create:precision_mechanism"
+    },
+    "H": {
+      "item": "create_icbm:remotedetonator"
+    }
+  },
+  "pattern": [
+    "RQ ",
+    " P ",
+    "  H"
+  ],
+  "result": {
+    "count": 1,
+    "id": "create_icbm:laserdetonator"
+  },
+  "show_notification": false
+}

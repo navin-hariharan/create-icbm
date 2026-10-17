@@ -1,0 +1,31 @@
+{
+	"parent": "minecraft:block/block",
+	"textures": {"c": "create_icbm:block/launch_connector", "particle": "create:block/brass_casing"},
+	"elements": [
+		{
+			"name": "cap",
+			"from": [5, 3, 5],
+			"to": [11, 4, 11],
+			"faces": {
+				"north": {"uv": [8, 0, 9, 6], "texture": "#c", "rotation": 90},
+				"east": {"uv": [8, 0, 9, 6], "texture": "#c", "rotation": 90},
+				"south": {"uv": [8, 0, 9, 6], "texture": "#c", "rotation": 90},
+				"west": {"uv": [8, 0, 9, 6], "texture": "#c", "rotation": 90},
+				"down": {"uv": [8, 0, 14, 6], "texture": "#c"}
+			}
+		},
+		{
+			"name": "lamp",
+			"from": [7, 2.5, 7],
+			"to": [9, 3, 9],
+			"faces": {
+				"north": {"uv": [0, 13, 0.5, 15], "texture": "#c", "rotation": 90},
+				"east": {"uv": [0, 13, 0.5, 15], "texture": "#c", "rotation": 90},
+				"south": {"uv": [0, 13, 0.5, 15], "texture": "#c", "rotation": 90},
+				"west": {"uv": [0, 13, 0.5, 15], "texture": "#c", "rotation": 90},
+				"down": {"uv": [0, 13, 2, 15], "texture": "#c"}
+			},
+			"neoforge_data": {"block_light": 8, "sky_light": 8}
+		}
+	]
+}

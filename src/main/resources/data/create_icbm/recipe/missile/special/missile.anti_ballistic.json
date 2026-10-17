@@ -1,0 +1,34 @@
+{
+  "type": "create:mechanical_crafting",
+  "accept_mirrored": true,
+  "category": "misc",
+  "key": {
+    "T": {
+      "item": "create:electron_tube"
+    },
+    "E": {
+      "type": "neoforge:components",
+      "items": "create_icbm:explosives",
+      "components": {
+        "create_icbm:explosive": "create_icbm:condensed"
+      }
+    },
+    "M": {
+      "type": "neoforge:components",
+      "items": "create_icbm:explosive_missile",
+      "components": {
+        "create_icbm:explosive": "create_icbm:missile"
+      }
+    }
+  },
+  "pattern": [
+    "T",
+    "E",
+    "M"
+  ],
+  "result": {
+    "count": 1,
+    "id": "create_icbm:surface_to_air_missile"
+  },
+  "show_notification": false
+}
