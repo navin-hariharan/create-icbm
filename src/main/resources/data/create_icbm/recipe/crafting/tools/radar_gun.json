@@ -1,0 +1,29 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "Q": {
+      "item": "create:rose_quartz"
+    },
+    "E": {
+      "item": "create:electron_tube"
+    },
+    "I": {
+      "item": "create:iron_sheet"
+    },
+    "B": {
+      "item": "minecraft:stone_button"
+    },
+    "A": {
+      "item": "create:andesite_alloy"
+    }
+  },
+  "pattern": [
+    "QEI",
+    " BA"
+  ],
+  "result": {
+    "count": 1,
+    "id": "create_icbm:radargun"
+  }
+}

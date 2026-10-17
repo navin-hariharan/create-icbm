@@ -1,0 +1,30 @@
+{
+  "variants": {
+    "facing=up": {
+      "model": "create_icbm:block/silo_pad"
+    },
+    "facing=down": {
+      "model": "create_icbm:block/silo_pad",
+      "x": 180
+    },
+    "facing=north": {
+      "model": "create_icbm:block/silo_pad",
+      "x": 270,
+      "y": 180
+    },
+    "facing=south": {
+      "model": "create_icbm:block/silo_pad",
+      "x": 270
+    },
+    "facing=east": {
+      "model": "create_icbm:block/silo_pad",
+      "x": 270,
+      "y": 270
+    },
+    "facing=west": {
+      "model": "create_icbm:block/silo_pad",
+      "x": 270,
+      "y": 90
+    }
+  }
+}

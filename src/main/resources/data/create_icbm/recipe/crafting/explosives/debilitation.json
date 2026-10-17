@@ -1,0 +1,34 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "F": {
+      "item": "create:cinder_flour"
+    },
+    "E": {
+      "item": "minecraft:fermented_spider_eye"
+    },
+    "S": {
+      "type": "neoforge:components",
+      "items": "create_icbm:explosives",
+      "components": {
+        "create_icbm:explosive": "create_icbm:shrapnel"
+      }
+    },
+    "W": {
+      "item": "minecraft:water_bucket"
+    }
+  },
+  "pattern": [
+    "FEF",
+    " S ",
+    "FWF"
+  ],
+  "result": {
+    "count": 3,
+    "id": "create_icbm:explosives",
+    "components": {
+      "create_icbm:explosive": "create_icbm:debilitation"
+    }
+  }
+}

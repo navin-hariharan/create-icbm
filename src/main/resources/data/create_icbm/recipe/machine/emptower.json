@@ -1,0 +1,39 @@
+{
+  "type": "create:mechanical_crafting",
+  "accept_mirrored": true,
+  "category": "misc",
+  "key": {
+    "S": {
+      "item": "create:sturdy_sheet"
+    },
+    "G": {
+      "item": "create:golden_sheet"
+    },
+    "C": {
+      "item": "create:copper_casing"
+    },
+    "P": {
+      "item": "create:precision_mechanism"
+    },
+    "I": {
+      "item": "create:industrial_iron_block"
+    },
+    "Q": {
+      "item": "create:polished_rose_quartz"
+    },
+    "H": {
+      "item": "create:shaft"
+    }
+  },
+  "pattern": [
+    "SGS",
+    "CPC",
+    "IQI",
+    " H "
+  ],
+  "result": {
+    "count": 1,
+    "id": "create_icbm:emptower"
+  },
+  "show_notification": false
+}

@@ -1,0 +1,29 @@
+{
+  "type": "create:mechanical_crafting",
+  "accept_mirrored": true,
+  "category": "misc",
+  "key": {
+    "S": {
+      "item": "create:iron_sheet"
+    },
+    "R": {
+      "item": "minecraft:redstone"
+    },
+    "C": {
+      "item": "create:copper_casing"
+    },
+    "G": {
+      "item": "create:golden_sheet"
+    }
+  },
+  "pattern": [
+    "SRS",
+    "CGC",
+    "SRS"
+  ],
+  "result": {
+    "count": 1,
+    "id": "create_icbm:emptower_extender"
+  },
+  "show_notification": false
+}

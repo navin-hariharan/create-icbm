@@ -1,0 +1,49 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "R": {
+      "item": "minecraft:red_dye"
+    },
+    "Y": {
+      "item": "minecraft:yellow_dye"
+    },
+    "G": {
+      "item": "minecraft:green_dye"
+    },
+    "B": {
+      "item": "minecraft:blue_dye"
+    },
+    "X": {
+      "type": "neoforge:components",
+      "items": "create_icbm:explosives",
+      "components": {
+        "create_icbm:explosive": "create_icbm:repulsive"
+      }
+    },
+    "O": {
+      "item": "minecraft:orange_dye"
+    },
+    "P": {
+      "item": "minecraft:purple_dye"
+    },
+    "M": {
+      "item": "minecraft:magenta_dye"
+    },
+    "L": {
+      "item": "minecraft:lime_dye"
+    }
+  },
+  "pattern": [
+    "RYG",
+    "BXO",
+    "PML"
+  ],
+  "result": {
+    "count": 1,
+    "id": "create_icbm:explosives",
+    "components": {
+      "create_icbm:explosive": "create_icbm:colors"
+    }
+  }
+}

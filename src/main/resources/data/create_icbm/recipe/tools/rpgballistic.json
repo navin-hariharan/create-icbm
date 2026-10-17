@@ -1,0 +1,16 @@
+{
+  "type": "create:deploying",
+  "ingredients": [
+    {
+      "item": "create_icbm:rocketlauncher"
+    },
+    {
+      "item": "create_icbm:launcherscreen"
+    }
+  ],
+  "results": [
+    {
+      "id": "create_icbm:ballisticlauncher"
+    }
+  ]
+}

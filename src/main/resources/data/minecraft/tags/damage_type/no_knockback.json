@@ -1,0 +1,9 @@
+{
+  "replace": false,
+  "values": [
+    "create_icbm:chemical",
+    "create_icbm:contagious",
+    "create_icbm:radioactive_block",
+    "create_icbm:projectile"
+  ]
+}

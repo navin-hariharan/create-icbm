@@ -1,0 +1,19 @@
+{
+  "type": "create:milling",
+  "ingredients": [
+    {
+      "item": "minecraft:spider_eye"
+    }
+  ],
+  "processing_time": 100,
+  "results": [
+    {
+      "id": "create_icbm:poisonpowder",
+      "count": 2
+    },
+    {
+      "id": "create_icbm:poisonpowder",
+      "chance": 0.5
+    }
+  ]
+}

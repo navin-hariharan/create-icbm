@@ -1,0 +1,439 @@
+package com.createicbm.content.blocks.emptower;
+
+import com.createicbm.CreateICBM;
+import com.createicbm.ICBMConstants;
+import com.createicbm.api.CreateICBMAPI;
+import com.createicbm.api.actions.cause.IActionCause;
+import com.createicbm.api.actions.data.ActionFields;
+import com.createicbm.api.actions.status.ActionStatusTypes;
+import com.createicbm.api.actions.status.IActionStatus;
+import com.createicbm.client.ICBMSounds;
+import com.createicbm.config.ConfigMain;
+import com.createicbm.config.machines.ConfigEmpTower;
+import com.createicbm.content.actions.emp.ActionDataEmpArea;
+import com.createicbm.content.blocks.emptower.gui.ContainerEMPTower;
+import com.createicbm.content.reg.BlockReg;
+import com.createicbm.lib.actions.PotentialActionKnown;
+import com.createicbm.lib.actions.fields.ActionFieldProvider;
+import com.createicbm.lib.capability.holder.ICapabilityHolderTile;
+import com.createicbm.lib.data.IMachineInfo;
+import com.createicbm.lib.energy.storage.EnergyBuffer;
+import com.createicbm.lib.network.lambda.PacketCodex;
+import com.createicbm.lib.network.lambda.PacketCodexReg;
+import com.createicbm.lib.network.lambda.tile.PacketCodexTile;
+import com.createicbm.lib.radio.RadioRegistry;
+import com.createicbm.lib.saving.NbtSaveHandler;
+import com.createicbm.lib.tile.TickAction;
+import com.createicbm.lib.tile.TickDoOnce;
+import com.createicbm.prefab.gui.IPlayerUsing;
+import com.createicbm.prefab.inventory.InventorySlot;
+import com.createicbm.prefab.inventory.InventoryWithSlots;
+import com.createicbm.prefab.tile.IGuiTile;
+import com.createicbm.prefab.tile.TileKineticMachine;
+import lombok.Getter;
+import net.minecraft.ChatFormatting;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.core.HolderLookup;
+import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
+import net.neoforged.neoforge.capabilities.BlockCapability;
+import net.neoforged.neoforge.capabilities.Capabilities;
+
+import javax.annotation.Nullable;
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.function.BiConsumer;
+
+/** Logic side of the EMP tower block */
+public class TileEMPTower extends TileKineticMachine implements IGuiTile, IMachineInfo, IPlayerUsing, ICapabilityHolderTile
+{
+    public static final ResourceLocation REGISTRY_NAME = ResourceLocation.fromNamespaceAndPath(ICBMConstants.DOMAIN, "emptower");
+
+    public static final int ROTATION_SPEED = 15;
+
+    /** Tick synced rotation */
+    public float rotation = 0;
+
+    /** Client side use in render */
+    public float prevRotation = 0;
+
+    /** Delay before EMP can be fired again */
+    protected int cooldownTicks = 0;
+
+    /** Radius of the EMP tower */
+    @Getter
+    public int range = 60;
+
+    /** Coil charge, built up from the shaft like a dynamo. A blast needs it full. */
+    public final EnergyBuffer energyStorage = new EnergyBuffer(() -> Math.max(1, this.getFiringCost()))
+        .withOnChange((p,c,s) -> {this.onChargeChanged(s);})
+        .withCanReceive(() -> this.getCooldown() <= 0)
+        .withCanExtract(() -> false);
+
+    public final RadioEmpTower radioCap = new RadioEmpTower(this);
+
+    public final PotentialActionKnown empAction = new PotentialActionKnown(ActionDataEmpArea.REG_NAME)
+        //TODO implement conditional preCheck to replace current checks
+        .withProvider(new ActionFieldProvider()
+            .field(ActionFields.AREA_SIZE, () -> (float)this.getRange())
+        );
+
+    private final List<TileEmpTowerFake> subBlocks = new ArrayList<>();
+
+    private final TickDoOnce descriptionPacketSender = new TickDoOnce((t) -> PACKET_DESCRIPTION.sendToAllAround(this));
+
+    @Getter
+    private final List<Player> playersUsing = new LinkedList<>();
+
+    public TileEMPTower(BlockPos pos, BlockState state) {
+        super(BlockReg.TILE_EMP_TOWER.get(), pos, state);
+        tickActions.add(descriptionPacketSender);
+        tickActions.add(new TickAction(3,true,  (t) -> PACKET_GUI.sendPacketToGuiUsers(this, playersUsing)));
+        tickActions.add(new TickAction(20,true,  (t) -> {
+            playersUsing.removeIf((player) -> !(player.containerMenu instanceof ContainerEMPTower));
+        }));
+        tickActions.add(new TickAction(5, (t) -> updateStructure()));
+        tickActions.add(empAction);
+    }
+
+    @Override
+    public void setChanged()
+    {
+        super.setChanged();
+        if(isServer()) {
+            descriptionPacketSender.doNext();
+        }
+    }
+
+    @Override
+    public void provideInformation(BiConsumer<String, Object> consumer) {
+        consumer.accept(NEEDS_POWER, ConfigMain.REQUIRES_POWER); //TODO create constant file and helpers for common keys
+        consumer.accept(ENERGY_COST_ACTION, getFiringCost());
+        consumer.accept("COOLING_TICKS", getMaxCooldown());
+        consumer.accept("MAX_RANGE", getMaxRadius());
+    }
+
+    @Override
+    public void onLoad()
+    {
+        super.onLoad();
+        if (isServer())
+        {
+            RadioRegistry.add(radioCap);
+        }
+    }
+
+    @Override
+    public void invalidate()
+    {
+        super.invalidate();
+        subBlocks.forEach(tile -> tile.setHost(null));
+        subBlocks.clear();
+        if (isServer()) {
+            RadioRegistry.remove(radioCap);
+        }
+    }
+
+    protected void updateStructure() {
+        //Find tower blocks TODO find a better solution
+        subBlocks.clear();
+        BlockPos above = getBlockPos().above();
+        while(level.getBlockState(above).is(getBlockState().getBlock())) {
+            final BlockEntity tile = level.getBlockEntity(above);
+            if(tile instanceof TileEmpTowerFake) {
+                ((TileEmpTowerFake) tile).setHost(this);
+                subBlocks.add((TileEmpTowerFake) tile);
+            }
+            above = above.above();
+        }
+    }
+
+    @Override
+    public void update()
+    {
+        super.update();
+
+        if (isServer())
+        {
+            // Charge the coil from the shaft, not while it cools down after a blast
+            if (getCooldown() <= 0 && energyStorage.getEnergyStored() < energyStorage.getMaxEnergyStored())
+            {
+                energyStorage.receiveEnergyInternal(takeRotationCharge((float) ConfigEmpTower.CHARGE_PER_RPM), false);
+            }
+
+            if (ticks % 20 == 0 && isReady()) //TODO convert to a mix of a timer and/or event handler
+            {
+                ICBMSounds.MACHINE_HUM.play(level, getBlockPos().getX() + 0.5, getBlockPos().getY() + 0.5, getBlockPos().getZ() + 0.5, 0.5F, 0.85F * getChargePercentage(), true);
+            }
+            else if(getCooldown() > 0 && ticks % 10 == level.random.nextInt(10)) {
+                //TODO add custom sound so sub-titles match
+                level.playSound(null, getBlockPos(), SoundEvents.LAVA_EXTINGUISH, SoundSource.BLOCKS, 0.5F, level.random.nextFloat() * 0.15F + 0.6F);
+            }
+
+            if (isReady() && level.getDirectSignalTo(getBlockPos()) > 0) //TODO convert to action conditional
+            {
+                fire(null); // TODO provide redstone cause by
+            }
+        }
+
+        prevRotation = rotation;
+
+        if(cooldownTicks > 0) {
+            cooldownTicks--;
+
+            if (ticks % 5 == 0) {
+
+                // Spawn particles, do 1 for each height
+                for (int i = 0; i <= subBlocks.size(); i++) {
+
+                    // Randomly select one of the 4 sides
+                    float rotation = this.rotation;
+                    int side = level.random.nextInt(4);
+                    rotation += side * 90f;
+                    spawnParticles(rotation + 45, i); // offset 45 for model being rotated
+                }
+            }
+        }
+        else
+        {
+            // The coil turns with its shaft
+            rotation += isRunning() ? Math.min(ROTATION_SPEED * 3, Math.abs(convertToAngular(getSpeed()))) : 0;
+
+            clamp(rotation);
+
+            while (this.rotation - this.prevRotation< -180.0F)
+            {
+                this.prevRotation -= 360.0F;
+            }
+
+            while (this.rotation - this.prevRotation >= 180.0F)
+            {
+                this.prevRotation += 360.0F;
+            }
+        }
+    }
+
+    private void spawnParticles(float rotation, int yOffset) {
+        final float faceWidth =  7.0F / 16.0F;
+        final float faceHeight = 9.0F / 16.0F;
+        final float faceYOffset = 5.0F / 16.0F;
+        final float faceWOffset = 3.5F / 16.0F;
+
+        double faceA = faceWidth * level.random.nextFloat() - (faceWidth / 2);
+        double faceB = faceHeight * level.random.nextFloat();
+
+        double rad = Math.toRadians(clamp(rotation));
+        double rad2 = Math.toRadians(clamp(rotation + 90));
+        double vecX = Math.sin(rad)  * faceWOffset;
+        double vecZ = Math.cos(rad)  * faceWOffset;
+        double faceX = Math.sin(rad2) * faceA;
+        double faceZ = Math.cos(rad2) * faceA;
+
+        double x = getBlockPos().getX() + 0.5;
+        double y = getBlockPos().getY() + yOffset + faceYOffset - 0.2f;
+        double z = getBlockPos().getZ() + 0.5;
+
+        double d0 = x + vecX + faceX;
+        double d1 = y + faceYOffset + faceB;
+        double d2 = z + vecZ + faceZ;
+        level.addParticle(ParticleTypes.SMOKE, d0, d1, d2, 0.0D, 0.0D, 0.0D);
+    }
+
+    private float clamp(float rotation) {
+        while(rotation > 180.0F) {
+            rotation -= 360F;
+        }
+        return rotation;
+    }
+
+    public float getChargePercentage()
+    {
+        if(!ConfigMain.REQUIRES_POWER) {
+            return 1;
+        }
+        return Math.max(0, Math.min(1, energyStorage.getEnergyStored() / (float) getFiringCost()));
+    }
+
+    public int getFiringCost()
+    {
+        if(!ConfigMain.REQUIRES_POWER) {
+            return 0;
+        }
+        return range * range * ConfigEmpTower.ENERGY_COST_AREA;// TODO change this to scale exponentially by area to discourage large area EMPs
+    }
+
+    @Override
+    public boolean addToGoggleTooltip(List<Component> tooltip, boolean isPlayerSneaking)
+    {
+        super.addToGoggleTooltip(tooltip, isPlayerSneaking);
+        addGoggleHeader(tooltip, "emp_tower");
+        if (getCooldown() > 0)
+        {
+            addGoggleLine(tooltip, "cooling", (getCooldown() + 19) / 20 + " s", ChatFormatting.AQUA);
+        }
+        else
+        {
+            addGoggleLine(tooltip, "coil_charge", percent(Math.round(getChargePercentage() * 100), 100),
+                getChargePercentage() >= 1 ? ChatFormatting.GREEN : ChatFormatting.GOLD);
+        }
+        addGoggleLine(tooltip, "emp_range", range + " m", ChatFormatting.WHITE);
+        return true;
+    }
+
+    public int getMaxRadius() {
+        return ConfigEmpTower.MAX_BASE_RANGE + (subBlocks.size() * ConfigEmpTower.BONUS_RADIUS);
+    }
+
+    public void setRange(int range) {
+        this.range = Math.min(range, getMaxRadius());
+    }
+
+    public boolean fire(IActionCause cause)
+    {
+        if (this.isReady())
+        {
+            final IActionStatus response = empAction.doAction(level, getBlockPos(), cause);
+            if (response.isType(ActionStatusTypes.GREEN))
+            {
+                //Consume energy
+                this.energyStorage.consumePower(getFiringCost(), false);
+
+                //Reset timer
+                this.cooldownTicks = getMaxCooldown();
+
+                this.setChanged();
+
+                return true;
+            }
+            else
+            {
+                CreateICBM.logger().warn("TileEmpTower( DIM: " + level.dimension().location() + ", " + getBlockPos() + ") EMP did not trigger, likely was blocked.");
+                //TODO display some info to player to explain why blast failed and more detailed debug
+            }
+        }
+        return false;
+    }
+
+    public boolean isReady()
+    {
+        return getCooldown() <= 0 && (!ConfigMain.REQUIRES_POWER || this.energyStorage.consumePower(getFiringCost(), true));
+    }
+
+    public int getCooldown()
+    {
+        return cooldownTicks;
+    }
+
+    public float getCooldownPercentage()
+    {
+        return 1f - (cooldownTicks / (float)getMaxCooldown());
+    }
+
+    public int getMaxCooldown()
+    {
+        return ConfigEmpTower.COOLDOWN; //TODO add to config
+    }
+
+    @Override
+    public Component getDisplayName()
+    {
+        return Component.translatable("gui.create_icbm:empTower.name");
+    }
+
+    @Nullable
+    @Override
+    public AbstractContainerMenu createMenu(int windowId, Inventory playerInventory, Player player)
+    {
+        return new ContainerEMPTower(windowId, player, this);
+    }
+
+    @Override
+    @Nullable
+    public <T> T getCapability(BlockCapability<T, Direction> capability, @Nullable Direction facing)
+    {
+        if(capability == CreateICBMAPI.RADIO_CAPABILITY)
+        {
+            return (T) radioCap;
+        }
+        return null;
+    }
+
+    @Override
+    protected void read(CompoundTag nbt, HolderLookup.Provider registries, boolean clientPacket)
+    {
+        super.read(nbt, registries, clientPacket);
+        SAVE_LOGIC.load(this, nbt);
+    }
+
+    @Override
+    protected void write(CompoundTag nbt, HolderLookup.Provider registries, boolean clientPacket)
+    {
+        SAVE_LOGIC.save(this, nbt);
+        super.write(nbt, registries, clientPacket);
+    }
+
+    private static final NbtSaveHandler<TileEMPTower> SAVE_LOGIC = new NbtSaveHandler<TileEMPTower>()
+        .mainRoot()
+        /* */.nodeINBTSerializable("emp_action", tile -> tile.empAction)
+        /* */.nodeINBTSerializable("radio", tile -> tile.radioCap)
+        /* */.nodeInteger("range", tile -> tile.range, (tile, i) -> tile.range = i)
+        /* */.nodeInteger("cooldown", tile -> tile.cooldownTicks, (tile, i) -> tile.cooldownTicks = i)
+        /* */.nodeInteger("energy", tile -> tile.energyStorage.getEnergyStored(), (tile, i) -> tile.energyStorage.setEnergyStored(i)) //TODO use INBTSerializable on storage instance
+        /* */.nodeFloat("rotation", tile -> tile.rotation, (tile, f) -> tile.rotation = f)
+        /* */.nodeFloat("prev_rotation", tile -> tile.prevRotation, (tile, f) -> tile.prevRotation = f)
+        .base();
+
+    /** Registers packet codexes, block entity type lives in BlockReg */
+    public static void register() {
+        PacketCodexReg.register(PACKET_RADIUS, PACKET_RADIO_HZ, PACKET_GUI, PACKET_FIRE, PACKET_RADIO_DISABLE, PACKET_DESCRIPTION);
+    }
+
+    public static final PacketCodex<TileEMPTower, TileEMPTower> PACKET_RADIUS = new PacketCodexTile<TileEMPTower, TileEMPTower>(REGISTRY_NAME, "radius")
+        .fromClient()
+        .nodeInt(TileEMPTower::getRange, TileEMPTower::setRange)
+        .onFinished((tile, target, player) -> tile.setChanged());
+
+    public static final PacketCodex<TileEMPTower, RadioEmpTower> PACKET_RADIO_HZ = new PacketCodexTile<TileEMPTower, RadioEmpTower>(REGISTRY_NAME, "radio.frequency", (tile) -> tile.radioCap)
+        .fromClient()
+        .nodeString(RadioEmpTower::getChannel, RadioEmpTower::setChannel)
+        .onFinished((tile, target, player) -> tile.setChanged());
+
+    public static final PacketCodex<TileEMPTower, RadioEmpTower> PACKET_RADIO_DISABLE = new PacketCodexTile<TileEMPTower, RadioEmpTower>(REGISTRY_NAME, "radio.disable", (tile) -> tile.radioCap)
+        .fromClient()
+        .toggleBoolean(RadioEmpTower::isDisabled, RadioEmpTower::setDisabled)
+        .onFinished((tile, target, player) -> tile.setChanged());
+
+    public static final PacketCodex<TileEMPTower, TileEMPTower> PACKET_GUI = new PacketCodexTile<TileEMPTower, TileEMPTower>(REGISTRY_NAME, "gui")
+        .fromServer()
+        .nodeInt((t) -> t.energyStorage.getEnergyStored(), (t, i) -> t.energyStorage.setEnergyStored(i))
+        .nodeString((t) -> t.radioCap.getChannel(), (t, s) -> t.radioCap.setChannel(s))
+        .nodeBoolean((t) -> t.radioCap.isDisabled(), (t, b) -> t.radioCap.setDisabled(b))
+        .nodeInt(TileEMPTower::getRange, TileEMPTower::setRange);
+
+    public static final PacketCodex<TileEMPTower, TileEMPTower> PACKET_FIRE = new PacketCodexTile<TileEMPTower, TileEMPTower>(REGISTRY_NAME, "fire")
+        .fromClient()
+        .onFinished((tile, target, player) -> {
+            tile.fire(null); //TODO add GUI cause using player
+            tile.setChanged();
+        });
+
+    public static final PacketCodexTile<TileEMPTower, TileEMPTower> PACKET_DESCRIPTION = (PacketCodexTile<TileEMPTower, TileEMPTower>) new PacketCodexTile<TileEMPTower, TileEMPTower>(REGISTRY_NAME, "description")
+        .fromServer()
+        // Range goes first as the client clamps energy to a range based capacity. Range is set directly, client sub
+        // blocks may not be scanned yet
+        .nodeInt(TileEMPTower::getRange, (t, i) -> t.range = i)
+        .nodeInt((t) -> t.energyStorage.getEnergyStored(), (t, i) -> t.energyStorage.setEnergyStored(i))
+        .nodeFloat((t) -> t.rotation, (t, f) -> t.rotation = f)
+        .nodeInt((t) -> t.cooldownTicks, (t, f) -> t.cooldownTicks = f);
+}

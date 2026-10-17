@@ -1,0 +1,42 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "C": {
+      "type": "neoforge:components",
+      "items": "create_icbm:explosives",
+      "components": {
+        "create_icbm:explosive": "create_icbm:chemical"
+      }
+    },
+    "I": {
+      "type": "neoforge:components",
+      "items": "create_icbm:explosives",
+      "components": {
+        "create_icbm:explosive": "create_icbm:incendiary"
+      }
+    },
+    "R": {
+      "type": "neoforge:components",
+      "items": "create_icbm:explosives",
+      "components": {
+        "create_icbm:explosive": "create_icbm:repulsive"
+      }
+    },
+    "B": {
+      "item": "minecraft:blaze_powder"
+    }
+  },
+  "pattern": [
+    "CIC",
+    "IRI",
+    "CBC"
+  ],
+  "result": {
+    "count": 1,
+    "id": "create_icbm:explosives",
+    "components": {
+      "create_icbm:explosive": "create_icbm:thermobaric"
+    }
+  }
+}

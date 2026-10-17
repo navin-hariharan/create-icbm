@@ -1,0 +1,15 @@
+{
+	"loader": "neoforge:separate_transforms",
+	"gui_light": "front",
+	"textures": {
+		"particle": "create_icbm:item/remote_detonator"
+	},
+	"base": {
+		"parent": "create_icbm:item/tools/remotedetonator_held"
+	},
+	"perspectives": {
+		"gui": {
+			"parent": "create_icbm:item/tools/remotedetonator_icon"
+		}
+	}
+}

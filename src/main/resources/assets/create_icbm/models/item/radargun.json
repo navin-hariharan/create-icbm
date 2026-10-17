@@ -1,0 +1,15 @@
+{
+	"loader": "neoforge:separate_transforms",
+	"gui_light": "front",
+	"textures": {
+		"particle": "create_icbm:item/radar_gun"
+	},
+	"base": {
+		"parent": "create_icbm:item/tools/radargun_held"
+	},
+	"perspectives": {
+		"gui": {
+			"parent": "create_icbm:item/tools/radargun_icon"
+		}
+	}
+}

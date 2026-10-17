@@ -1,0 +1,35 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "T": {
+      "item": "create:electron_tube"
+    },
+    "S": {
+      "item": "create:iron_sheet"
+    },
+    "E": {
+      "type": "neoforge:components",
+      "items": "create_icbm:explosives",
+      "components": {
+        "create_icbm:explosive": "create_icbm:condensed"
+      }
+    },
+    "M": {
+      "type": "neoforge:components",
+      "items": "create_icbm:explosive_missile",
+      "components": {
+        "create_icbm:explosive": "create_icbm:missile"
+      }
+    }
+  },
+  "pattern": [
+    " T ",
+    "SES",
+    " M "
+  ],
+  "result": {
+    "count": 1,
+    "id": "create_icbm:surface_to_air_missile"
+  }
+}

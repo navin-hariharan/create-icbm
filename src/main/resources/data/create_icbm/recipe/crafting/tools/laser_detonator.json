@@ -1,0 +1,26 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "R": {
+      "item": "create_icbm:radargun"
+    },
+    "Q": {
+      "item": "create:polished_rose_quartz"
+    },
+    "E": {
+      "item": "create:electron_tube"
+    },
+    "H": {
+      "item": "create_icbm:remotedetonator"
+    }
+  },
+  "pattern": [
+    "RQ",
+    "EH"
+  ],
+  "result": {
+    "count": 1,
+    "id": "create_icbm:laserdetonator"
+  }
+}

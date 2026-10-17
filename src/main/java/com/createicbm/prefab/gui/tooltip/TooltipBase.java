@@ -1,0 +1,77 @@
+package com.createicbm.prefab.gui.tooltip;
+
+import com.createicbm.lib.transform.region.Rectangle;
+import com.createicbm.prefab.gui.GuiContainerBase;
+import com.createicbm.prefab.gui.IGuiComponent;
+import lombok.Getter;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.network.chat.Component;
+
+/**
+ * Simple tooltip component for showing users additional information
+ */
+public abstract class TooltipBase implements IToolTip, IGuiComponent {
+
+    /**
+     * Bound box, relative to top-left of the container
+     */
+    @Getter
+    private final Rectangle bounds;
+
+    /**
+     * Delay in seconds to wait to show tooltip
+     */
+    @Getter
+    private float hoverDelay;
+
+    private GuiContainerBase<?> container;
+
+    /**
+     * Is mouse over component
+     */
+    @Getter
+    private boolean isHovering = false;
+    /**
+     * Current hover tick in seconds
+     */
+    private float hoveringTicks = 0;
+
+    public TooltipBase(int x, int y, int width, int height) {
+        this.bounds = new Rectangle(x, y, x + width, y + height);
+    }
+
+    public TooltipBase withDelay(float delay) {
+        this.hoverDelay = delay;
+        return this;
+    }
+
+    @Override
+    public void draw(GuiGraphics graphics, int mouseX, int mouseY, float partialTicks) {
+        isHovering = isWithin(mouseX, mouseY);
+        if (isHovering) {
+            hoveringTicks += partialTicks;
+        } else {
+            hoveringTicks = 0;
+        }
+    }
+
+    @Override
+    public void onAddedToHost(GuiContainerBase<?> container) {
+        this.container = container;
+    }
+
+    @Override
+    public boolean isWithin(int x, int y) {
+        return bounds.isWithin(x - container.getGuiLeft(), y - container.getGuiTop());
+    }
+
+    @Override
+    public final Component getToolTip() {
+        if (hoveringTicks < hoverDelay) {
+            return null;
+        }
+        return getActualTooltip();
+    }
+
+    protected abstract Component getActualTooltip();
+}

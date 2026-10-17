@@ -1,0 +1,88 @@
+package com.createicbm.content.missile.logic.flight.move;
+
+import com.createicbm.ICBMConstants;
+import com.createicbm.api.missiles.IMissile;
+import com.createicbm.content.missile.logic.flight.prefab.AccelerateByFacingLogic;
+import com.createicbm.lib.saving.NbtSaveHandler;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.experimental.Accessors;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.core.HolderLookup;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.core.Direction;
+import net.minecraft.resources.ResourceLocation;
+
+import javax.annotation.Nonnull;
+import java.util.function.Consumer;
+
+/**
+ * Flight logic to move in a direction matching {@link Direction} until a set distance is meet
+ */
+public class MoveByFacingLogic extends AccelerateByFacingLogic {
+    public static final ResourceLocation REG_NAME = ResourceLocation.fromNamespaceAndPath(ICBMConstants.DOMAIN, "engine.move.facing");
+
+    /** Distance to cover */
+    @Getter @Setter @Accessors(chain = true)
+    private double distance;
+
+    /** When set to true it will track distance relative to the acceleration and not actual amount moved */
+    @Getter @Setter @Accessors(chain = true)
+    private boolean relative = false;
+
+    @Override
+    protected void dumpInformation(Consumer<String> outputLines) {
+        super.dumpInformation(outputLines);
+        outputLines.accept("\tDistance: " + distance);
+        outputLines.accept("\tRelative: " + relative);
+    }
+
+    @Nonnull
+    @Override
+    public ResourceLocation getRegistryKey() {
+        return REG_NAME;
+    }
+
+    @Override
+    public void onEntityTick(Entity entity, IMissile missile, int ticksInAir) {
+        super.onEntityTick(entity, missile, ticksInAir);
+
+        // Movement ignoring outside forces
+        if(relative) {
+            distance -= getVelocityAdded();
+        }
+        // Measured movement in direction, technically can run forever if something stops movement
+        else
+        {
+            distance -= getDirection().getStepX() * entity.getDeltaMovement().x;
+            distance -= getDirection().getStepY() * entity.getDeltaMovement().y;
+            distance -= getDirection().getStepZ() * entity.getDeltaMovement().z;
+        }
+    }
+
+    @Override
+    public boolean isDone() {
+        return distance <= 0;
+    }
+
+    @Override
+    public boolean canSafelyExitLogic() {
+        return super.canSafelyExitLogic();
+    }
+
+    @Override
+    public CompoundTag serializeNBT(HolderLookup.Provider provider) {
+        return SAVE_LOGIC.save(this, super.serializeNBT(provider));
+    }
+
+    @Override
+    public void deserializeNBT(HolderLookup.Provider provider, CompoundTag nbt) {
+        super.deserializeNBT(provider, nbt);
+        SAVE_LOGIC.load(this, nbt);
+    }
+
+    private static final NbtSaveHandler<MoveByFacingLogic> SAVE_LOGIC = new NbtSaveHandler<MoveByFacingLogic>()
+        .mainRoot()
+        /* */.nodeDouble("distance", MoveByFacingLogic::getDistance, MoveByFacingLogic::setDistance)
+        .base();
+}

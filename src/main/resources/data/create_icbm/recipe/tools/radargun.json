@@ -1,0 +1,31 @@
+{
+  "type": "create:mechanical_crafting",
+  "accept_mirrored": true,
+  "category": "misc",
+  "key": {
+    "G": {
+      "item": "minecraft:glass"
+    },
+    "E": {
+      "item": "create:electron_tube"
+    },
+    "S": {
+      "item": "create:iron_sheet"
+    },
+    "B": {
+      "item": "minecraft:stone_button"
+    },
+    "A": {
+      "item": "create:andesite_alloy"
+    }
+  },
+  "pattern": [
+    "GES",
+    " BA"
+  ],
+  "result": {
+    "count": 1,
+    "id": "create_icbm:radargun"
+  },
+  "show_notification": false
+}

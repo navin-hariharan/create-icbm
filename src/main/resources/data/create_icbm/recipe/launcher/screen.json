@@ -1,0 +1,32 @@
+{
+  "type": "create:mechanical_crafting",
+  "accept_mirrored": true,
+  "category": "misc",
+  "key": {
+    "G": {
+      "item": "minecraft:glass"
+    },
+    "E": {
+      "item": "create:electron_tube"
+    },
+    "C": {
+      "item": "create:brass_casing"
+    },
+    "L": {
+      "item": "create:analog_lever"
+    },
+    "S": {
+      "item": "create:copper_sheet"
+    }
+  },
+  "pattern": [
+    " G ",
+    "ECL",
+    " S "
+  ],
+  "result": {
+    "count": 1,
+    "id": "create_icbm:launcherscreen"
+  },
+  "show_notification": false
+}

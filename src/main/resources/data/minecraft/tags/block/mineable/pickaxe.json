@@ -1,0 +1,14 @@
+{
+  "replace": false,
+  "values": [
+    "create_icbm:emptower",
+    "create_icbm:launcherbase",
+    "create_icbm:launcherscreen",
+    "create_icbm:launcherframe",
+    "create_icbm:launcher_connector",
+    "create_icbm:cruiselauncher",
+    "create_icbm:radarstation",
+    "create_icbm:radioactive_dirt",
+    "create_icbm:radioactive_stone"
+  ]
+}

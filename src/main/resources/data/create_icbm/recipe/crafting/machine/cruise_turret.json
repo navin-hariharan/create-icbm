@@ -1,0 +1,36 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "key": {
+    "B": {
+      "item": "create:brass_sheet"
+    },
+    "T": {
+      "item": "create:turntable"
+    },
+    "S": {
+      "item": "create_icbm:launcherscreen"
+    },
+    "L": {
+      "item": "create_icbm:launcherbase"
+    },
+    "P": {
+      "item": "create:precision_mechanism"
+    },
+    "K": {
+      "item": "create:copper_sheet"
+    },
+    "C": {
+      "item": "create:brass_casing"
+    }
+  },
+  "pattern": [
+    "BTB",
+    "SLP",
+    "KCK"
+  ],
+  "result": {
+    "count": 1,
+    "id": "create_icbm:cruiselauncher"
+  }
+}

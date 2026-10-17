@@ -1,0 +1,199 @@
+package com.createicbm.prefab.gui;
+
+import com.createicbm.lib.LanguageUtility;
+import com.createicbm.lib.colors.ColorHelper;
+import com.createicbm.lib.transform.region.Rectangle;
+import com.createicbm.prefab.gui.textbox.GuiTextFieldBase;
+import com.createicbm.prefab.gui.tooltip.IToolTip;
+import lombok.Setter;
+import net.minecraft.client.gui.Font;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.phys.Vec3;
+
+import java.util.Objects;
+import java.util.Optional;
+import java.util.function.BiFunction;
+import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.function.Supplier;
+
+/**
+ * Text input bound to a data source. Client only.
+ */
+public class TextInput<Output> extends GuiTextFieldBase implements IToolTip, IGuiComponent {
+
+    private final static int ERROR_COLOR = ColorHelper.toARGB(255, 1, 1, 255);
+
+    // Selection change handling
+    @Setter
+    private Consumer<Boolean> focusChangedCallback;
+
+    // Output to text handling
+    @Setter
+    private Function<Output, String> parseOutput;
+
+    // Error handling
+    private Component errorFeedback = null;
+
+    // Data watcher to know when we update our display text
+    @Setter
+    private Supplier<Output> sourceWatcher;
+    @Setter
+    private Consumer<Output> onSourceChange;
+    private Output previousData;
+
+    private String previousText;
+
+    @Deprecated
+    private final Rectangle boundBox;
+
+    public TextInput(int componentId, Font font, int x, int y, int width, int height) {
+        super(componentId, font, x, y, width, height);
+        boundBox = new Rectangle(x, y, x + width + 1, y + height + 1); //TODO replace with internal check using data stored
+    }
+
+    public static TextInput<Vec3> vec3dField(int id, Font fontRenderer, int x, int y, int width, int height,
+                                              Supplier<Vec3> getter, Consumer<Vec3> setter, Consumer<Vec3> network
+    ) {
+        final TextInput<Vec3> fieldTarget = new TextInput<Vec3>(id, fontRenderer, x, y, width, height);
+        fieldTarget.simpleHandler(getter, setter, GuiFormatHelpers::parseVec3d);
+        fieldTarget.setParseOutput(LanguageUtility::posFormatted);
+        fieldTarget.setOnSourceChange(network);
+        return fieldTarget;
+    }
+
+    public static TextInput<Integer> intField(int id, Font fontRenderer, int x, int y, int width, int height,
+                                              Supplier<Integer> getter, Consumer<Integer> setter, Consumer<Integer> network
+    ) {
+        final TextInput<Integer> fieldTarget = new TextInput<Integer>(id, fontRenderer, x, y, width, height);
+        fieldTarget.simpleHandler(getter, setter, GuiFormatHelpers::parseInt);
+        fieldTarget.setOnSourceChange(network);
+        return fieldTarget;
+    }
+
+    public static TextInput<String> textField(int id, Font fontRenderer, int x, int y, int width, int height,
+                                              Supplier<String> getter, Consumer<String> setter, Consumer<String> network
+    ) {
+        final TextInput<String> fieldTarget = new TextInput<String>(id, fontRenderer, x, y, width, height);
+        fieldTarget.stringHandler(getter, setter);
+        fieldTarget.setOnSourceChange(network);
+        return fieldTarget;
+    }
+
+    @Override
+    public void onUpdate() {
+        if(!isFocused() && sourceWatcher != null) {
+            detectForChange();
+
+            // Handle string changes, but source didn't change... reset to source
+            //  this likely happens when user inputs data but the source didn't take it
+            //  examples of this could be numeric values greater than allowed
+            if(!Objects.equals(previousText, getValue())) {
+                setTextFromWatcher();
+            }
+        }
+    }
+
+    protected boolean detectForChange() {
+        final Output output = sourceWatcher.get();
+        if(!Objects.equals(output, previousData)) {
+            previousData = output;
+            return true;
+        }
+        return false;
+    }
+
+    protected void setTextFromWatcher() {
+        if(parseOutput != null) {
+            previousText = parseOutput.apply(previousData);
+        }
+        else {
+            previousText = Optional.ofNullable(previousData).map(Object::toString).orElse("");
+        }
+        setValue(previousText);
+    }
+
+    @Override
+    public void setFocused(boolean isFocusedIn) {
+        // Compare against the state before the change so focus loss commits the value as intended.
+        final boolean wasFocused = this.isFocused();
+        super.setFocused(isFocusedIn);
+
+        if(isFocusedIn == wasFocused) {
+            return;
+        }
+
+        // Reset error feedback when we de-select
+        if(!isFocusedIn) {
+            errorFeedback = null;
+        }
+
+        // Handle focus change
+        //  often used for setting value from user input into host
+        //  can set error feedback
+        if (focusChangedCallback != null) {
+            focusChangedCallback.accept(isFocusedIn);
+        }
+
+        // Handle source change caused by user
+        if(!isFocusedIn && sourceWatcher != null && detectForChange() && onSourceChange != null) {
+            // Notify systems of the change, this often triggers network calls
+            onSourceChange.accept(previousData);
+        }
+    }
+
+    public TextInput<Output> simpleHandler(Supplier<Output> getter, Consumer<Output> setter, BiFunction<String, Consumer<Output>, String> validator) {
+        sourceWatcher = getter;
+        focusChangedCallback = (state) -> {
+            if(!state) {
+                // Parse input from user and store into tile client side
+                final String error = validator.apply(getValue(), setter);
+                if(error != null) {
+                    errorFeedback = Component.translatable(error);
+                }
+            }
+        };
+        return this;
+    }
+
+    public TextInput<String> stringHandler(Supplier<String> getter, Consumer<String> setter) {
+        sourceWatcher = (Supplier<Output>) getter;
+        focusChangedCallback = (state) -> {
+            if(!state) {
+                setter.accept(getValue());
+            }
+        };
+        return (TextInput<String>) this;
+    }
+
+    @Override
+    public void renderWidget(GuiGraphics graphics, int mouseX, int mouseY, float partialTicks) {
+        super.renderWidget(graphics, mouseX, mouseY, partialTicks);
+        if (this.isVisible() && this.hasBorder() && isErrored()) {
+            graphics.hLine(this.getX(), this.getX() + this.width, this.getY() + this.height, ERROR_COLOR);
+        }
+    }
+
+    @Override
+    public boolean isWithin(int cursorX, int cursorY) {
+        return boundBox.isWithin(cursorX - container.getGuiLeft(), cursorY - container.getGuiTop());
+    }
+
+    @Override
+    public Component getToolTip() {
+        return getErrorFeedback();
+    }
+
+    public Component getErrorFeedback() {
+        return errorFeedback;
+    }
+
+    public void setError(Component error) {
+        this.errorFeedback = error;
+    }
+
+    public boolean isErrored() {
+        return errorFeedback != null;
+    }
+}

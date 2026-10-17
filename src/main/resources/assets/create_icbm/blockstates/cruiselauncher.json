@@ -1,0 +1,25 @@
+{
+  "variants": {
+    "rotation=down": {
+      "model": "create_icbm:block/cruise_launcher"
+    },
+    "rotation=up": {
+      "model": "create_icbm:block/cruise_launcher"
+    },
+    "rotation=north": {
+      "model": "create_icbm:block/cruise_launcher"
+    },
+    "rotation=south": {
+      "model": "create_icbm:block/cruise_launcher",
+      "y": 180
+    },
+    "rotation=west": {
+      "model": "create_icbm:block/cruise_launcher",
+      "y": 270
+    },
+    "rotation=east": {
+      "model": "create_icbm:block/cruise_launcher",
+      "y": 90
+    }
+  }
+}

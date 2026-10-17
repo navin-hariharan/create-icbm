@@ -1,0 +1,31 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "P": {
+      "item": "create_icbm:poisonpowder"
+    },
+    "D": {
+      "type": "neoforge:components",
+      "items": "create_icbm:explosives",
+      "components": {
+        "create_icbm:explosive": "create_icbm:debilitation"
+      }
+    },
+    "C": {
+      "item": "create:copper_sheet"
+    }
+  },
+  "pattern": [
+    "PPP",
+    "PDP",
+    "CCC"
+  ],
+  "result": {
+    "count": 1,
+    "id": "create_icbm:explosives",
+    "components": {
+      "create_icbm:explosive": "create_icbm:chemical"
+    }
+  }
+}

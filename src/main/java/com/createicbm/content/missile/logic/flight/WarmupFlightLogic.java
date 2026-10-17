@@ -1,0 +1,88 @@
+package com.createicbm.content.missile.logic.flight;
+
+import com.createicbm.CreateICBM;
+import com.createicbm.ICBMConstants;
+import com.createicbm.api.missiles.IMissile;
+import com.createicbm.content.missile.logic.flight.prefab.FlightLogic;
+import com.createicbm.lib.saving.NbtSaveHandler;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.experimental.Accessors;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.core.HolderLookup;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.resources.ResourceLocation;
+
+import javax.annotation.Nonnull;
+import java.util.function.Consumer;
+
+/**
+ * Handles engine warmup logic
+ */
+public class WarmupFlightLogic extends FlightLogic {
+
+    public static final ResourceLocation REG_NAME = ResourceLocation.fromNamespaceAndPath(ICBMConstants.DOMAIN, "engine.warmup");
+
+    /** Timer for missile to wait on pad before climbing */
+    @Getter @Setter @Accessors(chain = true)
+    private int timer = 0;
+
+    @Override
+    protected void dumpInformation(Consumer<String> outputLines) {
+        super.dumpInformation(outputLines);
+        outputLines.accept("\tTimer: " + timer);
+    }
+
+    @Nonnull
+    @Override
+    public ResourceLocation getRegistryKey() {
+        return REG_NAME;
+    }
+
+    @Override
+    public void onEntityTick(Entity entity, IMissile missile, int ticksInAir) {
+        super.onEntityTick(entity, missile, ticksInAir);
+        if (--timer > 0) {
+            // Generate engine smoke to simulate a rocket engine starting but forces are not high enough to move up yet
+            CreateICBM.proxy.spawnPadSmoke(entity, this, ticksInAir);
+        }
+    }
+
+    @Override
+    public boolean shouldDecreaseMotion(Entity entity)
+    {
+        //Disable gravity and friction
+        return timer < 0 && getNextStep() == null;
+    }
+
+    @Override
+    public boolean isDone() {
+        return timer <= 0;
+    }
+
+    @Override
+    public boolean shouldRunEngineEffects(Entity entity) {
+        return timer < 0;
+    }
+
+    @Override
+    public boolean canSafelyExitLogic() {
+        return timer < 0;
+    }
+
+    @Override
+    public CompoundTag serializeNBT(HolderLookup.Provider provider) {
+        return SAVE_LOGIC.save(this, super.serializeNBT(provider));
+    }
+
+    @Override
+    public void deserializeNBT(HolderLookup.Provider provider, CompoundTag nbt) {
+        super.deserializeNBT(provider, nbt);
+        SAVE_LOGIC.load(this, nbt);
+    }
+
+    private static final NbtSaveHandler<WarmupFlightLogic> SAVE_LOGIC = new NbtSaveHandler<WarmupFlightLogic>()
+        .mainRoot()
+            /* */.nodeInteger("timer", (bl) -> bl.timer, (bl, data) -> bl.timer = data)
+        .base();
+}

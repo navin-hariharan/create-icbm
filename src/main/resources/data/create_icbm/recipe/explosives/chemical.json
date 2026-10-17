@@ -1,0 +1,44 @@
+{
+  "type": "create:mixing",
+  "ingredients": [
+    {
+      "type": "neoforge:components",
+      "items": "create_icbm:explosives",
+      "components": {
+        "create_icbm:explosive": "create_icbm:debilitation"
+      }
+    },
+    {
+      "item": "create_icbm:poisonpowder"
+    },
+    {
+      "item": "create_icbm:poisonpowder"
+    },
+    {
+      "item": "create_icbm:poisonpowder"
+    },
+    {
+      "item": "create_icbm:poisonpowder"
+    },
+    {
+      "item": "create_icbm:poisonpowder"
+    },
+    {
+      "item": "create_icbm:poisonpowder"
+    },
+    {
+      "item": "create_icbm:poisonpowder"
+    },
+    {
+      "item": "create_icbm:poisonpowder"
+    }
+  ],
+  "results": [
+    {
+      "id": "create_icbm:explosives",
+      "components": {
+        "create_icbm:explosive": "create_icbm:chemical"
+      }
+    }
+  ]
+}

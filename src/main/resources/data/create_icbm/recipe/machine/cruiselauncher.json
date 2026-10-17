@@ -1,0 +1,38 @@
+{
+  "type": "create:mechanical_crafting",
+  "accept_mirrored": true,
+  "category": "misc",
+  "key": {
+    "C": {
+      "item": "create:copper_sheet"
+    },
+    "P": {
+      "item": "create:precision_mechanism"
+    },
+    "S": {
+      "item": "create_icbm:launcherscreen"
+    },
+    "L": {
+      "item": "create_icbm:launcherbase"
+    },
+    "B": {
+      "item": "create:brass_casing"
+    },
+    "I": {
+      "item": "create:industrial_iron_block"
+    },
+    "T": {
+      "item": "create:turntable"
+    }
+  },
+  "pattern": [
+    "CPC",
+    "SLB",
+    "ITI"
+  ],
+  "result": {
+    "count": 1,
+    "id": "create_icbm:cruiselauncher"
+  },
+  "show_notification": false
+}

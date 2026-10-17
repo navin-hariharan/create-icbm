@@ -1,0 +1,18 @@
+{
+  "type": "create:milling",
+  "ingredients": [
+    {
+      "item": "minecraft:poisonous_potato"
+    }
+  ],
+  "processing_time": 100,
+  "results": [
+    {
+      "id": "create_icbm:poisonpowder"
+    },
+    {
+      "id": "create_icbm:poisonpowder",
+      "chance": 0.25
+    }
+  ]
+}

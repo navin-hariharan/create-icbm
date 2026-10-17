@@ -1,0 +1,304 @@
+package com.createicbm.content.missile.logic.flight;
+
+import com.createicbm.ICBMConstants;
+import com.createicbm.api.CreateICBMAPI;
+import com.createicbm.api.missiles.IMissile;
+import com.createicbm.api.missiles.parts.IMissileFlightLogic;
+import com.createicbm.api.missiles.parts.IMissileTarget;
+import com.createicbm.api.reg.obj.IBuilderRegistry;
+import com.createicbm.config.missile.ConfigMissile;
+import com.createicbm.content.missile.entity.EntityMissile;
+import com.createicbm.content.missile.entity.explosive.EntityExplosiveMissile;
+import com.createicbm.content.missile.tracker.MissileTrackerHandler;
+import com.createicbm.lib.buildable.BuildableObject;
+import com.createicbm.lib.projectile.EntityProjectile;
+import com.createicbm.lib.saving.NbtSaveHandler;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.Level;
+import net.minecraft.server.level.ServerLevel;
+
+/**
+ * Flight path that moves in a ballistic arc from start position to target position
+ */
+public class ArcFlightLogic extends BuildableObject<ArcFlightLogic, IBuilderRegistry<IMissileFlightLogic>> implements IMissileFlightLogic
+{
+    public static final ResourceLocation REG_NAME = ResourceLocation.fromNamespaceAndPath(ICBMConstants.DOMAIN, "path.arc");
+
+    public boolean hasStartedFlight = false;
+    /**
+     * Tick runtime of flight arc
+     */
+    private int missileFlightTime;
+    /**
+     * Motion Y acceleration for arc to work
+     */
+    private float acceleration;
+
+    /**
+     * Difference in distance from target, used as acceleration
+     */
+    private double deltaPathX, deltaPathY, deltaPathZ;
+    private double startX, startY, startZ;
+    private double endX, endY, endZ;
+
+    private boolean flightUpAlways = false;
+
+    private int ticksFlight = 0;
+
+    private boolean wasSimulationBlocked = false;
+
+    public ArcFlightLogic() {
+        super(REG_NAME, CreateICBMAPI.MISSILE_FLIGHT_LOGIC_REGISTRY, SAVE_LOGIC);
+    }
+
+    @Override
+    public void calculateFlightPath(final Level world, double startX, double startY, double startZ, final IMissileTarget targetData)
+    {
+        //Record start and end position
+        this.startX = startX;
+        this.startY = startY;
+        this.startZ = startZ;
+
+        if(targetData != null)
+        {
+            this.endX = targetData.getX();
+            this.endY = targetData.getY();
+            this.endZ = targetData.getZ();
+        }
+
+        // TODO check if entire path is chunk loaded, if a reasonable chunk count isn't then we should notify the user in the launcher UI and change to a up/down flight path
+        //      This likely will require a static function to run the calculation and show in the GUI. However, should be referenced based on the missile type
+        //      As future version might include different guidance systems based on the item's stored data. Meaning a single function wouldn't work but could
+        //      be referenced in a prediction callback. Something like IMissile#getGuidance().doPrediction()
+    }
+
+    //TODO wire IMissile to connect to ILauncher so we can get launcher source and let the launcher know when we are clear
+    //TODO code launcher to not reload until clear, use the all clear flag from the missile combined with collision checks and dead checks
+
+    protected void calculatePath(Entity entity)
+    {
+        //TODO rebuild to calculate arc up to maxHeight and move at a fixed speed instead of speed of sound+++++
+        //TODO once it reaches maxHeight have it fly flat to make for a smoother player riding experience
+        //TODO at end of arc if we can't fix the target offset have the missile fly at an angle strait at the target to fix accuracy issues
+
+        // Calculate the distance difference of the missile
+        this.deltaPathX = endX - startX;
+        this.deltaPathY = endY - startY;
+        this.deltaPathZ = endZ - startZ;
+
+        // TODO: Calculate parabola and relative out the targetHeight.
+        // Calculate the power required to reach the target co-ordinates
+        // Ground Displacement
+        final float flatDistance = (float)Math.sqrt(deltaPathX * deltaPathX + deltaPathZ * deltaPathZ);
+
+        if(flatDistance < ConfigMissile.ARC_DISTANCE_LIMIT || entity.getPassengers().stream().anyMatch(e -> e instanceof Player)) {
+
+            //Path constants
+            final float ticksPerMeterFlat = 2f;
+            final float heightToDistanceScale = flatDistance > 1000 ? 3f : 1f;
+            final float maxHeight = 1000f;
+            final float initialArcHeight = flatDistance > 100 ? 160f : 0;
+
+            // Parabolic Height
+            // Ballistic flight vars
+            final float arcHeightMax = Math.min(maxHeight, initialArcHeight + (flatDistance * heightToDistanceScale));
+
+            // Flight time
+            missileFlightTime = (int) Math.ceil(ticksPerMeterFlat * flatDistance);
+
+            // Acceleration
+            double heightToDistance = arcHeightMax / flatDistance;
+            double heightToTime = arcHeightMax / missileFlightTime;
+            double timeToDistance = missileFlightTime / flatDistance;
+            this.acceleration = (float) (((arcHeightMax - heightToDistance) * heightToDistance) / (missileFlightTime / timeToDistance) / (heightToTime * flatDistance));
+        }
+        else {
+            flightUpAlways = true;
+        }
+    }
+
+    @Override
+    public void onEntityTick(Entity entity, IMissile missile, int ticksInAir)
+    {
+        // Reset path if player starts riding after we already started
+        if(flightUpAlways && entity.getPassengers().stream().anyMatch(e -> e instanceof Player)) {
+            this.flightUpAlways = false;
+
+            // TODO instead of restarting flight logic... end this instance and replace with a new instance appended to flight plan
+            this.startX = entity.getX();
+            this.startY = entity.getY();
+            this.startZ = entity.getZ();
+            ticksFlight = 0;
+            this.calculatePath(entity);
+            return;
+        }
+
+        //Starts the missile into normal flight
+        if (!hasStartedFlight) {
+
+            hasStartedFlight = true;
+
+            this.startX = entity.getX();
+            this.startY = entity.getY();
+            this.startZ = entity.getZ();
+
+            this.calculatePath(entity);
+
+            // TODO split this into two different flight logics. Then have a parent logic object switch which is running
+            if(!flightUpAlways) {
+
+                MotionHelper.setMotionY(entity, this.acceleration * ((float) missileFlightTime / 2f));
+
+                MotionHelper.setMotionX(entity, this.deltaPathX / missileFlightTime);
+                MotionHelper.setMotionZ(entity, this.deltaPathZ / missileFlightTime);
+            }
+            else {
+                final float flatDistance = (float)Math.sqrt(deltaPathX * deltaPathX + deltaPathZ * deltaPathZ);
+                final float hortSpeed = 0.05f;
+                final float vertSpeed = 2f;
+                MotionHelper.setMotionX(entity, (this.deltaPathX / flatDistance) * hortSpeed);
+                MotionHelper.setMotionZ(entity, (this.deltaPathZ / flatDistance) * hortSpeed);
+                MotionHelper.setMotionY(entity, vertSpeed);
+            }
+        }
+        //Normal path logic
+        else {
+            runFlightLogic(entity, ticksInAir);
+        }
+    }
+
+    protected void runFlightLogic(Entity entity, int ticksInAir)
+    {
+        ticksFlight++;
+
+        if (!entity.level().isClientSide())
+        {
+
+            // Apply gravity
+            if(!flightUpAlways) {
+
+                if(entity instanceof EntityProjectile) {
+                    ((EntityProjectile<?>) entity).setMotionVector(entity.getDeltaMovement().x, entity.getDeltaMovement().y - this.acceleration, entity.getDeltaMovement().z);
+                }
+                else {
+                    MotionHelper.addMotionY(entity, -(this.acceleration));
+                }
+            }
+
+            // Cut off x-z motion to prevent missing target
+            if(Math.abs(entity.getX() - endX) <= 0.1f && Math.abs(entity.getZ() - endZ) <= 0.1f) {
+                if(entity instanceof EntityProjectile) {
+                    ((EntityProjectile<?>) entity).setMotionVector(0, entity.getDeltaMovement().y, 0);
+                }
+                else {
+                   MotionHelper.setMotionX(entity, 0);
+                   MotionHelper.setMotionZ(entity, 0);
+                }
+            }
+
+            // Update animate rotations
+            alignWithMotion(entity);
+
+            // Sim system
+            if (entity instanceof EntityExplosiveMissile && shouldSimulate(entity))
+            {
+                wasSimulationBlocked = !MissileTrackerHandler.simulateMissile((EntityExplosiveMissile) entity); //TODO add ability to simulate any entity
+            }
+        }
+    }
+
+    @Override
+    public boolean canSafelyExitLogic() {
+        return hasStartedFlight;
+    }
+
+    protected void alignWithMotion(Entity entity)
+    {
+        entity.setXRot((float) (Math.atan(entity.getDeltaMovement().y / (Math.sqrt(entity.getDeltaMovement().x * entity.getDeltaMovement().x + entity.getDeltaMovement().z * entity.getDeltaMovement().z))) * 180 / Math.PI));
+        // Look at the next point
+        entity.setYRot((float) (Math.atan2(entity.getDeltaMovement().x, entity.getDeltaMovement().z) * 180 / Math.PI));
+    }
+
+    @Override
+    public boolean shouldRunEngineEffects(Entity entity) {
+        return hasStartedFlight;
+    }
+
+    protected boolean shouldSimulate(Entity entity)
+    {
+        if (wasSimulationBlocked || EntityMissile.hasPlayerRiding(entity))
+        {
+            return false;
+        }
+        else if (entity.getY() >= ConfigMissile.SIMULATION_EXIT_HEIGHT)
+        {
+            return true;
+        }
+
+        // TODO predict if the missile only needed a few more chunks to hit... if so chunk load or let get stuck in board to prevent changing arc path
+
+        final BlockPos futurePos = predictPosition(entity, BlockPos::containing, 2);
+
+        if(entity.level() instanceof ServerLevel serverLevel) {
+            return !MissileTrackerHandler.canEntitiesTickBetween(serverLevel, entity.getX(), entity.getZ(), futurePos.getX(), futurePos.getZ());
+        }
+        return false;
+    }
+
+    @Override
+    public <V> V predictPosition(Entity entity, VecBuilderFunc<V> builder, int ticks)
+    {
+        double x = entity.getX();
+        double y = entity.getY();
+        double z = entity.getZ();
+
+        double motionY = entity.getDeltaMovement().y;
+
+        while (ticks-- > 0)
+        {
+            motionY -= this.acceleration;
+
+            x += entity.getDeltaMovement().x;
+            y += motionY;
+            z += entity.getDeltaMovement().z;
+        }
+
+        return builder.apply(x, y, z);
+    }
+
+    @Override
+    public boolean shouldDecreaseMotion(Entity entity)
+    {
+        //Disable gravity and friction
+        return false;
+    }
+
+    private static final NbtSaveHandler<ArcFlightLogic> SAVE_LOGIC = new NbtSaveHandler<ArcFlightLogic>()
+        //Stuck in ground data
+        .addRoot("flags")
+        /* */.nodeBoolean("flight_started", (bl) -> bl.hasStartedFlight, (bl, data) -> bl.hasStartedFlight = data)
+        /* */.nodeBoolean("block_simulation", (bl) -> bl.wasSimulationBlocked, (bl, data) -> bl.wasSimulationBlocked = data)
+        .base()
+        .addRoot("inputs")
+        /* */.nodeDouble("start_x", (bl) -> bl.startX, (bl, i) -> bl.startX = i)
+        /* */.nodeDouble("start_y", (bl) -> bl.startY, (bl, i) -> bl.startY = i)
+        /* */.nodeDouble("start_z", (bl) -> bl.startZ, (bl, i) -> bl.startZ = i)
+        /* */.nodeDouble("end_x", (bl) -> bl.endX, (bl, i) -> bl.endX = i)
+        /* */.nodeDouble("end_y", (bl) -> bl.endY, (bl, i) -> bl.endY = i)
+        /* */.nodeDouble("end_z", (bl) -> bl.endZ, (bl, i) -> bl.endZ = i)
+        .base()
+        .addRoot("calculated")
+        /* */.nodeInteger("flight_time", (bl) -> bl.missileFlightTime, (bl, data) -> bl.missileFlightTime = data)
+        /* */.nodeFloat("acceleration", (bl) -> bl.acceleration, (bl, data) -> bl.acceleration = data)
+        /* */.nodeDouble("delta_x", (bl) -> bl.deltaPathX, (bl, data) -> bl.deltaPathX = data)
+        /* */.nodeDouble("delta_y", (bl) -> bl.deltaPathY, (bl, data) -> bl.deltaPathY = data)
+        /* */.nodeDouble("delta_z", (bl) -> bl.deltaPathZ, (bl, data) -> bl.deltaPathZ = data)
+        .base()
+        .addRoot("timers")
+        /* */.nodeInteger("flight", (bl) -> bl.ticksFlight, (bl, i) -> bl.ticksFlight = i)
+        .base();
+
+}

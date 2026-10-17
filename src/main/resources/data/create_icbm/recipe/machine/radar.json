@@ -1,0 +1,35 @@
+{
+  "type": "create:mechanical_crafting",
+  "accept_mirrored": true,
+  "category": "misc",
+  "key": {
+    "B": {
+      "item": "create:brass_sheet"
+    },
+    "G": {
+      "item": "create:golden_sheet"
+    },
+    "P": {
+      "item": "create:precision_mechanism"
+    },
+    "S": {
+      "item": "create_icbm:launcherscreen"
+    },
+    "K": {
+      "item": "create:copper_casing"
+    },
+    "H": {
+      "item": "create:shaft"
+    }
+  },
+  "pattern": [
+    "BGB",
+    "PSP",
+    "KHK"
+  ],
+  "result": {
+    "count": 1,
+    "id": "create_icbm:radarstation"
+  },
+  "show_notification": false
+}

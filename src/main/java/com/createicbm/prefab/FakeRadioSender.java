@@ -1,0 +1,72 @@
+package com.createicbm.prefab;
+
+import com.createicbm.api.data.IBoundBox;
+import com.createicbm.api.radio.IRadioMessage;
+import com.createicbm.api.radio.IRadioReceiver;
+import com.createicbm.api.radio.IRadioSender;
+import com.createicbm.api.radio.messages.ITextMessage;
+import com.createicbm.lib.data.BoundBlockPos;
+import com.createicbm.lib.radio.RadioRegistry;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.level.Level;
+
+import java.util.Optional;
+
+/**
+ * Wrapper used by items to act as a radio wave sender
+ *
+ *
+ * Created by Dark(DarkGuardsman, Robin) on 4/24/2016.
+ */
+public class FakeRadioSender implements IRadioSender
+{
+    private static final Object[] empty = new Object[0];
+
+    public final Player player;
+    public final ItemStack item;
+    IBoundBox<BlockPos> bounds;
+
+    public FakeRadioSender(Player player, ItemStack item, Integer range)
+    {
+        this.player = player;
+        this.item = item;
+        if(range != null) {
+            this.bounds = new BoundBlockPos(player.blockPosition(), range);
+        }
+        else {
+            this.bounds = RadioRegistry.INFINITE;
+        }
+    }
+
+    @Override
+    public BlockPos getBlockPos() {
+        return player.blockPosition();
+    }
+
+    @Override
+    public Level getWorld() {
+        return player.level();
+    }
+
+    @Override
+    public IBoundBox<BlockPos> getRange() {
+        return bounds;
+    }
+
+    @Override
+    public void onMessageCallback(IRadioReceiver receiver, IRadioMessage response) {
+        if(response instanceof ITextMessage) {
+            final ITextMessage textMessage = (ITextMessage) response;
+            if(textMessage.shouldTranslate()) {
+                final Object[] data = Optional.ofNullable(textMessage.getTranslationInputs()).orElse(empty);
+                player.displayClientMessage(Component.translatable(textMessage.getMessage(), data), true);
+            }
+            else {
+                player.displayClientMessage(Component.literal(((ITextMessage) response).getMessage()), true);
+            }
+        }
+    }
+}

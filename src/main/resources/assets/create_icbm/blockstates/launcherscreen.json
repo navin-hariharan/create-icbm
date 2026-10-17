@@ -1,0 +1,25 @@
+{
+  "variants": {
+    "rotation=down": {
+      "model": "create_icbm:block/silo_screen"
+    },
+    "rotation=up": {
+      "model": "create_icbm:block/silo_screen"
+    },
+    "rotation=north": {
+      "model": "create_icbm:block/silo_screen",
+      "y": 180
+    },
+    "rotation=south": {
+      "model": "create_icbm:block/silo_screen"
+    },
+    "rotation=west": {
+      "model": "create_icbm:block/silo_screen",
+      "y": 90
+    },
+    "rotation=east": {
+      "model": "create_icbm:block/silo_screen",
+      "y": 270
+    }
+  }
+}

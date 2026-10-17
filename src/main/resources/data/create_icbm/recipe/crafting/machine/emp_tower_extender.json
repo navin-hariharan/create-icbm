@@ -1,0 +1,27 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "key": {
+    "S": {
+      "item": "create:iron_sheet"
+    },
+    "K": {
+      "item": "create:copper_sheet"
+    },
+    "R": {
+      "item": "minecraft:redstone"
+    },
+    "C": {
+      "item": "create:copper_casing"
+    }
+  },
+  "pattern": [
+    "SKS",
+    "RCR",
+    "SKS"
+  ],
+  "result": {
+    "count": 1,
+    "id": "create_icbm:emptower_extender"
+  }
+}

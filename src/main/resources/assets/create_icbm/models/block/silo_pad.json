@@ -1,0 +1,165 @@
+{
+	"parent": "minecraft:block/block",
+	"textures": {
+		"casing": "create:block/andesite_casing",
+		"socket": "create_icbm:block/kinetic_socket",
+		"deck": "create_icbm:block/launch_pad/side",
+		"top": "create_icbm:block/launch_pad/top",
+		"particle": "create:block/andesite_casing"
+	},
+	"elements": [
+		{
+			"name": "back_socket_0",
+			"from": [0, 0, 0],
+			"to": [5, 2, 16],
+			"faces": {
+				"down": {"uv": [0, 0, 5, 16], "texture": "#casing", "cullface": "down"},
+				"north": {"uv": [11, 14, 16, 16], "texture": "#casing", "cullface": "north"},
+				"south": {"uv": [0, 14, 5, 16], "texture": "#casing", "cullface": "south"},
+				"west": {"uv": [0, 14, 16, 16], "texture": "#casing", "cullface": "west"},
+				"east": {"uv": [5, 0, 11, 2], "texture": "#socket"}
+			}
+		},
+		{
+			"name": "back_socket_1",
+			"from": [11, 0, 0],
+			"to": [16, 2, 16],
+			"faces": {
+				"down": {"uv": [11, 0, 16, 16], "texture": "#casing", "cullface": "down"},
+				"north": {"uv": [0, 14, 5, 16], "texture": "#casing", "cullface": "north"},
+				"south": {"uv": [11, 14, 16, 16], "texture": "#casing", "cullface": "south"},
+				"east": {"uv": [0, 14, 16, 16], "texture": "#casing", "cullface": "east"},
+				"west": {"uv": [5, 0, 11, 2], "texture": "#socket"}
+			}
+		},
+		{
+			"name": "back_socket_2",
+			"from": [5, 0, 0],
+			"to": [11, 2, 5],
+			"faces": {
+				"down": {"uv": [5, 11, 11, 16], "texture": "#casing", "cullface": "down"},
+				"north": {"uv": [5, 14, 11, 16], "texture": "#casing", "cullface": "north"},
+				"south": {"uv": [5, 0, 11, 2], "texture": "#socket"}
+			}
+		},
+		{
+			"name": "back_socket_3",
+			"from": [5, 0, 11],
+			"to": [11, 2, 16],
+			"faces": {
+				"down": {"uv": [5, 0, 11, 5], "texture": "#casing", "cullface": "down"},
+				"south": {"uv": [5, 14, 11, 16], "texture": "#casing", "cullface": "south"},
+				"north": {"uv": [5, 0, 11, 2], "texture": "#socket"}
+			}
+		},
+		{
+			"name": "back_socket_ceiling",
+			"from": [5, 2, 5],
+			"to": [11, 2, 11],
+			"faces": {
+				"down": {"uv": [5, 5, 11, 11], "texture": "#socket"}
+			}
+		},
+		{
+			"name": "body",
+			"from": [0, 2, 0],
+			"to": [16, 12, 16],
+			"faces": {
+				"north": {"uv": [0, 4, 16, 14], "texture": "#casing", "cullface": "north"},
+				"south": {"uv": [0, 4, 16, 14], "texture": "#casing", "cullface": "south"},
+				"east": {"uv": [0, 4, 16, 14], "texture": "#casing", "cullface": "east"},
+				"west": {"uv": [0, 4, 16, 14], "texture": "#casing", "cullface": "west"}
+			}
+		},
+		{
+			"name": "deck",
+			"from": [0, 12, 0],
+			"to": [16, 16, 16],
+			"faces": {
+				"north": {"uv": [0, 0, 16, 4], "texture": "#deck", "cullface": "north"},
+				"south": {"uv": [0, 0, 16, 4], "texture": "#deck", "cullface": "south"},
+				"east": {"uv": [0, 0, 16, 4], "texture": "#deck", "cullface": "east"},
+				"west": {"uv": [0, 0, 16, 4], "texture": "#deck", "cullface": "west"},
+				"up": {"uv": [0, 0, 16, 16], "texture": "#top", "cullface": "up"}
+			}
+		},
+		{
+			"name": "rail",
+			"from": [1.5, 16, 2],
+			"to": [3.5, 17, 14],
+			"faces": {
+				"north": {"uv": [0, 10, 2, 11], "texture": "#deck"},
+				"east": {"uv": [2, 10, 14, 11], "texture": "#deck"},
+				"south": {"uv": [0, 10, 2, 11], "texture": "#deck"},
+				"west": {"uv": [2, 10, 14, 11], "texture": "#deck"},
+				"up": {"uv": [2, 8, 14, 10], "texture": "#deck", "rotation": 90},
+				"down": {"uv": [2, 8, 14, 10], "texture": "#deck", "rotation": 90}
+			}
+		},
+		{
+			"name": "rail_clamp",
+			"from": [1.25, 16, 1.5],
+			"to": [3.75, 18, 4],
+			"faces": {
+				"north": {"uv": [0, 12, 3, 14], "texture": "#deck"},
+				"east": {"uv": [0, 12, 3, 14], "texture": "#deck"},
+				"south": {"uv": [0, 12, 3, 14], "texture": "#deck"},
+				"west": {"uv": [0, 12, 3, 14], "texture": "#deck"},
+				"up": {"uv": [0, 12, 3, 15], "texture": "#deck"},
+				"down": {"uv": [0, 12, 3, 14], "texture": "#deck"}
+			}
+		},
+		{
+			"name": "rail_clamp",
+			"from": [1.25, 16, 12],
+			"to": [3.75, 18, 14.5],
+			"faces": {
+				"north": {"uv": [0, 12, 3, 14], "texture": "#deck"},
+				"east": {"uv": [0, 12, 3, 14], "texture": "#deck"},
+				"south": {"uv": [0, 12, 3, 14], "texture": "#deck"},
+				"west": {"uv": [0, 12, 3, 14], "texture": "#deck"},
+				"up": {"uv": [0, 12, 3, 15], "texture": "#deck"},
+				"down": {"uv": [0, 12, 3, 14], "texture": "#deck"}
+			}
+		},
+		{
+			"name": "rail",
+			"from": [12.5, 16, 2],
+			"to": [14.5, 17, 14],
+			"faces": {
+				"north": {"uv": [0, 10, 2, 11], "texture": "#deck"},
+				"east": {"uv": [2, 10, 14, 11], "texture": "#deck"},
+				"south": {"uv": [0, 10, 2, 11], "texture": "#deck"},
+				"west": {"uv": [2, 10, 14, 11], "texture": "#deck"},
+				"up": {"uv": [2, 8, 14, 10], "texture": "#deck", "rotation": 90},
+				"down": {"uv": [2, 8, 14, 10], "texture": "#deck", "rotation": 90}
+			}
+		},
+		{
+			"name": "rail_clamp",
+			"from": [12.25, 16, 1.5],
+			"to": [14.75, 18, 4],
+			"faces": {
+				"north": {"uv": [0, 12, 3, 14], "texture": "#deck"},
+				"east": {"uv": [0, 12, 3, 14], "texture": "#deck"},
+				"south": {"uv": [0, 12, 3, 14], "texture": "#deck"},
+				"west": {"uv": [0, 12, 3, 14], "texture": "#deck"},
+				"up": {"uv": [0, 12, 3, 15], "texture": "#deck"},
+				"down": {"uv": [0, 12, 3, 14], "texture": "#deck"}
+			}
+		},
+		{
+			"name": "rail_clamp",
+			"from": [12.25, 16, 12],
+			"to": [14.75, 18, 14.5],
+			"faces": {
+				"north": {"uv": [0, 12, 3, 14], "texture": "#deck"},
+				"east": {"uv": [0, 12, 3, 14], "texture": "#deck"},
+				"south": {"uv": [0, 12, 3, 14], "texture": "#deck"},
+				"west": {"uv": [0, 12, 3, 14], "texture": "#deck"},
+				"up": {"uv": [0, 12, 3, 15], "texture": "#deck"},
+				"down": {"uv": [0, 12, 3, 14], "texture": "#deck"}
+			}
+		}
+	]
+}

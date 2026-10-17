@@ -1,0 +1,106 @@
+package com.createicbm.content.blast.redmatter.caps;
+
+import com.createicbm.api.actions.cause.IActionSource;
+import com.createicbm.api.actions.status.IActionStatus;
+import com.createicbm.api.explosion.IBlast;
+import com.createicbm.api.refs.ICBMExplosives;
+import com.createicbm.api.reg.IExplosiveData;
+import com.createicbm.content.blast.redmatter.EntityRedmatter;
+import com.createicbm.content.missile.logic.source.ActionSource;
+import com.createicbm.content.missile.logic.source.cause.EntityCause;
+import com.createicbm.lib.actions.status.ActionResponses;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.level.Level;
+
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+
+/**
+ * Wrapper for exposing the {@link EntityRedmatter} as a Blast
+ *
+ * Created by Dark(DarkGuardsman, Robin) on 4/19/2020.
+ */
+@Deprecated //TODO rework so we don't need a blast wrapper as this is an entity that should be spawned using IAction not IBlast
+public class BlastRedmatterWrapper implements IBlast
+{
+    private final EntityRedmatter host;
+
+    public BlastRedmatterWrapper(EntityRedmatter host)
+    {
+        this.host = host;
+    }
+
+    @Nonnull
+    @Override
+    public IActionStatus doAction()
+    {
+        return ActionResponses.COMPLETED;
+    }
+
+    @Nonnull
+    @Override
+    public IActionSource getSource() {
+        return new ActionSource(host.level(), host.position(), new EntityCause(host));
+    }
+
+    @Override
+    public void clearBlast()
+    {
+        host.discard();
+    }
+
+    //<editor-fold desc="properties">
+    @Override
+    public boolean isCompleted()
+    {
+        return host.isRemoved();
+    }
+
+    @Nonnull
+    @Override
+    public IExplosiveData getActionData() {
+        return ICBMExplosives.REDMATTER;
+    }
+
+    @Override
+    @Nullable
+    public Entity getEntity()
+    {
+        return host;
+    }
+
+    @Override
+    @Nullable
+    public Entity getBlastSource()
+    {
+        return host;
+    }
+    //</editor-fold>
+
+    //<editor-fold desc="position-data">
+    @Override
+    public Level world()
+    {
+        return host.level();
+    }
+
+    @Override
+    public double z()
+    {
+        return host.getZ();
+    }
+
+    @Override
+    public double x()
+    {
+        return host.getX();
+    }
+
+    @Override
+    public double y()
+    {
+        return host.getY();
+    }
+    //</editor-fold>
+}

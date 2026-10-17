@@ -1,0 +1,4 @@
+{
+	"parent": "create_icbm:block/radar_screen",
+	"textures": {"screen": "create_icbm:block/radar/screen_off"}
+}

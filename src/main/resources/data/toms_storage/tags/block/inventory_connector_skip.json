@@ -1,0 +1,7 @@
+{
+  "replace": false,
+  "values": [
+    "create_icbm:launcherframe",
+    "create_icbm:launcherscreen"
+  ]
+}

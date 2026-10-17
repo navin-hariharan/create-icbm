@@ -1,0 +1,7 @@
+{
+  "replace": false,
+  "values": [
+    "create_icbm:fragments",
+    "create_icbm:projectile"
+  ]
+}
