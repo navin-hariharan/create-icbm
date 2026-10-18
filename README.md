@@ -17,6 +17,9 @@ out of Create itself.
 
 It is a new addon, inspired by the classic **ICBM** mod (see [Credits](#credits)).
 
+> **AI usage notice:** AI assistance was used in making Create: ICBM. Every feature is directed, reviewed
+> and tested in game by the author.
+
 ---
 
 ## Contents

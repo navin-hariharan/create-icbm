@@ -24,6 +24,8 @@
 
 A brand new addon, inspired by the classic **ICBM** mod (see [Credits](#-credits)).
 
+> **AI usage notice:** AI assistance was used in making Create: ICBM. Every feature is directed, reviewed and tested in game by the author.
+
 <p align="center">
   <img src="https://raw.githubusercontent.com/navin-hariharan/create-icbm/main/doc/images/machines.png" alt="The machines of Create: ICBM" width="100%">
 </p>
