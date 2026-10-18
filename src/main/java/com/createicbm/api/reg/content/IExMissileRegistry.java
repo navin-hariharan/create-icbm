@@ -1,10 +1,6 @@
 package com.createicbm.api.reg.content;
 
-import com.createicbm.api.data.EntityInteractionFunction;
 import com.createicbm.api.missiles.IMissile;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.InteractionHand;
 import net.minecraft.resources.ResourceLocation;
 
 import java.util.function.Consumer;
@@ -38,24 +34,9 @@ public interface IExMissileRegistry extends IExplosiveContentRegistry
      */
     void setMissileUpdateListener(ResourceLocation exName, Consumer<IMissile> eventCallback);
 
-    /**
-     * Adds a simple callback for player interaction with missile. This should be used
-     * to encoded data into the missile. Such as setting teleportation coordinates in the
-     * same way the ender blast does.
-     * <p>
-     * Do not use this in place of normal events, this is designed to add logic for
-     * specific missile types.
-     *
-     * @param exName        - id of the explosive/missile
-     * @param function - function to call
-     */
-    void setInteractionListener(ResourceLocation exName, EntityInteractionFunction function);
-
     //TODO add handling for insert into launcher (cruise launcher prevents cluster and homing)
 
     void triggerLaunch(IMissile missile);
 
     void triggerFlightUpdate(IMissile missile);
-
-    boolean onInteraction(Entity entity, Player player, InteractionHand hand);
 }

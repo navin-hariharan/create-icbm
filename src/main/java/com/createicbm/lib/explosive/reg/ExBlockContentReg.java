@@ -2,7 +2,6 @@ package com.createicbm.lib.explosive.reg;
 
 import com.createicbm.api.CreateICBMAPI;
 import com.createicbm.api.CreateICBMHelpers;
-import com.createicbm.api.data.BlockActivateFunction;
 import com.createicbm.api.data.WorldPosIntSupplier;
 import com.createicbm.api.data.WorldTickFunction;
 import com.createicbm.api.reg.IExplosiveData;
@@ -23,11 +22,9 @@ public class ExBlockContentReg extends ExplosiveContentRegistry implements IExBl
 {
     private final HashMap<ResourceLocation, WorldPosIntSupplier> fuseSetSupplierMap = new HashMap();
     private final HashMap<ResourceLocation, WorldTickFunction> fuseTickCallbackMap = new HashMap();
-    private final HashMap<ResourceLocation, BlockActivateFunction> blockActivationCallbackMap = new HashMap();
 
     private final Int2ObjectOpenHashMap<WorldPosIntSupplier> fuseSetSupplier = new Int2ObjectOpenHashMap<>();
     private final Int2ObjectOpenHashMap<WorldTickFunction> fuseTickCallback = new Int2ObjectOpenHashMap<>();
-    private final Int2ObjectOpenHashMap<BlockActivateFunction> blockActiviationCallback = new Int2ObjectOpenHashMap<>();
 
     public ExBlockContentReg()
     {
@@ -60,13 +57,6 @@ public class ExBlockContentReg extends ExplosiveContentRegistry implements IExBl
                     fuseTickCallback.put(data.getRegistryID(), func);
                 }
             });
-            blockActivationCallbackMap.forEach((regName, func) -> {
-                final IExplosiveData data = CreateICBMAPI.EXPLOSIVE_REGISTRY.getExplosiveData(regName);
-                if (data != null)
-                {
-                    blockActiviationCallback.put(data.getRegistryID(), func);
-                }
-            });
         }
         else
             throw new RuntimeException(this + ": Registry was locked twice!");
@@ -82,12 +72,6 @@ public class ExBlockContentReg extends ExplosiveContentRegistry implements IExBl
     public void setFuseTickListener(ResourceLocation exName, WorldTickFunction function)
     {
         fuseTickCallbackMap.put(exName, function);
-    }
-
-    @Override
-    public void setActivationListener(ResourceLocation exName, BlockActivateFunction function)
-    {
-        blockActivationCallbackMap.put(exName, function);
     }
 
     @Override

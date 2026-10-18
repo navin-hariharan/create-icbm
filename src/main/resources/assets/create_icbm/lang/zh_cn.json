@@ -9,7 +9,6 @@
   "message.radar.redstone.off": "关闭雷达红石信号发送",
   "gui.launcherscreen.name": "发射控制器",
   "gui.launcherscreen.inaccuracy": "落点偏差: %1$s 格",
-  "chat.launcher.toolTargetSet": "成功导出坐标数据",
   "chat.launcher.noTargetInTool": "没有坐标数据",
   "chat.launcher.toolFrequencySet": "频率设定为 %s",
   "info.misc.tier": "爆炸物等级",

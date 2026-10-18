@@ -1,6 +1,5 @@
 package com.createicbm.content.missile.entity.explosive;
 
-import com.createicbm.api.CreateICBMAPI;
 import com.createicbm.api.actions.IActionData;
 import com.createicbm.api.actions.data.ActionFields;
 import com.createicbm.api.actions.data.IActionFieldProvider;
@@ -15,20 +14,16 @@ import com.createicbm.content.reg.EntityReg;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.damagesource.DamageSource;
-import net.minecraft.world.InteractionHand;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.tags.DamageTypeTags;
-import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.level.Level;
 
-import javax.annotation.Nonnull;
 
 /**
  * Missile with generic action handling
@@ -125,17 +120,6 @@ public class EntityMissileActionable extends EntityMissile<EntityMissileActionab
         if(!status.isType(ActionStatusTypes.BLOCKING)) {
             this.destroy();
         }
-    }
-
-    @Override
-    public InteractionResult interact(@Nonnull Player player, @Nonnull InteractionHand hand)
-    {
-        //Allow missile to override interaction
-        if (CreateICBMAPI.EX_MISSILE_REGISTRY.onInteraction(this, player, hand))
-        {
-            return InteractionResult.SUCCESS;
-        }
-        return super.interact(player, hand);
     }
 
     @Override

@@ -18,7 +18,6 @@ import com.createicbm.config.machines.ConfigLauncher;
 import com.createicbm.config.machines.ConfigRadar;
 import com.createicbm.config.missile.ConfigMissile;
 import com.createicbm.content.actions.emp.EmpHandler;
-import com.createicbm.content.blast.ender.EnderBlastCustomization;
 import com.createicbm.content.blocks.emptower.TileEMPTower;
 import com.createicbm.content.blocks.launcher.base.TileLauncherBase;
 import com.createicbm.content.blocks.launcher.cruise.TileCruiseLauncher;
@@ -282,9 +281,6 @@ public class CreateICBM
     void handleExplosiveCustomizationRegistry()
     {
         CreateICBMAPI.EXPLOSIVE_CUSTOMIZATION_REGISTRY = new BuildableObjectRegistry<IExplosiveCustomization>("EXPLOSIVE_CUSTOMIZATION");
-
-        // Register defaults
-        CreateICBMAPI.EXPLOSIVE_CUSTOMIZATION_REGISTRY.register(EnderBlastCustomization.NAME, EnderBlastCustomization::new);
 
         //Fire registry event
         NeoForge.EVENT_BUS.post(new ExplosiveCustomizationRegistryEvent(CreateICBMAPI.EXPLOSIVE_CUSTOMIZATION_REGISTRY));

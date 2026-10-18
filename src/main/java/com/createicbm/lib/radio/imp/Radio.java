@@ -28,6 +28,15 @@ public abstract class Radio implements IRadio, INBTSerializable<CompoundTag>, IR
         return channel;
     }
 
+    /**
+     * Checks for a set or saved channel without creating a random one like {@link #getChannel()} does
+     *
+     * @return true if the channel is set and not empty
+     */
+    public boolean hasChannel() {
+        return channel != null && !channel.isEmpty();
+    }
+
     @Override
     public CompoundTag serializeNBT(HolderLookup.Provider provider) {
         final CompoundTag tag = new CompoundTag();

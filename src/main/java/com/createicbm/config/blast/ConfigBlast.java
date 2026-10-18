@@ -84,10 +84,6 @@ public class ConfigBlast
     @Config.Comment("Settings for antigravitational explosive")
     public static ConfigExBasics antigravitational = new ConfigExBasics(30);
 
-    @Config.LangKey("config.create_icbm:blast.ender.title")
-    @Config.Comment("Settings for ender explosive")
-    public static ConfigExBasics ender = new ConfigExBasics(30);
-
     @Config.LangKey("config.create_icbm:blast.antimatter.title")
     @Config.Comment("Settings for antimatter explosive")
     public static ConfigAntimatter antimatter = new ConfigAntimatter();

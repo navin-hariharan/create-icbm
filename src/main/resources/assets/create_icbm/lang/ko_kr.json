@@ -32,8 +32,6 @@
   "tier.create_icbm.three": "3티어",
   "tier.create_icbm.four": "4티어",
   "missile.create_icbm:ender.name": "엔더 미사일",
-  "explosive.create_icbm:ender.pos": "대상: %1$sx, %2$sy, %3$sz",
-  "explosive.create_icbm:ender.world": "월드: [%1$s] %2$s",
   "missile.create_icbm:generic.name": "미사일",
   "missile.create_icbm:condensed.name": "응축 미사일",
   "missile.create_icbm:shrapnel.name": "파편 미사일",

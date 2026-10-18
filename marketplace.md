@@ -432,6 +432,7 @@ Every explosive comes three ways: as a **crate** you place and light, as a **mis
 - a redstone signal, or placing it on a powered spot;
 - right-click with Flint and Steel or a Fire Charge, or hit it with a burning arrow;
 - another explosion or a Sonic shockwave reaching it;
+- a Remote Detonator it is wired to (right-click the crate with the detonator to wire it);
 - placing it next to fire or lava.
 
 Once lit, the crate becomes a lit block that falls and can be pushed, and goes off when its fuse runs out: 5 seconds for most explosives. An EMP puts a lit crate out. Mining a crate is safe and gives it back.
@@ -916,7 +917,9 @@ makes the vanilla TNT Minecart.
 </p>
 
 **Radio channels.** Launch Controllers, Cruise Turrets and EMP Towers each have a radio channel. Right-click one of them
-with a Remote Detonator or Laser Designator to tune the tool to the same channel. Radio reaches the whole dimension.
+with a Remote Detonator or Laser Designator to tune the tool to the same channel. Explosive crates work the other way
+round: right-click a crate with a Remote Detonator to give the crate the detonator's channel. Radio reaches the whole
+dimension.
 
 ### Laser Range Finder
 
@@ -941,8 +944,12 @@ with a Remote Detonator or Laser Designator to tune the tool to the same channel
 </p>
 
 - **Right-click** a Launch Controller, Cruise Turret or EMP Tower to tune the detonator to its channel.
+- **Right-click an explosive crate** to wire it to the detonator's channel. A detonator with no channel yet picks a
+  random one. Wire as many crates as you like; a crate stays wired until it goes off or is mined.
 - **Right-click** anywhere else to send the fire signal. Every controller, turret and tower on that channel fires at
-  the target it already has, however far away it is. Their answers show above your hotbar.
+  the target it already has, and every crate wired to it is lit, however far away it is. Answers show above your
+  hotbar.
+- Laser Designator strikes and radar alerts don't set off crates, only the detonator's fire signal does.
 
 <details>
 <summary><b>Recipe</b></summary>

@@ -7,7 +7,6 @@
   "item.create_icbm:radarGun.info": "Считывает GPS координаты",
   "message.radar.redstone.on": "Радар будет излучать сигнал красного камня",
   "message.radar.redstone.off": "Радар не будет излучать сигнал красного камня",
-  "chat.launcher.toolTargetSet": "Данные о цели переданы.",
   "chat.launcher.noTargetInTool": "Инструмент не содержит никаких данных о цели!",
   "chat.launcher.toolFrequencySet": "Частота установлена на %s",
   "info.misc.tier": "Уровень взрывчатки",

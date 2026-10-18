@@ -16,6 +16,7 @@ import com.createicbm.content.reg.ItemReg;
 import com.createicbm.lib.actions.fields.ActionFieldProvider;
 import com.createicbm.lib.capability.ex.CapabilityExplosiveStack;
 import com.createicbm.lib.capability.holder.ICapabilityHolderTile;
+import com.createicbm.lib.radio.RadioRegistry;
 import com.createicbm.lib.transform.vector.Pos;
 import com.createicbm.prefab.tile.BlockICBM;
 import net.minecraft.core.BlockPos;
@@ -28,6 +29,9 @@ import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.TickTask;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -47,6 +51,7 @@ import javax.annotation.Nullable;
 public class TileEntityExplosive extends BlockEntity implements IRotatable, ICapabilityHolderTile
 {
     public static final String NBT_EXPLOSIVE_STACK = "explosive_stack";
+    public static final String NBT_RADIO = "radio";
 
     /** Model data key holding the explosive type of the block, read by the client explosive block model */
     public static final ModelProperty<IExplosiveData> EXPLOSIVE_PROPERTY = new ModelProperty<>();
@@ -57,6 +62,9 @@ public class TileEntityExplosive extends BlockEntity implements IRotatable, ICap
     public boolean hasBeenTriggered = false;
 
     public CapabilityExplosiveStack capabilityExplosive = createCapability(null);
+
+    /** Radio channel set by a Remote Detonator, the crate doesn't listen until then */
+    public final RadioExplosive radioCap = new RadioExplosive(this);
 
     public TileEntityExplosive(BlockPos pos, BlockState state)
     {
@@ -108,6 +116,41 @@ public class TileEntityExplosive extends BlockEntity implements IRotatable, ICap
     }
 
     @Override
+    public void onLoad()
+    {
+        super.onLoad();
+        if (level != null && !level.isClientSide() && radioCap.hasChannel())
+        {
+            RadioRegistry.add(radioCap);
+        }
+    }
+
+    @Override
+    public void setRemoved()
+    {
+        if (level != null && !level.isClientSide())
+        {
+            RadioRegistry.remove(radioCap);
+        }
+        super.setRemoved();
+    }
+
+    /**
+     * Wires the crate to a radio channel, a Remote Detonator on that channel then sets it off
+     *
+     * @param channel to listen on
+     */
+    public void setRadioChannel(String channel)
+    {
+        radioCap.setChannel(channel);
+        if (level != null && !level.isClientSide())
+        {
+            RadioRegistry.add(radioCap);
+        }
+        setChanged();
+    }
+
+    @Override
     public ModelData getModelData()
     {
         final IExplosiveData data = getExplosiveData();
@@ -131,6 +174,10 @@ public class TileEntityExplosive extends BlockEntity implements IRotatable, ICap
             capabilityExplosive = createCapability(ItemStack.parseOptional(registries, itemStackTag));
             requestModelDataUpdate();
         }
+        if (nbt.contains(NBT_RADIO, Tag.TAG_COMPOUND))
+        {
+            radioCap.deserializeNBT(registries, nbt.getCompound(NBT_RADIO));
+        }
     }
 
     /**
@@ -146,6 +193,10 @@ public class TileEntityExplosive extends BlockEntity implements IRotatable, ICap
             {
                 nbt.put(NBT_EXPLOSIVE_STACK, stack.save(registries));
             }
+        }
+        if (radioCap.hasChannel())
+        {
+            nbt.put(NBT_RADIO, radioCap.serializeNBT(registries));
         }
         super.saveAdditional(nbt, registries);
     }
@@ -235,6 +286,29 @@ public class TileEntityExplosive extends BlockEntity implements IRotatable, ICap
             final IExplosiveData data = capabilityExplosive.getExplosiveData();
             CreateICBM.logger().info("TileEntityExplosive: Triggered ITEM{" + capabilityExplosive.toStack() + "] " + (data != null ? data.getRegistryKey() : "none") + " at location " + getBlockPos());
         }
+    }
+
+    /**
+     * Sets the crate off from a radio signal. Runs as a server task so the crate isn't removed while the signal is
+     * still going out to the other receivers.
+     *
+     * @param igniter holding the Remote Detonator, null for other senders
+     * @return true if the crate will go off
+     */
+    public boolean triggerByRadio(@Nullable Entity igniter)
+    {
+        if (hasBeenTriggered || !(level instanceof ServerLevel serverLevel))
+        {
+            return false;
+        }
+        final MinecraftServer server = serverLevel.getServer();
+        server.tell(new TickTask(server.getTickCount(), () -> {
+            if (!isRemoved() && level == serverLevel)
+            {
+                trigger(false, igniter);
+            }
+        }));
+        return true;
     }
 
     @Override

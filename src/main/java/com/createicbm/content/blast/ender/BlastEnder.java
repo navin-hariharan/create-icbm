@@ -5,8 +5,6 @@ import com.createicbm.api.explosion.IBlastTickable;
 import com.createicbm.content.blast.Blast;
 import com.createicbm.lib.transform.vector.Location;
 import com.createicbm.lib.transform.vector.Pos;
-import lombok.Getter;
-import lombok.Setter;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.monster.EnderMan;
 import net.minecraft.world.entity.EntityType;
@@ -18,30 +16,22 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.SectionPos;
-import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.world.level.Level;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.levelgen.Heightmap;
-import net.minecraft.world.level.portal.DimensionTransition;
 import net.minecraft.world.phys.Vec3;
-
-import javax.annotation.Nullable;
 
 import java.util.List;
 
 public class BlastEnder extends Blast implements IBlastTickable //TODO handle save/load
 {
+    /** Reach of the vortex in blocks */
+    public static final int RADIUS = 20;
+
     public int duration = 20 * 8;
 
-    @Getter
-    @Setter
+    /** Random spot on the surface that everything pulled into the middle is sent to, picked once per blast */
     private Vec3 teleportTarget;
-
-    /** Null for the blast's own level. */
-    @Getter
-    @Setter
-    private ResourceKey<Level> teleportDim;
 
     @Override
     public boolean doExplode(int callCount) //TODO break into smaller methods
@@ -134,7 +124,7 @@ public class BlastEnder extends Blast implements IBlastTickable //TODO handle sa
 
                     try
                     {
-                        // If a target doesn't exist, search for a random one within 100 block range
+                        // Pick a random spot within 150 blocks of the blast the first time something is teleported
                         if (this.teleportTarget == null)
                         {
                             final double centerX = this.controller != null ? this.controller.getX() : location.x();
@@ -165,17 +155,11 @@ public class BlastEnder extends Blast implements IBlastTickable //TODO handle sa
                             }
 
                             this.teleportTarget = new Vec3(checkX + 0.5, topY, checkZ + 0.5);
-                            this.teleportDim = null; // random target is always in this level
                         }
 
                         this.world().playSound(null, entity.getX(), entity.getY(), entity.getZ(), SoundEvents.ENDERMAN_TELEPORT, SoundSource.BLOCKS, 1.0F, 1.0F);
 
-                        final ServerLevel targetLevel = getTeleportLevel();
-                        if (targetLevel != null)
-                        {
-                            entity.changeDimension(new DimensionTransition(targetLevel, this.teleportTarget, Vec3.ZERO, entity.getYRot(), entity.getXRot(), DimensionTransition.DO_NOTHING));
-                        }
-                        else if (entity instanceof ServerPlayer)
+                        if (entity instanceof ServerPlayer)
                         {
                             ((ServerPlayer) entity).connection.teleport(this.teleportTarget.x, this.teleportTarget.y, this.teleportTarget.z, entity.getYRot(), entity.getXRot());
                         }
@@ -197,19 +181,6 @@ public class BlastEnder extends Blast implements IBlastTickable //TODO handle sa
         return this.callCount > this.duration;
     }
 
-    /**
-     * @return level to move entities to when the target is in another dimension, null to teleport inside this level
-     */
-    @Nullable
-    private ServerLevel getTeleportLevel()
-    {
-        if (teleportDim != null && world() instanceof ServerLevel serverLevel && !teleportDim.equals(serverLevel.dimension()))
-        {
-            return serverLevel.getServer().getLevel(teleportDim);
-        }
-        return null;
-    }
-
     @Override
     public void onBlastCompleted()
     {
@@ -229,7 +200,7 @@ public class BlastEnder extends Blast implements IBlastTickable //TODO handle sa
     @Override
     public float getBlastRadius()
     {
-        return 20;
+        return RADIUS;
     }
 
     @Override

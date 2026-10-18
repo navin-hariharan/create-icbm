@@ -3,10 +3,7 @@ package com.createicbm.content.reg;
 import com.createicbm.ICBMConstants;
 import com.createicbm.api.EnumTier;
 import com.createicbm.api.CreateICBMAPI;
-import com.createicbm.api.CreateICBMHelpers;
 import com.createicbm.api.actions.data.ActionFields;
-import com.createicbm.api.caps.IExplosive;
-import com.createicbm.api.caps.IGPSData;
 import com.createicbm.api.explosion.IBlastFactory;
 import com.createicbm.api.refs.ICBMEntities;
 import com.createicbm.api.refs.ICBMExplosives;
@@ -21,7 +18,6 @@ import com.createicbm.content.blast.effect.BlastRecon;
 import com.createicbm.content.blast.*;
 import com.createicbm.content.blast.BlastTNT.PushType;
 import com.createicbm.content.blast.ender.BlastEnder;
-import com.createicbm.content.blast.ender.EnderBlastCustomization;
 import com.createicbm.content.blast.gas.BlastChemical;
 import com.createicbm.content.blast.gas.BlastColor;
 import com.createicbm.content.blast.gas.BlastDebilitation;
@@ -32,18 +28,9 @@ import com.createicbm.content.blast.threaded.BlastNuclear;
 import com.createicbm.content.blast.threaded.BlastThermobaric;
 import com.createicbm.content.entity.EntityFragments;
 import com.createicbm.lib.explosive.reg.ExplosiveRegistry;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.block.entity.BlockEntity;
-import net.minecraft.core.Direction;
-import net.minecraft.world.InteractionHand;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.core.BlockPos;
 import net.minecraft.world.phys.Vec3;
-import net.minecraft.network.chat.Component;
-import net.minecraft.world.level.Level;
 
 /**
  * Created by Dark(DarkGuardsman, Robin) on 1/7/19.
@@ -210,9 +197,7 @@ public class ExplosiveInit
         CreateICBMAPI.EX_BLOCK_REGISTRY.setFuseSupplier(ICBMExplosives.ANTI_GRAVITATIONAL.getRegistryKey(), (world, x, y, z) -> ConfigBlast.FUSE_TIMES.EXPLOSIVES.ANTI_GRAVITATIONAL);
         CreateICBMAPI.EX_MINECART_REGISTRY.setFuseSupplier(ICBMExplosives.ANTI_GRAVITATIONAL.getRegistryKey(), (entity) -> ConfigBlast.FUSE_TIMES.BOMB_CARTS.ANTI_GRAVITATIONAL);
 
-        ICBMExplosives.ENDER = newEx(20, "ender", EnumTier.THREE, (w, x, y, z, s) -> new BlastEnder().setBlastSize(ConfigBlast.ender.scale).setBlastWorld(w).setBlastPosition(x, y, z));
-        CreateICBMAPI.EX_MISSILE_REGISTRY.setInteractionListener(ICBMExplosives.ENDER.getRegistryKey(), ExplosiveInit::enderMissileCoordSet);
-        CreateICBMAPI.EX_BLOCK_REGISTRY.setActivationListener(ICBMExplosives.ENDER.getRegistryKey(), ExplosiveInit::enderBlockCoordSet);
+        ICBMExplosives.ENDER = newEx(20, "ender", EnumTier.THREE, (w, x, y, z, s) -> new BlastEnder().setBlastSize(BlastEnder.RADIUS).setBlastWorld(w).setBlastPosition(x, y, z));
         CreateICBMAPI.EX_BLOCK_REGISTRY.setFuseSupplier(ICBMExplosives.ENDER.getRegistryKey(), (world, x, y, z) -> ConfigBlast.FUSE_TIMES.EXPLOSIVES.ENDER);
         CreateICBMAPI.EX_MINECART_REGISTRY.setFuseSupplier(ICBMExplosives.ENDER.getRegistryKey(), (entity) -> ConfigBlast.FUSE_TIMES.BOMB_CARTS.ENDER);
 
@@ -284,50 +269,5 @@ public class ExplosiveInit
         }
 
         return data;
-    }
-
-    private static boolean enderMissileCoordSet(Entity entity, Player player, InteractionHand hand)
-    {
-        final IExplosive explosive = entity.getCapability(CreateICBMAPI.EXPLOSIVE_ENTITY_CAPABILITY);
-        if (explosive != null)
-        {
-            return encodeEnderCoordSet(explosive, player, hand);
-        }
-        return false;
-    }
-
-    private static boolean enderBlockCoordSet(Level world, BlockPos pos, Player player, InteractionHand hand, Direction facing, float hitX, float hitY, float hitz)
-    {
-        final BlockEntity tileEntity = world.getBlockEntity(pos);
-
-        if (tileEntity != null && world.getCapability(CreateICBMAPI.EXPLOSIVE_BLOCK_CAPABILITY, pos, facing) != null)
-        {
-            return encodeEnderCoordSet(world.getCapability(CreateICBMAPI.EXPLOSIVE_BLOCK_CAPABILITY, pos, null), player, hand);
-        }
-
-        return false;
-    }
-
-    private static boolean encodeEnderCoordSet(IExplosive provider, Player player, InteractionHand hand) {
-        if(provider == null) {
-            return false;
-        }
-        final ItemStack stack = player.getItemInHand(hand);
-        final IGPSData gpsData = CreateICBMHelpers.getGPSData(stack);
-        if (gpsData != null)
-        {
-            final Vec3 position = gpsData.getPosition();
-            if (position != null)
-            {
-                provider.addCustomization(new EnderBlastCustomization(gpsData.getWorldId(), position));
-                player.sendSystemMessage(Component.translatable("chat.launcher.toolTargetSet"));
-            }
-            else
-            {
-                player.sendSystemMessage(Component.translatable("chat.launcher.noTargetInTool"));
-            }
-            return true;
-        }
-        return false;
     }
 }

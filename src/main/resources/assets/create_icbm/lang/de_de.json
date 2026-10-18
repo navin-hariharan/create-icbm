@@ -52,7 +52,6 @@
   "message.radar.redstone.off": "Radar gibt kein Redstonesignal ab",
   "gui.launcherscreen.name": "Abschuss-Steuerpult",
   "gui.launcherscreen.inaccuracy": "Ungenauigkeit: %1$s Blöcke",
-  "chat.launcher.toolTargetSet": "Zieldaten von Tool übertragen.",
   "chat.launcher.noTargetInTool": "Tool beinhaltet keine Zieldaten!",
   "chat.launcher.toolFrequencySet": "Frequenz zu %s gesetzt",
   "info.misc.tier": "Sprengstoffstufe",
