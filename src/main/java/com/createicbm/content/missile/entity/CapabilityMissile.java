@@ -8,6 +8,8 @@ import com.createicbm.api.missiles.parts.IMissileFlightLogic;
 import com.createicbm.api.missiles.parts.IMissileTarget;
 import com.createicbm.client.ICBMSounds;
 import com.createicbm.config.ConfigDebug;
+import com.createicbm.content.blocks.mail.LauncherOwner;
+import com.createicbm.content.missile.logic.source.MissileSender;
 import com.createicbm.lib.CalculationHelpers;
 import com.createicbm.lib.radar.RadarRegistry;
 import com.createicbm.lib.saving.NbtSaveHandler;
@@ -17,8 +19,10 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.level.Level;
 import net.neoforged.neoforge.common.util.INBTSerializable;
 
+import javax.annotation.Nullable;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.UUID;
 
 /**
  * Created by Dark(DarkGuardsman, Robin) on 1/7/19.
@@ -32,6 +36,17 @@ public class CapabilityMissile implements IMissile, INBTSerializable<CompoundTag
 
     private IMissileFlightLogic flightLogic;
     private boolean doFlight = false;
+
+    /** Id of this flight, kept while the missile is simulated in unloaded chunks and spawned again at the target */
+    private UUID flightId;
+
+    /** Player who sent this missile, worked out once from the launch history and saved with the missile */
+    private LauncherOwner sender;
+    private boolean senderResolved = false;
+
+    /** Launch sound of this missile and the game time it started, to cut it short if the missile blows up first */
+    private long launchSoundKey = 0;
+    private long launchSoundTime = 0;
 
     public CapabilityMissile(EntityMissile missile)
     {
@@ -103,12 +118,44 @@ public class CapabilityMissile implements IMissile, INBTSerializable<CompoundTag
         return firingSource;
     }
 
+    /**
+     * @return id of this flight, created on first use
+     */
+    public UUID getFlightId()
+    {
+        if (flightId == null)
+        {
+            flightId = UUID.randomUUID();
+        }
+        return flightId;
+    }
+
+    /**
+     * @return player who sent this missile, or null when nobody can be found
+     */
+    @Nullable
+    public LauncherOwner getSender()
+    {
+        if (!senderResolved && firingSource != null)
+        {
+            senderResolved = true;
+            sender = MissileSender.find(firingSource);
+        }
+        return sender;
+    }
+
     @Override
     public void launch()
     {
         //Tell missile to start moving
         this.doFlight = true;
         triggerFlightLogic();
+
+        if (!world().isClientSide())
+        {
+            getFlightId();
+            getSender();
+        }
 
         //Trigger events
         //TODO add generic event
@@ -119,8 +166,18 @@ public class CapabilityMissile implements IMissile, INBTSerializable<CompoundTag
         RadarRegistry.add(this.missile); //TODO replace with capability and have radar system listen for entity spawn event
 
         //Play audio
-        ICBMSounds.MISSILE_LAUNCH.play(world(), x(), y(), z(),
-            1F, (1.0F + CalculationHelpers.randFloatRange(world().random, 0.2F)) * 0.7F, true);
+        if (world().isClientSide())
+        {
+            ICBMSounds.MISSILE_LAUNCH.play(world(), x(), y(), z(),
+                1F, (1.0F + CalculationHelpers.randFloatRange(world().random, 0.2F)) * 0.7F, true);
+        }
+        else
+        {
+            launchSoundKey = ICBMSounds.nextTrackedKey();
+            launchSoundTime = world().getGameTime();
+            ICBMSounds.MISSILE_LAUNCH.playTracked(world(), launchSoundKey, x(), y(), z(),
+                1F, (1.0F + CalculationHelpers.randFloatRange(world().random, 0.2F)) * 0.7F);
+        }
 
         if (ConfigDebug.DEBUG_MISSILE_LAUNCHES)
         {
@@ -133,6 +190,19 @@ public class CapabilityMissile implements IMissile, INBTSerializable<CompoundTag
                 )
             );
         }
+    }
+
+    /**
+     * Fades out the launch sound if it is still playing, called when the missile is removed
+     */
+    public void stopLaunchSound()
+    {
+        // The longest launch sound is about 5 seconds, 9 at the lowest pitch
+        if (launchSoundKey != 0 && world().getGameTime() - launchSoundTime < 200)
+        {
+            ICBMSounds.stopTracked(world(), launchSoundKey);
+        }
+        launchSoundKey = 0;
     }
 
     @Override
@@ -179,7 +249,28 @@ public class CapabilityMissile implements IMissile, INBTSerializable<CompoundTag
         /* */.nodeBuildableObject("target", () -> CreateICBMAPI.MISSILE_TARGET_DATA_REGISTRY, CapabilityMissile::getTargetData, CapabilityMissile::setTargetData)
         /* */.nodeBuildableObject("flight", () -> CreateICBMAPI.MISSILE_FLIGHT_LOGIC_REGISTRY, CapabilityMissile::getFlightLogic, CapabilityMissile::setFlightLogic)
         /* */.nodeINBTSerializable("source", CapabilityMissile::getMissileSource)
+        /* */.nodeUUID("flightId", (cap) -> cap.flightId, (cap, id) -> cap.flightId = id)
+        /* */.nodeCompoundTag("sender", CapabilityMissile::saveSender, CapabilityMissile::loadSender)
         .base();
+
+    @Nullable
+    private CompoundTag saveSender()
+    {
+        if (sender == null)
+        {
+            return null;
+        }
+        final CompoundTag tag = new CompoundTag();
+        tag.putUUID("id", sender.id());
+        tag.putString("name", sender.name());
+        return tag;
+    }
+
+    private void loadSender(CompoundTag tag)
+    {
+        senderResolved = true;
+        sender = new LauncherOwner(tag.hasUUID("id") ? tag.getUUID("id") : new UUID(0, 0), tag.getString("name"));
+    }
 
     public boolean canRunFlightLogic()
     {

@@ -39,7 +39,7 @@ public class BlastSonic extends Blast implements IBlastTickable
         //TODO remove thread
         createAndStartThread(new ThreadLargeExplosion(this, (int) this.getBlastRadius(), getBlastRadius() * 2, this.exploder));
 
-        ICBMSounds.SONICWAVE.play(world, location.x(), location.y(), location.z(), 4.0F, (1.0F + (this.world().random.nextFloat() - this.world().random.nextFloat()) * 0.2F) * 0.7F, true);
+        playBlastSound(ICBMSounds.SONICWAVE, location.x(), location.y(), location.z(), 4.0F, (1.0F + (this.world().random.nextFloat() - this.world().random.nextFloat()) * 0.2F) * 0.7F);
     }
 
     @Override

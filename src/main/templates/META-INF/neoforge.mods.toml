@@ -41,3 +41,10 @@ file="META-INF/accesstransformer.cfg"
     versionRange="[19,)"
     ordering="AFTER"
     side="BOTH"
+
+[[dependencies.${mod_id}]]
+    modId="bluemap"
+    type="optional"
+    versionRange="[5,)"
+    ordering="NONE"
+    side="BOTH"

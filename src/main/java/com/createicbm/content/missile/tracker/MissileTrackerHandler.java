@@ -3,11 +3,13 @@ package com.createicbm.content.missile.tracker;
 import com.createicbm.ICBMConstants;
 import com.createicbm.api.events.MissileEvent;
 import com.createicbm.content.missile.entity.EntityMissile;
+import com.createicbm.content.missile.entity.delivery.EntityDeliveryMissile;
 import com.createicbm.content.missile.entity.explosive.EntityExplosiveMissile;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.Mth;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
@@ -53,7 +55,7 @@ public class MissileTrackerHandler
      * @param missile - entity to simulate
      * @return true if missile was added to simulate queue, false if blocked
      */
-    public static boolean simulateMissile(EntityExplosiveMissile missile)
+    public static boolean simulateMissile(EntityMissile<?> missile)
     {
         //TODO add an event to capture missile and change how simulation works... specifically AR support
         // Can't save missiles that are dead, riding another entity, or have a player riding
@@ -71,6 +73,17 @@ public class MissileTrackerHandler
             }
         }
         return false;
+    }
+
+    /**
+     * Missiles that keep flying through unloaded chunks. Delivery missiles used to stall at the edge of the loaded area
+     * and lose their cargo when they timed out.
+     *
+     * @return true for explosive and delivery missiles
+     */
+    public static boolean canSimulate(Entity entity)
+    {
+        return entity instanceof EntityExplosiveMissile || entity instanceof EntityDeliveryMissile;
     }
 
     /**

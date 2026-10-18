@@ -80,6 +80,7 @@ public class ItemBombCart extends ItemBase implements ICapabilityHolderItem, ISu
                 {
                     entityminecart.setCustomName(itemstack.getHoverName());
                 }
+                entityminecart.setIgniter(context.getPlayer());
 
                 worldIn.addFreshEntity(entityminecart);
             }

@@ -79,6 +79,18 @@ public class ConfigFuseTimes
 
         @Config.RangeInt(min = 0, max = Integer.MAX_VALUE)
         public int REDMATTER = 100;
+
+        @Config.RangeInt(min = 0, max = Integer.MAX_VALUE)
+        public int FLASHBANG = 100;
+
+        @Config.RangeInt(min = 0, max = Integer.MAX_VALUE)
+        public int RECON = 100;
+
+        @Config.RangeInt(min = 0, max = Integer.MAX_VALUE)
+        public int PHANTOM = 100;
+
+        @Config.RangeInt(min = 0, max = Integer.MAX_VALUE)
+        public int DARKNESS = 100;
     }
 
     public class Explosives
@@ -145,5 +157,17 @@ public class ConfigFuseTimes
 
         @Config.RangeInt(min = 0, max = Integer.MAX_VALUE)
         public int REDMATTER = 100;
+
+        @Config.RangeInt(min = 0, max = Integer.MAX_VALUE)
+        public int FLASHBANG = 100;
+
+        @Config.RangeInt(min = 0, max = Integer.MAX_VALUE)
+        public int RECON = 100;
+
+        @Config.RangeInt(min = 0, max = Integer.MAX_VALUE)
+        public int PHANTOM = 100;
+
+        @Config.RangeInt(min = 0, max = Integer.MAX_VALUE)
+        public int DARKNESS = 100;
     }
 }

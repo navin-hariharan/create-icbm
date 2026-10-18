@@ -36,6 +36,10 @@ public class EntityExplosive extends Entity implements IRotatable, IEntityWithCo
 
     private Direction _facing = Direction.NORTH;
 
+    /** Player who lit the fuse, null if redstone, fire or another blast set it off */
+    @Nullable
+    private EntityCause igniter;
+
     //Capabilities
     public final IEMPReceiver capabilityEMP = new CapabilityEmpKill<>(this);
     public final CapabilityExplosiveEntity capabilityExplosive = new CapabilityExplosiveEntity(this);
@@ -63,6 +67,14 @@ public class EntityExplosive extends Entity implements IRotatable, IEntityWithCo
         this._facing = orientation;
 
         capabilityExplosive.setStack(stack);
+    }
+
+    /**
+     * @param entity that lit the fuse, only a player is kept
+     */
+    public void setIgniter(@Nullable Entity entity)
+    {
+        this.igniter = Igniter.of(entity);
     }
 
     /**
@@ -102,7 +114,7 @@ public class EntityExplosive extends Entity implements IRotatable, IEntityWithCo
 
     public void explode()
     {
-        getExplosiveCap().doExplosion(this.getX() + 0.5D, this.getY() + 0.5D, this.getZ() + 0.5D, new ActionSource(level(), new Vec3(getX(), getY(), getZ()), new EntityCause(this)));
+        getExplosiveCap().doExplosion(this.getX() + 0.5D, this.getY() + 0.5D, this.getZ() + 0.5D, new ActionSource(level(), new Vec3(getX(), getY(), getZ()), Igniter.blastCause(this, igniter)));
         this.discard();
     }
 
@@ -115,6 +127,7 @@ public class EntityExplosive extends Entity implements IRotatable, IEntityWithCo
         {
             getExplosiveCap().setStack(stack);
         }
+        igniter = Igniter.load(nbt, registryAccess());
     }
 
     @Override
@@ -122,6 +135,7 @@ public class EntityExplosive extends Entity implements IRotatable, IEntityWithCo
     {
         nbt.putInt(NBTConstants.FUSE, this.fuse);
         nbt.put(NBTConstants.EXPLOSIVE_STACK, getExplosiveCap().toStack().saveOptional(registryAccess()));
+        Igniter.save(nbt, registryAccess(), igniter);
     }
 
     @Override

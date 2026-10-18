@@ -17,6 +17,7 @@ import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.tags.DamageTypeTags;
 import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.vehicle.MinecartTNT;
@@ -42,6 +43,10 @@ public class EntityBombCart extends MinecartTNT implements IEntityWithComplexSpa
 
     protected int bombFuse = -1;
 
+    /** Player who placed the cart, null if a dispenser or something else did */
+    @Nullable
+    private EntityCause igniter;
+
     public EntityBombCart(EntityType<? extends EntityBombCart> type, Level level)
     {
         super(type, level);
@@ -60,6 +65,14 @@ public class EntityBombCart extends MinecartTNT implements IEntityWithComplexSpa
         this.yo = y;
         this.zo = z;
         this.explosive.setStack(itemStack);
+    }
+
+    /**
+     * @param entity that placed or primed the cart, only a player is kept
+     */
+    public void setIgniter(@Nullable Entity entity)
+    {
+        this.igniter = Igniter.of(entity);
     }
 
     @Override
@@ -83,7 +96,10 @@ public class EntityBombCart extends MinecartTNT implements IEntityWithComplexSpa
     {
         if (!level().isClientSide())
         {
-            explosive.doExplosion(this.getX(), this.getY(), this.getZ(), new ActionSource(level(), new Vec3(getX(), getY(), getZ()), new EntityCause(this))); //TODO handle output and include trigger source & player of the cart
+            // A player who set it off by hitting or shooting it counts over the one who placed it
+            final EntityCause trigger = damageSource != null ? Igniter.of(damageSource.getEntity()) : null;
+            final EntityCause cause = Igniter.blastCause(this, trigger != null ? trigger : igniter);
+            explosive.doExplosion(this.getX(), this.getY(), this.getZ(), new ActionSource(level(), new Vec3(getX(), getY(), getZ()), cause)); //TODO handle output and include trigger source
         }
         this.discard();
     }
@@ -220,6 +236,7 @@ public class EntityBombCart extends MinecartTNT implements IEntityWithComplexSpa
         super.addAdditionalSaveData(nbt);
         nbt.put("explosive", explosive.toStack().saveOptional(registryAccess()));
         nbt.putInt(NBT_FUSE, bombFuse);
+        Igniter.save(nbt, registryAccess(), igniter);
     }
 
     @Override
@@ -236,6 +253,7 @@ public class EntityBombCart extends MinecartTNT implements IEntityWithComplexSpa
         {
             bombFuse = nbt.getInt(NBT_FUSE);
         }
+        igniter = Igniter.load(nbt, registryAccess());
     }
 
     @Override

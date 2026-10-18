@@ -118,8 +118,11 @@ public class RedmatterLogic
                 final float pitch = CalculationHelpers.randFloatRange(host.level().random, 0.6f, 1);
                 ICBMSounds.COLLAPSE.play(host.level(), playX, playY, playZ, volume, pitch, true);
             }
-            //TODO check if this should play every tick
-            ICBMSounds.REDMATTER.play(host.level(), host.getX(), host.getY(), host.getZ(), 3.0F, CalculationHelpers.randFloatRange(host.level().random, -0.8f, 1.2f), true);
+            // Once per second, the sound is a second long. Attached to the red matter so it ends when it does.
+            if (host.tickCount % 20 == 0)
+            {
+                ICBMSounds.REDMATTER.playOn(host, 3.0F, CalculationHelpers.randFloatRange(host.level().random, 0.8f, 1.2f));
+            }
         }
     }
 

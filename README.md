@@ -6,7 +6,7 @@
   <img src="https://img.shields.io/badge/Minecraft-1.21.1-62B47A?style=for-the-badge" alt="Minecraft 1.21.1">
   <img src="https://img.shields.io/badge/NeoForge-21.1.219%2B-E2711D?style=for-the-badge" alt="NeoForge 21.1.219+">
   <img src="https://img.shields.io/badge/Create-6.0.10%2B-C9A45C?style=for-the-badge" alt="Create 6.0.10+">
-  <img src="https://img.shields.io/badge/Release-V1.0.0-22C55E?style=for-the-badge" alt="Release V1.0.0">
+  <img src="https://img.shields.io/badge/Release-v1.0.2-22C55E?style=for-the-badge" alt="Release v1.0.2">
   <img src="https://img.shields.io/badge/License-CC_BY--NC_4.0-3B82F6?style=for-the-badge" alt="CC BY-NC 4.0 licence">
 </p>
 
@@ -26,11 +26,13 @@ It is a new addon, inspired by the classic **ICBM** mod (see [Credits](#credits)
 - [Your first launch](#your-first-launch)
 - [Machines](#machines)
 - [Missiles](#missiles)
+  - [Mail](#mail)
 - [Explosives](#explosives)
 - [Bomb carts](#bomb-carts)
 - [Tools](#tools)
 - [Air defence](#air-defence)
 - [Storage and automation](#storage-and-automation)
+- [BlueMap](#bluemap)
 - [Crafting recipes](#crafting-recipes)
 - [Configuration and commands](#configuration-and-commands)
 - [Building from source](#building-from-source)
@@ -42,16 +44,21 @@ It is a new addon, inspired by the classic **ICBM** mod (see [Credits](#credits)
 
 - **Rotation-powered machines.** Launch Pads, Cruise Turrets, Radar Stations and EMP Towers take a shaft and draw
   stress like any Create machine. No batteries, no energy cables.
-- **23 explosives in 4 tiers**, from a beefed-up TNT to antimatter and a red matter black hole. Each one can be placed
+- **27 explosives in 4 tiers**, from a beefed-up TNT to antimatter and a red matter black hole. Each one can be placed
   as a crate, fired as a missile or rolled in as a bomb cart.
+- **Tricks as well as bangs:** a blinding Flashbang, a Recon pulse that outlines enemies through walls, Phantom Enemies
+  that only pretend to attack, and a cloud of Darkness.
 - **Long-range missiles** that fly a ballistic arc up to 10,000 blocks and keep flying through unloaded chunks.
 - **A real launch network:** chain pads, gantries and connectors to one Launch Controller and fire whole salvos.
 - **Air defence:** a spinning Radar Station spots incoming missiles and tells Cruise Turrets loaded with
   Surface to Air Missiles to shoot them down.
-- **Delivery Missiles** that drop a stack of items straight into a chest on the other side of the map.
+- **Delivery Missiles** that drop a stack of items straight into a chest on the other side of the map, or leave it
+  in a **Mail** parcel with the sender's name on it.
 - **Made with Create:** every recipe uses only Create and vanilla items, on Create's machines or at a plain crafting
   table. Ponder scenes, goggle overlays, "Hold [Shift] for Summary" tooltips and JEI support included.
 - **Plays well with storage mods:** hoppers, funnels, chutes and Tom's Simple Storage can stock your launchers.
+- **Live on BlueMap:** with [BlueMap](https://bluemap.bluecolored.de/) installed, flying missiles move across its web
+  map. Click one to see who launched it, and every impact leaves a mushroom cloud on the map for a minute.
 - **Server friendly:** big blasts are spread over several ticks with a time budget, so a salvo doesn't freeze the
   server.
 
@@ -68,6 +75,7 @@ It is a new addon, inspired by the classic **ICBM** mod (see [Credits](#credits)
 | [Create](https://modrinth.com/mod/create) | 6.0.10 or newer (brings Ponder and Flywheel with it) |
 | [JEI](https://modrinth.com/mod/jei) | optional, 19.x, shows every recipe |
 | [Tom's Simple Storage](https://modrinth.com/mod/toms-storage) | optional, for storage automation |
+| [BlueMap](https://modrinth.com/plugin/bluemap) | optional, 5.x, shows missiles on its web map |
 
 Drop the `create-icbm` jar into your `mods` folder next to Create.
 
@@ -121,11 +129,12 @@ Tower have Ponder scenes: hold **W** over one in your inventory.
 - **Missile Casing**: a pressed sheet-metal rocket body.
 - **Missile Module**: a casing fitted with an Electron Tube and a Blaze Powder motor. It flies, but carries only a
   small charge.
-- **Explosive Missile**: a Missile Module armed with any of the 23 explosives. The warhead goes off on impact.
+- **Explosive Missile**: a Missile Module armed with any of the 27 explosives. The warhead goes off on impact.
 - **Surface to Air Missile**: hunts flying targets, other missiles included. Fire it from a Cruise Turret or a handheld
   launcher (see [Air defence](#air-defence)).
 - **Delivery Missile**: carries one stack of anything a chest slot can hold, shulker boxes included. On impact it puts
-  the stack into the chest, barrel or Create vault it hits, or drops it where it lands. It does no damage.
+  the stack into the chest, barrel or Create vault it hits. Anywhere else it leaves the stack in a
+  [Mail](#mail) parcel where it lands. It does no damage.
 
 <p align="center">
   <img src="doc/images/delivery-menu.png" alt="The Delivery Missile cargo slot" width="45%">
@@ -137,10 +146,25 @@ it in your inventory, like a bundle.
 Missiles can be shot down by SAMs, EMP blasts or enough damage. A missile brought down by fire or an explosion sets off
 its warhead where it falls.
 
+### Mail
+
+<p align="center">
+  <img src="doc/images/mail.png" alt="A Mail parcel with the sender's name on its label" width="70%">
+</p>
+
+When a Delivery Missile has no container to fill, it leaves a **Mail** parcel where it lands, the size of a slab. Its
+label shows the name of the player who launched the missile, and looking at it shows *Mail from &lt;name&gt;*.
+**Right-click** the parcel to take the items straight into your inventory. Once it is empty it disappears; if your
+inventory is full, whatever didn't fit stays inside for later.
+
+Mail holds one stack of anything a chest can hold. It can't be crafted, broken, pushed by pistons or taken from the
+Creative inventory, and ordinary explosions can't break it, so a delivery is never scattered on the ground. A parcel
+nobody has opened for 3 minutes starts to **ding** every now and then, so it's easy to find, until someone opens it.
+
 ## Explosives
 
 <p align="center">
-  <img src="doc/images/explosives.png" alt="All 23 explosive crates" width="100%">
+  <img src="doc/images/explosives.png" alt="All 27 explosive crates" width="100%">
 </p>
 
 Every explosive comes as a **crate** you can place and light (redstone, fire or a Remote Detonator set it off), as a
@@ -159,11 +183,15 @@ over a heated Blaze Burner, tiers 3 and 4 over a superheated one.
 | Attractive | 1 | Pulls in every mob, player and item within 12 blocks. |
 | Colorful | 1 | A harmless rainbow gas cloud. |
 | Smoke Marking | 1 | A column of smoke for 5 seconds, handy for marking a target or testing your aim. |
+| Flashbang | 1 | Every player within 16 blocks sees a blinding white flash fill the screen for a second. Breaks nothing. |
+| Recon | 1 | A radar pulse makes every mob and enemy player within 32 blocks glow through walls for 3 minutes. Whoever launched or lit it, their team and their pets are left alone. |
 | Fragmentation | 2 | Over 200 explosive fragments that blow up where they land. |
 | Contagious | 2 | A green viral cloud that lingers for 30 seconds. |
 | Sonic | 2 | A shockwave out to about 15 blocks that rips up blocks and flings mobs into the air. |
 | Breaching | 2 | Punches a 3x3 tunnel up to 7 blocks deep, even through obsidian. |
 | Thermobaric | 2 | Wipes out terrain within about 30 blocks and kills anything in the open within 50. |
+| Phantom Enemy | 2 | Conjures fake zombies, husks, spiders and creepers around every player within 24 blocks. They close in and swing but never deal damage; hit one and it vanishes in a puff of smoke. |
+| Darkness | 2 | Gives every player and mob within 24 blocks the Darkness effect for 3 minutes. Breaks nothing. |
 | Nuclear | 3 | Wipes out terrain within about 50 blocks and leaves radioactive fallout behind. |
 | EMP | 3 | Drains stored energy from machines and carried items within 50 blocks. Breaks nothing. |
 | Exothermic | 3 | Turns the land within about 30 blocks into netherrack, magma and lava. |
@@ -219,6 +247,44 @@ range out of the sky.
   connector), a missile in its filter slot and its front against the **Launch Controller**. It refills every empty pad
   in that launch network from storage. Gantries and controllers are hidden from Tom's Inventory Connector so missiles
   aren't counted twice; connect the pads themselves to see their missiles in the terminal.
+
+## BlueMap
+
+<p align="center">
+  <img src="doc/images/bluemap.png" alt="BlueMap markers: a missile in flight, a mushroom cloud at an impact and a parcel from a Delivery Missile" width="100%">
+</p>
+
+Install [BlueMap](https://bluemap.bluecolored.de/) next to Create: ICBM and every missile in the air shows up on its
+web map. Nothing to set up: the markers appear as soon as BlueMap has loaded.
+
+- **Missiles in flight** move across the map, with the icon pointing the way they fly. Missiles crossing unloaded
+  chunks are shown too, along their path to the target.
+- **Click a missile** to see what it is, **who launched it** and where it is heading.
+- **Impacts** leave a small **mushroom cloud** where the warhead went off. Click it to see the missile and who launched
+  it. The cloud disappears from the map after **1 minute**.
+- **Delivery Missiles** leave a **parcel** where their Mail is, with who sent it. It **stays on the map until someone
+  opens the Mail**, even across restarts. A delivery that went straight into a chest shows its parcel for 1 minute.
+- The markers sit on their own **Missiles** layer, which you can hide in BlueMap's menu.
+
+Create: ICBM only adds its own marker layer. It never touches BlueMap's rendered tiles, textures or settings, and BlueMap
+works exactly as before.
+
+BlueMap publishes markers every 10 seconds, so a missile moves across the map in steps. If you serve the map from your
+own webserver instead of BlueMap's built-in one, set `write-markers-interval` in BlueMap's `plugin.conf` (10 seconds
+matches the built-in one), otherwise BlueMap only writes markers for the page every few minutes.
+
+Blocks on the map showing the wrong textures come from BlueMap's browser cache, after BlueMap re-rendered a map or
+rebuilt its texture list (a `/bluemap purge` does that). Click **Update Map** in BlueMap's menu or
+reload the page with Ctrl+F5. If it stays wrong, check BlueMap's log for "Failed to load textures for map", run
+`/bluemap purge <map>` and let it render again.
+
+The settings live in `create_icbm-mods-bluemap.toml`:
+
+| Option | Default | What it changes |
+|---|---|---|
+| `enabled` | `true` | Set to `false` to keep missiles off the map. |
+| `update_ticks` | 100 | How often missile markers move, in ticks (20 ticks is 1 second). BlueMap publishes them every 10 seconds anyway. |
+| `impact_marker_seconds` | 60 | How long the mushroom cloud stays on the map, and the parcel of a delivery that went into a chest. `0` turns them off. Parcels of unopened Mail stay until it is opened. |
 
 ## Crafting recipes
 
@@ -283,7 +349,7 @@ Each explosive is mixed from a lower one, so you work your way up from Condensed
 </p>
 
 <details>
-<summary><b>Tier 1</b>: Condensed, Shrapnel, Incendiary, Debilitation, Chemical, Anvil, Repulsive, Attractive, Colorful, Smoke Marking</summary>
+<summary><b>Tier 1</b>: Condensed, Shrapnel, Incendiary, Debilitation, Chemical, Anvil, Repulsive, Attractive, Colorful, Smoke Marking, Flashbang, Recon</summary>
 <p align="center">
   <img src="doc/images/recipes/condensed-explosives.png" alt="Condensed Explosives recipe" width="80%"><br>
   <img src="doc/images/recipes/shrapnel-explosives.png" alt="Shrapnel Explosives recipe" width="80%"><br>
@@ -294,18 +360,22 @@ Each explosive is mixed from a lower one, so you work your way up from Condensed
   <img src="doc/images/recipes/repulsive-explosives.png" alt="Repulsive Explosives recipe" width="80%"><br>
   <img src="doc/images/recipes/attractive-explosives.png" alt="Attractive Explosives recipe" width="80%"><br>
   <img src="doc/images/recipes/colorful-explosives.png" alt="Colorful Explosives recipe" width="80%"><br>
-  <img src="doc/images/recipes/smoke-marking-explosives.png" alt="Smoke Marking Explosives recipe" width="80%">
+  <img src="doc/images/recipes/smoke-marking-explosives.png" alt="Smoke Marking Explosives recipe" width="80%"><br>
+  <img src="doc/images/recipes/flashbang-explosives.png" alt="Flashbang Explosives recipe" width="80%"><br>
+  <img src="doc/images/recipes/recon-explosives.png" alt="Recon Explosives recipe" width="80%">
 </p>
 </details>
 
 <details>
-<summary><b>Tier 2</b>: Fragmentation, Contagious, Sonic, Breaching, Thermobaric</summary>
+<summary><b>Tier 2</b>: Fragmentation, Contagious, Sonic, Breaching, Thermobaric, Phantom Enemy, Darkness</summary>
 <p align="center">
   <img src="doc/images/recipes/fragmentation-explosives.png" alt="Fragmentation Explosives recipe" width="80%"><br>
   <img src="doc/images/recipes/contagious-explosives.png" alt="Contagious Explosives recipe" width="80%"><br>
   <img src="doc/images/recipes/sonic-explosives.png" alt="Sonic Explosives recipe" width="80%"><br>
   <img src="doc/images/recipes/breaching-explosives.png" alt="Breaching Explosives recipe" width="80%"><br>
-  <img src="doc/images/recipes/thermobaric-explosives.png" alt="Thermobaric Explosives recipe" width="80%">
+  <img src="doc/images/recipes/thermobaric-explosives.png" alt="Thermobaric Explosives recipe" width="80%"><br>
+  <img src="doc/images/recipes/phantom-enemy-explosives.png" alt="Phantom Enemy Explosives recipe" width="80%"><br>
+  <img src="doc/images/recipes/darkness-explosives.png" alt="Darkness Explosives recipe" width="80%">
 </p>
 </details>
 
@@ -342,6 +412,7 @@ Open **Mods → Create: ICBM → Config** in game, or edit the `create_icbm-*.to
 | `max_range` (radar), `min_speed` | 500, 16 | Radar detection range and the RPM the dish needs. |
 | `base_max_range`, `extender_range_bonus` | 150, 20 | EMP Tower radius and the bonus per extender. |
 | `blast_ms_per_tick`, `block_edit_ms_per_tick` | 15, 20 | Milliseconds per tick that big blasts may use. Lower is smoother for the server, higher finishes blasts sooner. |
+| `impact_marker_seconds` | 60 | BlueMap: how long impact markers stay on the map. See [BlueMap](#bluemap). |
 
 Operator commands, all under `/icbm`:
 
@@ -370,8 +441,7 @@ The jar lands in `build/libs/`. On Windows use `gradlew.bat build`, or `bash ./g
 [Built Broken Modding](https://github.com/BuiltBrokenModding), led by **Robin "DarkGuardsman" Seifert**
 ([@DarkGuardsman](https://github.com/DarkGuardsman)), and by the original **ICBM** mod by **Calclavia**
 ([@calclavia](https://github.com/calclavia)). Thank you for more than a decade of missiles. Much of the blast,
-missile flight, radar and launcher code in this addon is built on ICBM-Classic's MIT-licensed source, and the sound
-effects come from ICBM-Classic.
+missile flight, radar and launcher code in this addon is built on ICBM-Classic's MIT-licensed source.
 
 Thanks as well to everyone who worked on ICBM-Classic over the years: bl4ckscor3, GHXX, Dmod, kmecpp, Graugger, M1W3st,
 Tgame14, LetterN, Vexatos and all its contributors.
@@ -383,9 +453,14 @@ Create: ICBM is an unofficial addon. It is not made by or affiliated with the IC
 
 ## Licence
 
-Create: ICBM is © 2026 Navin Hariharan and licensed under
-[Creative Commons Attribution-NonCommercial 4.0 International (CC BY-NC 4.0)](https://creativecommons.org/licenses/by-nc/4.0/).
+Create: ICBM is © 2026 Navin Hariharan.
+
+**Code and art:** [Creative Commons Attribution-NonCommercial 4.0 International (CC BY-NC 4.0)](https://creativecommons.org/licenses/by-nc/4.0/).
 You may share and adapt it with credit, but not for commercial purposes. See [LICENSE](LICENSE).
 
-The parts of the code based on ICBM-Classic keep Built Broken Modding's MIT notice, which is included in the LICENSE
-file. The sound effects come from ICBM-Classic and are not covered by this licence.
+**Sound effects:** Versions 1.0.1 and earlier contain sound effects sourced from ICBM-Classic; those sounds are not
+covered by this project's licence and remain subject to their applicable original licensing terms. Beginning with
+version 1.0.2, sound effects are covered by this project's CC BY-NC 4.0 licence.
+
+The parts of the code based on ICBM-Classic remain under ICBM-Classic's MIT licence, whose notice is included in the
+LICENSE file.

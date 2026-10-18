@@ -1,6 +1,7 @@
 package com.createicbm.content.missile.entity.explosive;
 
 import com.createicbm.api.CreateICBMAPI;
+import com.createicbm.api.events.MissileEvent;
 import com.createicbm.api.reg.IExplosiveData;
 import com.createicbm.config.missile.ConfigMissile;
 import com.createicbm.content.missile.entity.EntityMissile;
@@ -25,6 +26,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.capabilities.EntityCapability;
+import net.neoforged.neoforge.common.NeoForge;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -40,6 +42,9 @@ public class EntityExplosiveMissile extends EntityMissile<EntityExplosiveMissile
 
     /** Explosive data and settings */
     public final CapabilityExplosiveEntity explosive = new CapabilityExplosiveEntity(this);
+
+    /** Set once the warhead has gone off */
+    private boolean detonated = false;
 
     public EntityExplosiveMissile(EntityType<? extends EntityExplosiveMissile> type, Level w)
     {
@@ -85,7 +90,7 @@ public class EntityExplosiveMissile extends EntityMissile<EntityExplosiveMissile
        // TODO add config
        // TODO add random chance modifier
        if(source.is(DamageTypeTags.IS_EXPLOSION) || source.is(DamageTypeTags.IS_FIRE)) {
-           explosive.doExplosion(getX(), getY(), getZ(), new ActionSource(level(), new Vec3(getX(), getY(), getZ()), new EntityCause(this)));
+           detonate(getX(), getY(), getZ());
        }
     }
 
@@ -133,6 +138,11 @@ public class EntityExplosiveMissile extends EntityMissile<EntityExplosiveMissile
     public void tick()
     {
         targetRangeDet.update();
+        // The proximity fuse went off, moving on could hit something and explode a second time
+        if (isRemoved())
+        {
+            return;
+        }
         super.tick();
     }
 
@@ -150,7 +160,25 @@ public class EntityExplosiveMissile extends EntityMissile<EntityExplosiveMissile
     @Override
     protected void actionOnImpact(HitResult impactLocation) {
         super.actionOnImpact(impactLocation);
-        explosive.doExplosion(impactLocation.getLocation().x, impactLocation.getLocation().y, impactLocation.getLocation().z, new ActionSource(level(), new Vec3(getX(), getY(), getZ()), new EntityCause(this)));
+        detonate(impactLocation.getLocation().x, impactLocation.getLocation().y, impactLocation.getLocation().z);
+    }
+
+    /**
+     * Sets off the warhead at the given spot, only once. Listeners are told, see {@link MissileEvent.Detonated}.
+     */
+    public void detonate(double x, double y, double z)
+    {
+        // The proximity fuse and a hit in the same tick could both set it off
+        if (detonated)
+        {
+            return;
+        }
+        detonated = true;
+        explosive.doExplosion(x, y, z, new ActionSource(level(), new Vec3(getX(), getY(), getZ()), new EntityCause(this)));
+        if (!level().isClientSide())
+        {
+            NeoForge.EVENT_BUS.post(new MissileEvent.Detonated(getMissileCapability(), this, x, y, z));
+        }
     }
 
     @Override

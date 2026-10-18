@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=south": {
+      "model": "create_icbm:block/mail"
+    },
+    "facing=west": {
+      "model": "create_icbm:block/mail",
+      "y": 90
+    },
+    "facing=north": {
+      "model": "create_icbm:block/mail",
+      "y": 180
+    },
+    "facing=east": {
+      "model": "create_icbm:block/mail",
+      "y": 270
+    }
+  }
+}

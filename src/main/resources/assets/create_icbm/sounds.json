@@ -190,5 +190,65 @@
         "stream": false
       }
     ]
+  },
+  "flashbang": {
+    "category": "block",
+    "subtitle": "subtitle.create_icbm:flashbang",
+    "sounds": [
+      {
+        "name": "create_icbm:flashbang",
+        "stream": false
+      }
+    ]
+  },
+  "recon_pulse": {
+    "category": "block",
+    "subtitle": "subtitle.create_icbm:recon_pulse",
+    "sounds": [
+      {
+        "name": "create_icbm:recon_pulse",
+        "stream": false
+      }
+    ]
+  },
+  "phantom_summon": {
+    "category": "hostile",
+    "subtitle": "subtitle.create_icbm:phantom_summon",
+    "sounds": [
+      {
+        "name": "create_icbm:phantom_summon",
+        "stream": false
+      }
+    ]
+  },
+  "phantom_poof": {
+    "category": "hostile",
+    "subtitle": "subtitle.create_icbm:phantom_poof",
+    "sounds": [
+      {
+        "name": "create_icbm:phantom_poof",
+        "stream": false
+      }
+    ]
+  },
+  "darkness": {
+    "category": "block",
+    "subtitle": "subtitle.create_icbm:darkness",
+    "sounds": [
+      {
+        "name": "create_icbm:darkness",
+        "stream": false
+      }
+    ]
+  },
+  "mail_ding": {
+    "category": "block",
+    "subtitle": "subtitle.create_icbm:mail_ding",
+    "sounds": [
+      {
+        "name": "create_icbm:mail_ding",
+        "stream": false
+      }
+    ]
   }
 }

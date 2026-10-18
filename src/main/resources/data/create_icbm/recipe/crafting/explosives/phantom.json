@@ -1,0 +1,40 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "M": {
+      "item": "minecraft:phantom_membrane"
+    },
+    "R": {
+      "item": "minecraft:rotten_flesh"
+    },
+    "S": {
+      "item": "minecraft:spider_eye"
+    },
+    "G": {
+      "item": "minecraft:gunpowder"
+    },
+    "B": {
+      "item": "minecraft:blaze_powder"
+    },
+    "X": {
+      "type": "neoforge:components",
+      "items": "create_icbm:explosives",
+      "components": {
+        "create_icbm:explosive": "create_icbm:smoke"
+      }
+    }
+  },
+  "pattern": [
+    "MRM",
+    "SXG",
+    "MBM"
+  ],
+  "result": {
+    "count": 1,
+    "id": "create_icbm:explosives",
+    "components": {
+      "create_icbm:explosive": "create_icbm:phantom"
+    }
+  }
+}

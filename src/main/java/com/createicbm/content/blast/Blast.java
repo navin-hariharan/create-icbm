@@ -1,5 +1,6 @@
 package com.createicbm.content.blast;
 
+import com.createicbm.client.ICBMSounds;
 import com.createicbm.CreateICBM;
 import com.createicbm.api.actions.cause.IActionSource;
 import com.createicbm.api.actions.status.IActionStatus;
@@ -103,6 +104,10 @@ public abstract class Blast implements IBlastInit, IBlastRestore
 
     private IExplosiveData explosiveData;
     private IActionSource actionSource;
+
+    /** Sounds this blast started with {@link #playBlastSound}, faded out when the blast ends */
+    private long soundKey = 0;
+    private long soundTime = 0;
 
     /**
      * Only use the default if you plan to init required data
@@ -434,6 +439,34 @@ public abstract class Blast implements IBlastInit, IBlastRestore
             dropBlockAsItemWithChance(pos, state, this.getBlastRadius());
         }
         state.onBlockExploded(world, pos, explosion);
+    }
+
+    /**
+     * Plays a sound that fades out once this blast has finished, for long sounds of blasts that run over many ticks
+     */
+    protected void playBlastSound(ICBMSounds sound, double x, double y, double z, float volume, float pitch)
+    {
+        if (world.isClientSide())
+        {
+            sound.play(world, x, y, z, volume, pitch, true);
+            return;
+        }
+        if (soundKey == 0)
+        {
+            soundKey = ICBMSounds.nextTrackedKey();
+        }
+        soundTime = world.getGameTime();
+        sound.playTracked(world, soundKey, x, y, z, volume, pitch);
+    }
+
+    private void stopBlastSounds()
+    {
+        // Nothing to cut short once the longest sound (about 11 seconds, 20 at the lowest pitch) is over
+        if (soundKey != 0 && world != null && world.getGameTime() - soundTime < 420)
+        {
+            ICBMSounds.stopTracked(world, soundKey);
+        }
+        soundKey = 0;
     }
 
     protected void playExplodeSound()
@@ -853,6 +886,7 @@ public abstract class Blast implements IBlastInit, IBlastRestore
 
     protected void endBlast() {
         isAlive = false;
+        stopBlastSounds();
         WorkTickingActionHandler.remove(this);
 
         if (getThread() != null)

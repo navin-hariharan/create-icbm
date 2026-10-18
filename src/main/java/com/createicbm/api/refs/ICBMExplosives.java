@@ -23,6 +23,11 @@ public final class ICBMExplosives
 
     public static IExplosiveData SMOKE;
 
+    public static IExplosiveData FLASHBANG;
+    public static IExplosiveData RECON;
+    public static IExplosiveData PHANTOM;
+    public static IExplosiveData DARKNESS;
+
     //=================== Tier 2
     public static IExplosiveData FRAGMENTATION;
     public static IExplosiveData CONTAGIOUS;

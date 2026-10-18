@@ -1,0 +1,37 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "I": {
+      "item": "minecraft:ink_sac"
+    },
+    "S": {
+      "item": "minecraft:soul_sand"
+    },
+    "C": {
+      "item": "minecraft:coal"
+    },
+    "B": {
+      "item": "minecraft:blaze_powder"
+    },
+    "X": {
+      "type": "neoforge:components",
+      "items": "create_icbm:explosives",
+      "components": {
+        "create_icbm:explosive": "create_icbm:debilitation"
+      }
+    }
+  },
+  "pattern": [
+    "ISI",
+    "CXC",
+    "IBI"
+  ],
+  "result": {
+    "count": 1,
+    "id": "create_icbm:explosives",
+    "components": {
+      "create_icbm:explosive": "create_icbm:darkness"
+    }
+  }
+}

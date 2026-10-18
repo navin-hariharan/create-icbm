@@ -71,6 +71,15 @@ repositories {
         name = "ModMaven"
         url = "https://modmaven.dev"
     }
+    maven {
+        // BlueMap API, and the vector library it uses if Maven Central does not have it
+        name = "bluecolored"
+        url = "https://repo.bluecolored.de/releases"
+        content {
+            includeGroup "de.bluecolored"
+            includeGroup "com.flowpowered"
+        }
+    }
 }
 
 dependencies {
@@ -90,6 +99,9 @@ dependencies {
     compileOnly "mezz.jei:jei-${minecraft_version}-common-api:${jei_version}"
     compileOnly "mezz.jei:jei-${minecraft_version}-neoforge-api:${jei_version}"
     runtimeOnly "mezz.jei:jei-${minecraft_version}-neoforge:${jei_version}"
+
+    // BlueMap (optional), shows missiles on its web maps
+    compileOnly "de.bluecolored:bluemap-api:${bluemap_api_version}"
 }
 
 var generateModMetadata = tasks.register("generateModMetadata", ProcessResources) {

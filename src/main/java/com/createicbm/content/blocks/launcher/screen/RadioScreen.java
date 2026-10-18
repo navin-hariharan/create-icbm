@@ -8,6 +8,7 @@ import com.createicbm.api.radio.messages.ITriggerActionMessage;
 import com.createicbm.config.missile.ConfigMissile;
 import com.createicbm.content.reg.ItemReg;
 import com.createicbm.lib.radio.imp.RadioTile;
+import com.createicbm.prefab.FakeRadioSender;
 import com.createicbm.lib.radio.messages.RadioTranslations;
 import com.createicbm.lib.radio.messages.TextMessage;
 import net.minecraft.world.phys.Vec3;
@@ -43,7 +44,7 @@ public class RadioScreen extends RadioTile<TileLauncherScreen> implements IRadio
 
             // Fire missile packet
             if(packet instanceof ITriggerActionMessage && ((ITriggerActionMessage) packet).shouldTrigger()) {
-                if (host.fireAllLaunchers(false)) { // TODO collect all screens and provide a single feedback message
+                if (host.fireAllLaunchers(false, sender instanceof FakeRadioSender fake ? fake.player : null)) { // TODO collect all screens and provide a single feedback message
                     final Vec3 target = host.getTarget();
                     final double distance = Math.sqrt(target.distanceToSqr(host.getBlockPos().getX() + 0.5, host.getBlockPos().getY() + 0.5, host.getBlockPos().getZ() + 0.5)); // TODO base from launcher
                     sender.onMessageCallback(this, new TextMessage(getChannel(), RadioTranslations.RADIO_LAUNCH_SUCCESS, target.x, target.y, target.z, distance));

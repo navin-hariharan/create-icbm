@@ -1,5 +1,7 @@
 package com.createicbm;
 
+import com.createicbm.content.blocks.mail.LauncherOwner;
+import com.createicbm.content.entity.phantom.PhantomLogic;
 import com.createicbm.api.CreateICBMAPI;
 import com.createicbm.api.missiles.parts.IMissileFlightLogic;
 import com.createicbm.api.missiles.parts.IMissileTarget;
@@ -146,6 +148,8 @@ public class CreateICBM
         NeoForge.EVENT_BUS.register(RadarRegistry.INSTANCE);
         NeoForge.EVENT_BUS.register(RadioRegistry.INSTANCE);
         NeoForge.EVENT_BUS.addListener(CreateICBM::registerCommands);
+        NeoForge.EVENT_BUS.addListener(LauncherOwner::onBlockPlaced);
+        NeoForge.EVENT_BUS.addListener(PhantomLogic::onMobGriefing);
         NeoForge.EVENT_BUS.addListener(CreateICBM::serverStarting);
         NeoForge.EVENT_BUS.addListener(CreateICBM::serverStopping);
 
@@ -178,6 +182,7 @@ public class CreateICBM
         ConfigLoader.register(container, ConfigDebug.class);
         ConfigLoader.register(container, ConfigFlyingBlocks.class);
         ConfigLoader.register(container, ConfigJEI.class);
+        ConfigLoader.register(container, ConfigBlueMap.class);
         ConfigLoader.register(container, ConfigThread.class);
         ConfigLoader.register(container, ConfigMissile.class);
         ConfigLoader.register(container, ConfigEmpTower.class);

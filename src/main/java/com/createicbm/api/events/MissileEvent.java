@@ -104,4 +104,23 @@ public abstract class MissileEvent extends Event
             this.hit = hit;
         }
     }
+
+    /**
+     * Called once when a missile's warhead goes off: on impact, at its proximity fuse, or when fire or an explosion
+     * shoots it down. Server side only.
+     */
+    public static class Detonated extends MissileEvent
+    {
+        public final double x;
+        public final double y;
+        public final double z;
+
+        public Detonated(IMissile missile, Entity entityMissile, double x, double y, double z)
+        {
+            super(missile, entityMissile);
+            this.x = x;
+            this.y = y;
+            this.z = z;
+        }
+    }
 }

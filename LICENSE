@@ -1,8 +1,7 @@
 Create: ICBM
 Copyright (c) 2026 Navin Hariharan
 
-This work is licensed under the Creative Commons Attribution-NonCommercial 4.0
-International License (CC BY-NC 4.0).
+Code and art: Creative Commons Attribution-NonCommercial 4.0 International (CC BY-NC 4.0).
 
 You are free to share (copy and redistribute the material in any medium or format)
 and adapt (remix, transform and build upon the material), under these terms:
@@ -16,10 +15,19 @@ https://creativecommons.org/licenses/by-nc/4.0/legalcode
 
 ---
 
+Sound effects
+
+Versions 1.0.1 and earlier contain sound effects sourced from ICBM-Classic; those sounds are not
+covered by this project's licence and remain subject to their applicable original licensing terms.
+Beginning with version 1.0.2, sound effects are covered by this project's CC BY-NC 4.0 licence.
+
+---
+
 Third-party notice: ICBM-Classic
 
-Parts of the code are based on ICBM-Classic (https://github.com/BuiltBrokenModding/ICBM-Classic),
-which is distributed under the following license:
+This project is inspired by ICBM-Classic (https://github.com/BuiltBrokenModding/ICBM-Classic), and parts of
+its code are based on ICBM-Classic's code, which is distributed under the following license (updated license
+definitions: https://github.com/BuiltBrokenModding/ICBM-Classic/blob/prod/1.12/LICENSE.md#definitions--notes):
 
   MIT License
 
@@ -44,8 +52,3 @@ which is distributed under the following license:
   SOFTWARE.
 
 ---
-
-Sound effects
-
-The sound effects in src/main/resources/assets/create_icbm/sounds/ come from ICBM-Classic and are not
-covered by this license. Their original source and license are listed as unknown by ICBM-Classic.

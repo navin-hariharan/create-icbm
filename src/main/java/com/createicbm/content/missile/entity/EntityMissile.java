@@ -11,7 +11,6 @@ import com.createicbm.client.ICBMSounds;
 import com.createicbm.config.missile.ConfigMissile;
 import com.createicbm.content.missile.logic.flight.BallisticFlightLogicOld;
 import com.createicbm.content.missile.logic.flight.DeadFlightLogic;
-import com.createicbm.lib.CalculationHelpers;
 import com.createicbm.lib.RegistryHelper;
 import com.createicbm.lib.capability.chicken.CapSpaceChicken;
 import com.createicbm.lib.capability.holder.ICapabilityHolderEntity;
@@ -69,6 +68,14 @@ public abstract class EntityMissile<E extends EntityMissile<E>> extends EntityPr
 
     protected boolean syncClient = false;
 
+    /** Client only: the looping engine sound following this missile, null while none plays */
+    public Object engineSound;
+    /** Client only: last tick the engine effects ran, the engine sound stops once they do */
+    public int lastEngineTick;
+
+    /** Set when the missile is removed to be simulated rather than because its flight ended */
+    private boolean leftForSimulation = false;
+
     public EntityMissile(EntityType<? extends EntityMissile> type, Level world)
     {
         super(type, world);
@@ -119,7 +126,7 @@ public abstract class EntityMissile<E extends EntityMissile<E>> extends EntityPr
                 if(logic.shouldRunEngineEffects(this)) {
                     CreateICBM.proxy.spawnMissileSmoke(this, logic, ticksInAir);
                     if (level().isClientSide()) {
-                        ICBMSounds.MISSILE_ENGINE.play(level(), getX(), getY(), getZ(), Math.min(1, ticksInAir / 40F), (1.0F + CalculationHelpers.randFloatRange(this.level().random, 0.2F)) * 0.7F, true);
+                        CreateICBM.proxy.onMissileEngineTick(this);
                     }
                 }
             }
@@ -197,9 +204,30 @@ public abstract class EntityMissile<E extends EntityMissile<E>> extends EntityPr
         if (!level().isClientSide())
         {
             RadarRegistry.remove(this);
+            if (!leftForSimulation)
+            {
+                missileCapability.stopLaunchSound();
+            }
         }
 
         super.remove(reason);
+    }
+
+    /**
+     * Called right before the missile is discarded to fly on in the missile tracker. It hasn't ended, so its launch
+     * sound plays out and a delivery missile keeps its cargo.
+     */
+    public void leaveForSimulation()
+    {
+        leftForSimulation = true;
+    }
+
+    /**
+     * @return true if the missile was removed to fly on in the missile tracker, see {@link #leaveForSimulation()}
+     */
+    public boolean hasLeftForSimulation()
+    {
+        return leftForSimulation;
     }
 
     @Override

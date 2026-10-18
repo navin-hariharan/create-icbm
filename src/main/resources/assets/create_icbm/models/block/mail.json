@@ -1,0 +1,161 @@
+{
+  "parent": "block/block",
+  "textures": {
+    "front": "create:block/bound_cardboard_block_front",
+    "side": "create:block/bound_cardboard_block_side",
+    "top": "create:block/bound_cardboard_block_top",
+    "bottom": "create:block/cardboard_block_top",
+    "label": "create_icbm:block/mail_label",
+    "particle": "create:block/cardboard_block_side"
+  },
+  "elements": [
+    {
+      "name": "parcel",
+      "from": [
+        0,
+        0,
+        0
+      ],
+      "to": [
+        16,
+        8,
+        16
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            0,
+            4,
+            16,
+            12
+          ],
+          "texture": "#front",
+          "cullface": "north"
+        },
+        "east": {
+          "uv": [
+            0,
+            4,
+            16,
+            12
+          ],
+          "texture": "#side",
+          "cullface": "east"
+        },
+        "south": {
+          "uv": [
+            0,
+            4,
+            16,
+            12
+          ],
+          "texture": "#front",
+          "cullface": "south"
+        },
+        "west": {
+          "uv": [
+            0,
+            4,
+            16,
+            12
+          ],
+          "texture": "#side",
+          "cullface": "west"
+        },
+        "up": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#top"
+        },
+        "down": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#bottom",
+          "cullface": "down"
+        }
+      }
+    },
+    {
+      "name": "label",
+      "from": [
+        2,
+        8,
+        3
+      ],
+      "to": [
+        14,
+        8.25,
+        13
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            0,
+            0,
+            16,
+            0.5
+          ],
+          "texture": "#label"
+        },
+        "east": {
+          "uv": [
+            0,
+            0,
+            16,
+            0.5
+          ],
+          "texture": "#label"
+        },
+        "south": {
+          "uv": [
+            0,
+            15.5,
+            16,
+            16
+          ],
+          "texture": "#label"
+        },
+        "west": {
+          "uv": [
+            0,
+            0,
+            16,
+            0.5
+          ],
+          "texture": "#label"
+        },
+        "up": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#label"
+        }
+      }
+    }
+  ],
+  "display": {
+    "gui": {
+      "rotation": [
+        30,
+        225,
+        0
+      ],
+      "scale": [
+        0.625,
+        0.625,
+        0.625
+      ]
+    }
+  }
+}

@@ -2,6 +2,7 @@ package com.createicbm.client;
 
 import com.createicbm.jlib.data.vector.IPos3D;
 import com.createicbm.ICBMConstants;
+import com.createicbm.lib.network.packet.PacketTrackedSound;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.resources.ResourceLocation;
@@ -12,6 +13,8 @@ import net.minecraft.core.registries.Registries;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
+
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Enum of sounds used by ICBM
@@ -38,9 +41,17 @@ public enum ICBMSounds
     MISSILE_LAUNCH("missilelaunch"),
     MISSILE_ENGINE("missileinair"),
     MEEP("meep", SoundSource.NEUTRAL),
-    RADIOACTIVE_TICK("radioactive_tick", SoundSource.BLOCKS);
+    RADIOACTIVE_TICK("radioactive_tick", SoundSource.BLOCKS),
+    FLASHBANG("flashbang"),
+    RECON_PULSE("recon_pulse"),
+    PHANTOM_SUMMON("phantom_summon", SoundSource.HOSTILE),
+    PHANTOM_POOF("phantom_poof", SoundSource.HOSTILE),
+    DARKNESS("darkness"),
+    MAIL_DING("mail_ding", SoundSource.BLOCKS);
 
     public static final DeferredRegister<SoundEvent> SOUNDS = DeferredRegister.create(Registries.SOUND_EVENT, ICBMConstants.DOMAIN);
+
+    private static final AtomicLong TRACKED_KEYS = new AtomicLong();
 
     private final ResourceLocation location;
     private final SoundSource category;
@@ -105,6 +116,47 @@ public enum ICBMSounds
     public void play(Level world, IPos3D pos, float volume, float pitch, boolean distanceDelay)
     {
         world.playSound(null, pos.x(), pos.y(), pos.z(), getSound(), category, volume, pitch);
+    }
+
+    /**
+     * Plays the sound attached to the entity, so it moves with it and stops when the entity is removed
+     */
+    public void playOn(Entity entity, float volume, float pitch)
+    {
+        entity.level().playSound(null, entity, getSound(), category, volume, pitch);
+    }
+
+    /**
+     * Plays the sound so it can be faded out with {@link #stopTracked(Level, long)} once the thing that made it is over
+     *
+     * @param key from {@link #nextTrackedKey()}, the same key can start several sounds
+     */
+    public void playTracked(Level world, long key, double x, double y, double z, float volume, float pitch)
+    {
+        if (world.isClientSide())
+        {
+            play(world, x, y, z, volume, pitch, false);
+        }
+        else
+        {
+            PacketTrackedSound.sendPlay(world, key, getSound(), category, x, y, z, volume, pitch);
+        }
+    }
+
+    /**
+     * Fades out every sound started with the key
+     */
+    public static void stopTracked(Level world, long key)
+    {
+        if (world != null && !world.isClientSide())
+        {
+            PacketTrackedSound.sendStop(world, key);
+        }
+    }
+
+    public static long nextTrackedKey()
+    {
+        return TRACKED_KEYS.incrementAndGet();
     }
 
     public static void register(IEventBus modBus)
