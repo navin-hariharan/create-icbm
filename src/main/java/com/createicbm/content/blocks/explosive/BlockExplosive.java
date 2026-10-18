@@ -8,6 +8,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.ItemInteractionResult;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.projectile.AbstractArrow;
@@ -81,9 +82,10 @@ public class BlockExplosive extends BlockICBM
             TileEntityExplosive explosive = (TileEntityExplosive) tile;
             explosive.setExplosiveStack(itemStack);
 
+            // Placed straight onto a signal or next to fire, the player who placed it lit it
             if (world.hasNeighborSignal(pos))
             {
-                BlockExplosive.triggerExplosive(world, pos, false);
+                BlockExplosive.triggerExplosive(world, pos, false, entityLiving);
             }
 
             // Check to see if there is fire nearby.
@@ -94,7 +96,7 @@ public class BlockExplosive extends BlockICBM
 
                 if (neighbor.is(Blocks.FIRE) || neighbor.is(Blocks.LAVA))
                 {
-                    BlockExplosive.triggerExplosive(world, pos, true);
+                    BlockExplosive.triggerExplosive(world, pos, true, entityLiving);
                     break;
                 }
             }
@@ -127,13 +129,21 @@ public class BlockExplosive extends BlockICBM
      */
     public static void triggerExplosive(Level world, BlockPos pos, boolean setFire)
     {
+        triggerExplosive(world, pos, setFire, null);
+    }
+
+    /**
+     * @param igniter that lit it, remembered for the blast when it's a player
+     */
+    public static void triggerExplosive(Level world, BlockPos pos, boolean setFire, @Nullable Entity igniter)
+    {
         if (!world.isClientSide())
         {
             final BlockEntity tileEntity = world.getBlockEntity(pos);
 
             if (tileEntity instanceof TileEntityExplosive)
             {
-                ((TileEntityExplosive) tileEntity).trigger(setFire);
+                ((TileEntityExplosive) tileEntity).trigger(setFire, igniter);
             }
         }
     }
@@ -162,7 +172,7 @@ public class BlockExplosive extends BlockICBM
     {
         if (!itemstack.isEmpty() && (itemstack.getItem() == Items.FLINT_AND_STEEL || itemstack.getItem() == Items.FIRE_CHARGE))
         {
-            BlockExplosive.triggerExplosive(world, pos, false);
+            BlockExplosive.triggerExplosive(world, pos, false, player);
 
             if (itemstack.getItem() == Items.FLINT_AND_STEEL)
             {
@@ -183,7 +193,7 @@ public class BlockExplosive extends BlockICBM
     {
         if (!world.isClientSide() && projectile instanceof AbstractArrow && projectile.isOnFire())
         {
-            BlockExplosive.triggerExplosive(world, hit.getBlockPos(), false);
+            BlockExplosive.triggerExplosive(world, hit.getBlockPos(), false, projectile.getOwner());
         }
     }
 

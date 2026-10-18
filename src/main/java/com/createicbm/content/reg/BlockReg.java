@@ -1,5 +1,7 @@
 package com.createicbm.content.reg;
 
+import com.createicbm.content.blocks.mail.BlockMail;
+import com.createicbm.content.blocks.mail.TileMail;
 import com.createicbm.ICBMConstants;
 import com.createicbm.content.blocks.emptower.BlockEmpTower;
 import com.createicbm.content.blocks.emptower.TileEMPTower;
@@ -53,6 +55,9 @@ public class BlockReg
     public static final DeferredBlock<BlockEmpTower> blockEmpTower = BLOCKS.register("emptower", BlockEmpTower::new);
     public static final DeferredBlock<BlockCruiseLauncher> blockCruiseLauncher = BLOCKS.register("cruiselauncher", BlockCruiseLauncher::new);
 
+    /** Parcel left by delivery missiles, has no item on purpose */
+    public static final DeferredBlock<BlockMail> blockMail = BLOCKS.register("mail", BlockMail::new);
+
     public static final DeferredBlock<BlockRadioactive> blockRadioactiveDirt = BLOCKS.register("radioactive_dirt", () -> new BlockRadioactive(BlockRadioactive.EnumType.DIRT));
     public static final DeferredBlock<BlockRadioactive> blockRadioactiveStone = BLOCKS.register("radioactive_stone", () -> new BlockRadioactive(BlockRadioactive.EnumType.STONE));
 
@@ -66,6 +71,7 @@ public class BlockReg
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<TileLauncherBase>> TILE_LAUNCHER_BASE = tile("launcherbase", TileLauncherBase::new, blockLaunchBase);
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<TileLauncherScreen>> TILE_LAUNCHER_SCREEN = tile("launcherscreen", TileLauncherScreen::new, blockLaunchScreen);
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<TileCruiseLauncher>> TILE_CRUISE_LAUNCHER = tile("cruiselauncher", TileCruiseLauncher::new, blockCruiseLauncher);
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<TileMail>> TILE_MAIL = tile("mail", TileMail::new, blockMail);
 
     @SafeVarargs
     private static <T extends net.minecraft.world.level.block.entity.BlockEntity> DeferredHolder<BlockEntityType<?>, BlockEntityType<T>> tile(String name, BlockEntityType.BlockEntitySupplier<T> factory, Supplier<? extends Block>... blocks)

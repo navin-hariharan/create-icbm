@@ -4,12 +4,14 @@ import com.createicbm.CreateICBM;
 import com.createicbm.api.events.MissileChunkEvent;
 import com.createicbm.config.ConfigDebug;
 import com.createicbm.config.missile.ConfigMissile;
+import com.createicbm.content.missile.entity.EntityMissile;
 import com.createicbm.content.missile.entity.explosive.EntityExplosiveMissile;
 import com.createicbm.content.missile.logic.flight.DeadFlightLogic;
 import com.createicbm.lib.NBTConstants;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
+import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.Mth;
@@ -24,6 +26,7 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.Map;
+import java.util.function.Consumer;
 
 /**
  * Per world handler for tracking and simulating missiles
@@ -69,7 +72,7 @@ public class MissileTrackerWorld extends SavedData
      * Called to simulate the missile
      * @param missile
      */
-    void simulateMissile(EntityExplosiveMissile missile)
+    void simulateMissile(EntityMissile<?> missile)
     {
         if(ConfigDebug.DEBUG_MISSILE_TRACKER) {
             final String formatted = String.format("MissileTracker[%s]: Simulating missile: %s",
@@ -94,14 +97,25 @@ public class MissileTrackerWorld extends SavedData
 
             //Calculate duration and queue up
             mtd.ticksLeftToTarget = (int) Math.round(dst / ConfigMissile.SIMULATION_FLIGHT_SPEED);
+            mtd.totalTicks = mtd.ticksLeftToTarget;
             missileList.add(mtd);
 
-            //Destroys the entity and marks it for removal from world
+            //Destroys the entity and marks it for removal from world, the missile flies on in the simulation
+            missile.leaveForSimulation();
             missile.discard();
 
             //Mark that we need to save
             this.setDirty();
         }
+    }
+
+    /**
+     * Visits every missile being simulated or waiting to spawn at its target, read only
+     */
+    public void forEachSimulated(Consumer<MissileTrackerData> visitor)
+    {
+        missileList.forEach(visitor);
+        missileSpawnList.forEach(visitor);
     }
 
     /**
@@ -200,11 +214,18 @@ public class MissileTrackerWorld extends SavedData
 
     private void spawnMissileOnDestination(final Level world, MissileTrackerData mtd)
     {
-        //Create entity
-        EntityExplosiveMissile missile = new EntityExplosiveMissile(world);
-
-        //Set data
-        missile.load(mtd.missileData);
+        //Create entity of the kind that left, a delivery missile used to come back as an explosive missile
+        final EntityMissile<?> missile;
+        if (EntityType.create(mtd.missileData, world).orElse(null) instanceof EntityMissile<?> saved)
+        {
+            missile = saved;
+        }
+        else
+        {
+            final EntityExplosiveMissile explosive = new EntityExplosiveMissile(world);
+            explosive.load(mtd.missileData);
+            missile = explosive;
+        }
         //TODO calculate arc position so we don't come in on top of the target
         missile.setPos(mtd.targetPos.x(), ConfigMissile.SIMULATION_ENTER_HEIGHT, mtd.targetPos.z());
         missile.setMotionVector(0, -ConfigMissile.SIMULATION_ENTER_SPEED, 0); //TODO get speed it would have been at the given time

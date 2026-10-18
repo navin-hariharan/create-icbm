@@ -11,6 +11,10 @@ import com.createicbm.content.entity.EntityLightBeam;
 import com.createicbm.content.entity.EntityPlayerSeat;
 import com.createicbm.content.entity.EntitySmoke;
 import com.createicbm.content.entity.flyingblock.EntityFlyingBlock;
+import com.createicbm.content.entity.phantom.PhantomCreeper;
+import com.createicbm.content.entity.phantom.PhantomHusk;
+import com.createicbm.content.entity.phantom.PhantomSpider;
+import com.createicbm.content.entity.phantom.PhantomZombie;
 import com.createicbm.content.missile.entity.anti.EntitySurfaceToAirMissile;
 import com.createicbm.content.missile.entity.explosive.EntityExplosiveMissile;
 import com.createicbm.content.missile.entity.explosive.EntityMissileActionable;
@@ -20,7 +24,11 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MobCategory;
+import net.minecraft.world.entity.monster.Creeper;
+import net.minecraft.world.entity.monster.Spider;
+import net.minecraft.world.entity.monster.Zombie;
 import net.neoforged.bus.api.IEventBus;
+import net.neoforged.neoforge.event.entity.EntityAttributeCreationEvent;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
 
@@ -65,6 +73,17 @@ public final class EntityReg
     public static final DeferredHolder<EntityType<?>, EntityType<EntitySmoke>> SMOKE = register(ICBMEntities.SMOKE,
         EntityType.Builder.<EntitySmoke>of(EntitySmoke::new, MobCategory.MISC).sized(0.1F, 0.1F), 100, 15);
 
+    // Fake mobs of the phantom enemy missile, same size as the real ones. Never saved, and MISC so they don't count
+    // toward the hostile mob cap
+    public static final DeferredHolder<EntityType<?>, EntityType<PhantomZombie>> PHANTOM_ZOMBIE = register(ICBMEntities.PHANTOM_ZOMBIE,
+        EntityType.Builder.<PhantomZombie>of(PhantomZombie::new, MobCategory.MISC).sized(0.6F, 1.95F).eyeHeight(1.74F).noSave(), 128, 3);
+    public static final DeferredHolder<EntityType<?>, EntityType<PhantomHusk>> PHANTOM_HUSK = register(ICBMEntities.PHANTOM_HUSK,
+        EntityType.Builder.<PhantomHusk>of(PhantomHusk::new, MobCategory.MISC).sized(0.6F, 1.95F).eyeHeight(1.74F).noSave(), 128, 3);
+    public static final DeferredHolder<EntityType<?>, EntityType<PhantomSpider>> PHANTOM_SPIDER = register(ICBMEntities.PHANTOM_SPIDER,
+        EntityType.Builder.<PhantomSpider>of(PhantomSpider::new, MobCategory.MISC).sized(1.4F, 0.9F).eyeHeight(0.65F).noSave(), 128, 3);
+    public static final DeferredHolder<EntityType<?>, EntityType<PhantomCreeper>> PHANTOM_CREEPER = register(ICBMEntities.PHANTOM_CREEPER,
+        EntityType.Builder.<PhantomCreeper>of(PhantomCreeper::new, MobCategory.MISC).sized(0.6F, 1.7F).noSave(), 128, 3);
+
     private EntityReg()
     {
     }
@@ -81,5 +100,14 @@ public final class EntityReg
     public static void register(IEventBus modBus)
     {
         ENTITIES.register(modBus);
+        modBus.addListener(EntityReg::registerAttributes);
+    }
+
+    private static void registerAttributes(EntityAttributeCreationEvent event)
+    {
+        event.put(PHANTOM_ZOMBIE.get(), Zombie.createAttributes().build());
+        event.put(PHANTOM_HUSK.get(), Zombie.createAttributes().build());
+        event.put(PHANTOM_SPIDER.get(), Spider.createAttributes().build());
+        event.put(PHANTOM_CREEPER.get(), Creeper.createAttributes().build());
     }
 }

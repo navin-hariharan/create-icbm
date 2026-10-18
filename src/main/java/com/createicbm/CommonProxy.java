@@ -1,6 +1,7 @@
 package com.createicbm;
 
 import com.createicbm.api.missiles.parts.IMissileFlightLogic;
+import com.createicbm.content.missile.entity.EntityMissile;
 import com.createicbm.lib.network.packet.PacketSpawnAirParticle;
 import com.createicbm.lib.network.packet.PacketSpawnBlockExplosion;
 import com.createicbm.lib.transform.vector.Pos;
@@ -63,6 +64,12 @@ public class CommonProxy
     }
 
     public void spawnMissileSmoke(Entity entity, IMissileFlightLogic flightLogic, int ticksInAir) //TODO refactor to be packet based or wired to each flight logic type
+    {
+
+    }
+
+    /** Client only, keeps the missile's looping engine sound going */
+    public void onMissileEngineTick(EntityMissile<?> missile)
     {
 
     }

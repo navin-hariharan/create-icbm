@@ -28,4 +28,9 @@ public final class ICBMEntities
     public static final ResourceLocation REDMATTER = ResourceLocation.fromNamespaceAndPath(CreateICBMAPI.ID, "redmatter");
 
     public static final ResourceLocation SMOKE = ResourceLocation.fromNamespaceAndPath(CreateICBMAPI.ID, "smoke");
+
+    public static final ResourceLocation PHANTOM_ZOMBIE = ResourceLocation.fromNamespaceAndPath(CreateICBMAPI.ID, "phantom_zombie");
+    public static final ResourceLocation PHANTOM_HUSK = ResourceLocation.fromNamespaceAndPath(CreateICBMAPI.ID, "phantom_husk");
+    public static final ResourceLocation PHANTOM_SPIDER = ResourceLocation.fromNamespaceAndPath(CreateICBMAPI.ID, "phantom_spider");
+    public static final ResourceLocation PHANTOM_CREEPER = ResourceLocation.fromNamespaceAndPath(CreateICBMAPI.ID, "phantom_creeper");
 }

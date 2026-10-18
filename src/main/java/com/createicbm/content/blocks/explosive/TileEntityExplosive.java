@@ -28,6 +28,7 @@ import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
@@ -187,6 +188,14 @@ public class TileEntityExplosive extends BlockEntity implements IRotatable, ICap
 
     public void trigger(boolean setFire)
     {
+        trigger(setFire, null);
+    }
+
+    /**
+     * @param igniter that lit it, kept on the primed explosive when it's a player. Null for redstone, fire or blasts
+     */
+    public void trigger(boolean setFire, @Nullable Entity igniter)
+    {
         if (!hasBeenTriggered)
         {
             hasBeenTriggered = true;
@@ -212,6 +221,8 @@ public class TileEntityExplosive extends BlockEntity implements IRotatable, ICap
 
                 final EntityExplosive entityExplosive = new EntityExplosive(level, new Pos(pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5), getDirection(), capabilityExplosive.toStack());
                 //TODO check for tick rate, trigger directly if tick is less than 3
+
+                entityExplosive.setIgniter(igniter);
 
                 if (setFire) {
                     entityExplosive.igniteForSeconds(100);

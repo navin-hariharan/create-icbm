@@ -1,5 +1,7 @@
 package com.createicbm.client;
 
+import com.createicbm.client.sound.MissileEngineSound;
+import com.createicbm.content.missile.entity.EntityMissile;
 import com.createicbm.CommonProxy;
 import com.createicbm.api.missiles.parts.IMissileFlightLogic;
 import com.createicbm.client.fx.ParticleAirICBM;
@@ -117,6 +119,12 @@ public class ClientProxy extends CommonProxy
             (particleZ + sourceZ) / 2.0D,
             particleMX, particleMY, particleMZ);
         world.addParticle(ParticleTypes.SMOKE, particleX, particleY, particleZ, particleMX, particleMY, particleMZ);
+    }
+
+    @Override
+    public void onMissileEngineTick(EntityMissile<?> missile)
+    {
+        MissileEngineSound.onEngineTick(missile);
     }
 
     @Override

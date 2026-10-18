@@ -14,6 +14,10 @@ import com.createicbm.api.reg.IExplosiveData;
 import com.createicbm.config.blast.ConfigBlast;
 import com.createicbm.content.actions.emp.ActionDataEmpArea;
 import com.createicbm.content.actions.entity.ActionSpawnEntity;
+import com.createicbm.content.blast.effect.BlastDarkness;
+import com.createicbm.content.blast.effect.BlastFlashbang;
+import com.createicbm.content.blast.effect.BlastPhantom;
+import com.createicbm.content.blast.effect.BlastRecon;
 import com.createicbm.content.blast.*;
 import com.createicbm.content.blast.BlastTNT.PushType;
 import com.createicbm.content.blast.ender.BlastEnder;
@@ -240,6 +244,24 @@ public class ExplosiveInit
             actionSpawnEntity.setValue(ActionFields.ENTITY_REG_NAME, ICBMEntities.SMOKE);
             return actionSpawnEntity;
         });
+
+        //=================== Effect only, break no blocks
+
+        ICBMExplosives.FLASHBANG = newEx(-1, "flashbang", EnumTier.ONE, (w, x, y, z, s) -> new BlastFlashbang().setBlastSize(ConfigBlast.flashbang.size).setBlastWorld(w).setBlastPosition(x, y, z));
+        CreateICBMAPI.EX_BLOCK_REGISTRY.setFuseSupplier(ICBMExplosives.FLASHBANG.getRegistryKey(), (world, x, y, z) -> ConfigBlast.FUSE_TIMES.EXPLOSIVES.FLASHBANG);
+        CreateICBMAPI.EX_MINECART_REGISTRY.setFuseSupplier(ICBMExplosives.FLASHBANG.getRegistryKey(), (entity) -> ConfigBlast.FUSE_TIMES.BOMB_CARTS.FLASHBANG);
+
+        ICBMExplosives.RECON = newEx(-1, "recon", EnumTier.ONE, (w, x, y, z, s) -> new BlastRecon().setBlastSize(ConfigBlast.recon.size).setBlastWorld(w).setBlastPosition(x, y, z));
+        CreateICBMAPI.EX_BLOCK_REGISTRY.setFuseSupplier(ICBMExplosives.RECON.getRegistryKey(), (world, x, y, z) -> ConfigBlast.FUSE_TIMES.EXPLOSIVES.RECON);
+        CreateICBMAPI.EX_MINECART_REGISTRY.setFuseSupplier(ICBMExplosives.RECON.getRegistryKey(), (entity) -> ConfigBlast.FUSE_TIMES.BOMB_CARTS.RECON);
+
+        ICBMExplosives.PHANTOM = newEx(-1, "phantom", EnumTier.TWO, (w, x, y, z, s) -> new BlastPhantom().setBlastSize(ConfigBlast.phantom.size).setBlastWorld(w).setBlastPosition(x, y, z));
+        CreateICBMAPI.EX_BLOCK_REGISTRY.setFuseSupplier(ICBMExplosives.PHANTOM.getRegistryKey(), (world, x, y, z) -> ConfigBlast.FUSE_TIMES.EXPLOSIVES.PHANTOM);
+        CreateICBMAPI.EX_MINECART_REGISTRY.setFuseSupplier(ICBMExplosives.PHANTOM.getRegistryKey(), (entity) -> ConfigBlast.FUSE_TIMES.BOMB_CARTS.PHANTOM);
+
+        ICBMExplosives.DARKNESS = newEx(-1, "darkness", EnumTier.TWO, (w, x, y, z, s) -> new BlastDarkness().setBlastSize(ConfigBlast.darkness.size).setBlastWorld(w).setBlastPosition(x, y, z));
+        CreateICBMAPI.EX_BLOCK_REGISTRY.setFuseSupplier(ICBMExplosives.DARKNESS.getRegistryKey(), (world, x, y, z) -> ConfigBlast.FUSE_TIMES.EXPLOSIVES.DARKNESS);
+        CreateICBMAPI.EX_MINECART_REGISTRY.setFuseSupplier(ICBMExplosives.DARKNESS.getRegistryKey(), (entity) -> ConfigBlast.FUSE_TIMES.BOMB_CARTS.DARKNESS);
 
         ((ExplosiveRegistry) CreateICBMAPI.EXPLOSIVE_REGISTRY).lockForce();
     }

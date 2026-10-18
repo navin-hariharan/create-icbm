@@ -59,7 +59,7 @@ public abstract class BlastGasBase extends Blast implements IBlastTickable
         if (callCount == 0 && !this.playShortSoundFX)
         {
             //TODO look into different sounds per type
-            ICBMSounds.DEBILITATION.play(world, this.location.x(), this.location.y(), this.location.z(), 4.0F, (1.0F + (world().random.nextFloat() - world().random.nextFloat()) * 0.2F) * 0.7F, true);
+            playBlastSound(ICBMSounds.DEBILITATION, this.location.x(), this.location.y(), this.location.z(), 4.0F, (1.0F + (world().random.nextFloat() - world().random.nextFloat()) * 0.2F) * 0.7F);
         }
 
         //Do gas effect
@@ -164,8 +164,8 @@ public abstract class BlastGasBase extends Blast implements IBlastTickable
     {
         if (this.playShortSoundFX)
         {
-            ICBMSounds.GAS_LEAK.play(world, location.x() + 0.5D, location.y() + 0.5D, location.z() + 0.5D,
-                    4.0F, (1.0F + (world().random.nextFloat() - world().random.nextFloat()) * 0.2F), true);
+            playBlastSound(ICBMSounds.GAS_LEAK, location.x() + 0.5D, location.y() + 0.5D, location.z() + 0.5D,
+                    4.0F, (1.0F + (world().random.nextFloat() - world().random.nextFloat()) * 0.2F));
         }
     }
 

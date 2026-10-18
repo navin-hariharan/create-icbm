@@ -59,7 +59,7 @@ public abstract class BlastBeam extends Blast implements IBlastTickable
             hasDoneSetup = true;
 
             //Play audio
-            ICBMSounds.BEAM_CHARGING.play(world, location.x(), location.y(), location.z(), 4.0F, 0.8F, true);
+            playBlastSound(ICBMSounds.BEAM_CHARGING, location.x(), location.y(), location.z(), 4.0F, 0.8F);
 
             //Basic explosion
             //TODO remove basic in favor of thread

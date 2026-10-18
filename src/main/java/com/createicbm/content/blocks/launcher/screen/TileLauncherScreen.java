@@ -1,5 +1,7 @@
 package com.createicbm.content.blocks.launcher.screen;
 
+import net.minecraft.world.entity.Entity;
+import com.createicbm.content.missile.logic.source.cause.EntityCause;
 import com.createicbm.CreateICBM;
 import com.createicbm.ICBMConstants;
 import com.createicbm.api.CreateICBMAPI;
@@ -217,7 +219,7 @@ public class TileLauncherScreen extends TileMachine implements ILauncherComponen
     public static final PacketCodexTile<TileLauncherScreen, TileLauncherScreen> PACKET_LAUNCH = (PacketCodexTile<TileLauncherScreen, TileLauncherScreen>) new PacketCodexTile<TileLauncherScreen, TileLauncherScreen>(REGISTRY_NAME, "launch")
         .fromClient()
         .onFinished((r, t, p) -> {
-            r.fireAllLaunchers(false);
+            r.fireAllLaunchers(false, p);
             r.setChanged();
         });
 
@@ -237,6 +239,13 @@ public class TileLauncherScreen extends TileMachine implements ILauncherComponen
     }
 
     public boolean fireAllLaunchers(boolean simulate) {
+        return fireAllLaunchers(simulate, null);
+    }
+
+    /**
+     * @param user who pressed launch or sent the radio signal, recorded as the sender of the missiles
+     */
+    public boolean fireAllLaunchers(boolean simulate, @Nullable Entity user) {
         refreshStatus = true;
 
         if(getNetworkNode().getNetwork() == null) {
@@ -246,6 +255,9 @@ public class TileLauncherScreen extends TileMachine implements ILauncherComponen
         final List<LauncherEntry> launchers = getLaunchersInGroup();
 
         final IActionCause cause = createCause();
+        if (user != null) {
+            cause.setPreviousCause(new EntityCause(user));
+        }
         final IMissileTarget target = new BasicTargetData(getTarget());
         final ILauncherSolution solution = new LauncherSolution(target, getFiringGroup(), launchers.size());
         return getNetworkNode().getNetwork()

@@ -8,7 +8,6 @@ import com.createicbm.api.missiles.parts.IMissileTarget;
 import com.createicbm.api.reg.obj.IBuilderRegistry;
 import com.createicbm.config.missile.ConfigMissile;
 import com.createicbm.content.missile.entity.EntityMissile;
-import com.createicbm.content.missile.entity.explosive.EntityExplosiveMissile;
 import com.createicbm.content.missile.tracker.MissileTrackerHandler;
 import com.createicbm.lib.buildable.BuildableObject;
 import com.createicbm.lib.projectile.EntityProjectile;
@@ -203,9 +202,9 @@ public class ArcFlightLogic extends BuildableObject<ArcFlightLogic, IBuilderRegi
             alignWithMotion(entity);
 
             // Sim system
-            if (entity instanceof EntityExplosiveMissile && shouldSimulate(entity))
+            if (MissileTrackerHandler.canSimulate(entity) && shouldSimulate(entity))
             {
-                wasSimulationBlocked = !MissileTrackerHandler.simulateMissile((EntityExplosiveMissile) entity); //TODO add ability to simulate any entity
+                wasSimulationBlocked = !MissileTrackerHandler.simulateMissile((EntityMissile<?>) entity);
             }
         }
     }

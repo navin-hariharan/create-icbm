@@ -1,0 +1,23 @@
+{
+  "type": "create:deploying",
+  "ingredients": [
+    {
+      "item": "minecraft:minecart"
+    },
+    {
+      "type": "neoforge:components",
+      "items": "create_icbm:explosives",
+      "components": {
+        "create_icbm:explosive": "create_icbm:phantom"
+      }
+    }
+  ],
+  "results": [
+    {
+      "id": "create_icbm:bombcart",
+      "components": {
+        "create_icbm:explosive": "create_icbm:phantom"
+      }
+    }
+  ]
+}

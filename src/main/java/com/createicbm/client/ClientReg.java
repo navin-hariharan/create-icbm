@@ -1,5 +1,11 @@
 package com.createicbm.client;
 
+import com.createicbm.client.fx.ScreenFlash;
+import com.createicbm.client.sound.MissileEngineSound;
+import com.createicbm.client.sound.TrackedSounds;
+import net.neoforged.neoforge.client.event.RegisterGuiLayersEvent;
+import com.createicbm.ICBMConstants;
+import com.createicbm.content.blocks.mail.TESRMail;
 import com.createicbm.client.mapper.ExplosiveModels;
 import com.createicbm.client.models.ModelChickenHelmet;
 import com.createicbm.client.models.CruiseLauncherTopModel;
@@ -37,7 +43,11 @@ import com.createicbm.content.reg.ItemReg;
 import com.createicbm.content.reg.MenuReg;
 import com.createicbm.lib.colors.ColorHelper;
 import net.minecraft.client.renderer.entity.ChickenRenderer;
+import net.minecraft.client.renderer.entity.CreeperRenderer;
 import net.minecraft.client.renderer.entity.EntityRenderer;
+import net.minecraft.client.renderer.entity.HuskRenderer;
+import net.minecraft.client.renderer.entity.SpiderRenderer;
+import net.minecraft.client.renderer.entity.ZombieRenderer;
 import net.minecraft.client.renderer.item.ItemProperties;
 import net.minecraft.client.resources.model.ModelResourceLocation;
 import net.minecraft.resources.ResourceLocation;
@@ -50,6 +60,10 @@ import net.neoforged.neoforge.client.event.EntityRenderersEvent;
 import net.neoforged.neoforge.client.event.ModelEvent;
 import net.neoforged.neoforge.client.event.RegisterColorHandlersEvent;
 import net.neoforged.neoforge.client.event.RegisterMenuScreensEvent;
+import net.neoforged.neoforge.client.event.ScreenEvent;
+import net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent;
+import net.neoforged.neoforge.client.event.ClientTickEvent;
+import net.neoforged.neoforge.common.NeoForge;
 import net.createmod.ponder.foundation.PonderIndex;
 
 /**
@@ -74,6 +88,14 @@ public final class ClientReg
         modBus.addListener(ClientReg::registerLayerDefinitions);
         modBus.addListener(ClientReg::addLayers);
         modBus.addListener(ClientReg::registerScreens);
+        modBus.addListener(ClientReg::registerGuiLayers);
+        // The HUD is drawn under open screens, so the flash is drawn over them again
+        NeoForge.EVENT_BUS.addListener(ScreenEvent.Render.Post.class, event -> ScreenFlash.render(event.getGuiGraphics()));
+        NeoForge.EVENT_BUS.addListener(ClientTickEvent.Post.class, event -> MissileEngineSound.onClientTick());
+        NeoForge.EVENT_BUS.addListener(ClientPlayerNetworkEvent.LoggingOut.class, event -> {
+            MissileEngineSound.stopAll();
+            TrackedSounds.clear();
+        });
         modBus.addListener(ClientReg::clientSetup);
         modBus.addListener(ExplosiveModels::onRegisterAdditional);
         modBus.addListener(ExplosiveModels::onModifyBakingResult);
@@ -152,12 +174,19 @@ public final class ClientReg
         event.registerEntityRenderer(EntityReg.MISSILE_SAM.get(), RenderMissile::new);
         event.registerEntityRenderer(EntityReg.MISSILE_DELIVERY.get(), RenderMissile::new);
 
+        // Phantom mobs look exactly like the real ones
+        event.registerEntityRenderer(EntityReg.PHANTOM_ZOMBIE.get(), ZombieRenderer::new);
+        event.registerEntityRenderer(EntityReg.PHANTOM_HUSK.get(), HuskRenderer::new);
+        event.registerEntityRenderer(EntityReg.PHANTOM_SPIDER.get(), SpiderRenderer::new);
+        event.registerEntityRenderer(EntityReg.PHANTOM_CREEPER.get(), CreeperRenderer::new);
+
         // Block entities, raw types as the emp tower render is shared by the tower and its fake blocks
         event.registerBlockEntityRenderer((BlockEntityType) BlockReg.TILE_LAUNCHER_BASE.get(), ctx -> new TESRLauncherBase(ctx));
         event.registerBlockEntityRenderer((BlockEntityType) BlockReg.TILE_CRUISE_LAUNCHER.get(), ctx -> new TESRCruiseLauncher(ctx));
         event.registerBlockEntityRenderer((BlockEntityType) BlockReg.TILE_EMP_TOWER.get(), ctx -> new EmpTowerRenderer(ctx));
         event.registerBlockEntityRenderer((BlockEntityType) BlockReg.TILE_RADAR_STATION.get(), ctx -> new RadarStationRenderer(ctx));
         event.registerBlockEntityRenderer((BlockEntityType) BlockReg.TILE_EMP_TOWER_FAKE.get(), ctx -> new TESREmpTower(ctx));
+        event.registerBlockEntityRenderer(BlockReg.TILE_MAIL.get(), TESRMail::new);
     }
 
     public static void registerLayerDefinitions(EntityRenderersEvent.RegisterLayerDefinitions event)
@@ -178,6 +207,11 @@ public final class ClientReg
     // ------------------------------------------------------------------
     // Screens
     // ------------------------------------------------------------------
+
+    public static void registerGuiLayers(RegisterGuiLayersEvent event)
+    {
+        event.registerAboveAll(ResourceLocation.fromNamespaceAndPath(ICBMConstants.DOMAIN, "flashbang"), ScreenFlash::render);
+    }
 
     public static void registerScreens(RegisterMenuScreensEvent event)
     {

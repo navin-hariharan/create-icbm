@@ -4,7 +4,7 @@ import com.createicbm.ICBMConstants;
 import com.createicbm.api.CreateICBMAPI;
 import com.createicbm.api.events.MissileRideEvent;
 import com.createicbm.api.missiles.IMissile;
-import com.createicbm.content.missile.entity.explosive.EntityExplosiveMissile;
+import com.createicbm.content.missile.entity.EntityMissile;
 import com.createicbm.content.missile.logic.flight.BallisticFlightLogicOld;
 import com.createicbm.content.missile.tracker.MissileTrackerHandler;
 import com.createicbm.lib.radar.RadarMap;
@@ -55,11 +55,11 @@ public class MissileEventHandler
             if (map != null)
             {
                 // Collect missiles we are about to unload, using list to avoid concurrent mod from radar remove TODO have radar system track removals in list and apply next tick
-                final List<EntityExplosiveMissile> unloading = new LinkedList();
+                final List<EntityMissile<?>> unloading = new LinkedList();
                 map.collectEntitiesInChunk(chunk.x, chunk.z, (radarEntity -> {
-                    if (radarEntity.entity instanceof EntityExplosiveMissile) //TODO rewrite to work on any missile via capability system
+                    if (MissileTrackerHandler.canSimulate(radarEntity.entity))
                     {
-                        unloading.add((EntityExplosiveMissile) radarEntity.entity);
+                        unloading.add((EntityMissile<?>) radarEntity.entity);
                     }
                 }));
 

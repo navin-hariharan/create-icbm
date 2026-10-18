@@ -10,6 +10,8 @@ import com.createicbm.lib.network.packet.PacketEntityPos;
 import com.createicbm.lib.network.packet.PacketPlayerItem;
 import com.createicbm.lib.network.packet.PacketSpawnAirParticle;
 import com.createicbm.lib.network.packet.PacketSpawnBlockExplosion;
+import com.createicbm.lib.network.packet.PacketScreenFlash;
+import com.createicbm.lib.network.packet.PacketTrackedSound;
 import com.createicbm.jlib.data.vector.IPos3D;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
@@ -56,6 +58,8 @@ public class PacketManager
         addPacket(PacketSpawnAirParticle.class, PacketSpawnAirParticle::new);
         addPacket(PacketSpawnBlockExplosion.class, PacketSpawnBlockExplosion::new);
         addPacket(PacketEntityPos.class, PacketEntityPos::new);
+        addPacket(PacketTrackedSound.class, PacketTrackedSound::new);
+        addPacket(PacketScreenFlash.class, PacketScreenFlash::new);
     }
 
     public final String channel;

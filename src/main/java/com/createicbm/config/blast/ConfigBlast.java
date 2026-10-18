@@ -100,6 +100,22 @@ public class ConfigBlast
     @Config.Comment("Set for colorful blast")
     public static ConfigExBasics colorful = new ConfigExBasics(10);
 
+    @Config.LangKey("config.create_icbm:blast.flashbang.title")
+    @Config.Comment("Settings for the flashbang missile")
+    public static ConfigFlashbang flashbang = new ConfigFlashbang();
+
+    @Config.LangKey("config.create_icbm:blast.recon.title")
+    @Config.Comment("Settings for the recon missile")
+    public static ConfigRecon recon = new ConfigRecon();
+
+    @Config.LangKey("config.create_icbm:blast.phantom.title")
+    @Config.Comment("Settings for the phantom enemy missile")
+    public static ConfigPhantom phantom = new ConfigPhantom();
+
+    @Config.LangKey("config.create_icbm:blast.darkness.title")
+    @Config.Comment("Settings for the darkness missile")
+    public static ConfigDarkness darkness = new ConfigDarkness();
+
     @Config.Name("blast_do_block_updates")
     @Config.Comment("Whether or not the big explosions trigger block updates for all blocks.\nSetting this to false leads to performance improvements, especially when dealing with a lot of water.")
     public static boolean BLAST_DO_BLOCKUPDATES = false;

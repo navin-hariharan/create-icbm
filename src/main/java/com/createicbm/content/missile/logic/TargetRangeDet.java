@@ -2,10 +2,7 @@ package com.createicbm.content.missile.logic;
 
 import com.createicbm.api.refs.ICBMExplosives;
 import com.createicbm.content.missile.entity.explosive.EntityExplosiveMissile;
-import com.createicbm.content.missile.logic.source.ActionSource;
-import com.createicbm.content.missile.logic.source.cause.EntityCause;
 import com.createicbm.content.missile.logic.targeting.BallisticTargetingData;
-import net.minecraft.world.phys.Vec3;
 
 public class TargetRangeDet {
     private final EntityExplosiveMissile missile;
@@ -41,7 +38,7 @@ public class TargetRangeDet {
                 double distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY + deltaZ * deltaZ);
                 if(distance <= offset)
                 {
-                    missile.explosive.doExplosion(missile.getX(), missile.getY(), missile.getZ(), new ActionSource(missile.level(), new Vec3(missile.getX(), missile.getY(), missile.getZ()), new EntityCause(missile))); //TODO make lambda driven, so we can reuse fuses on other entities
+                    missile.detonate(missile.getX(), missile.getY(), missile.getZ()); //TODO make lambda driven, so we can reuse fuses on other entities
                     missile.discard();
                 }
             }
