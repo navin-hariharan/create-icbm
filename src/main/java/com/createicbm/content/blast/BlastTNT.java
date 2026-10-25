@@ -77,6 +77,12 @@ public class BlastTNT extends Blast
     }
 
     @Override
+    protected float getShipDamageRadius()
+    {
+        return getBlastRadius();
+    }
+
+    @Override
     protected void clientRunBlast()
     {
 

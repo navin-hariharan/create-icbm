@@ -6,7 +6,7 @@
       "item": "create:metal_girder"
     },
     "B": {
-      "item": "create:brass_sheet"
+      "tag": "c:plates/brass"
     }
   },
   "pattern": [

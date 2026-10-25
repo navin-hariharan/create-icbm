@@ -3,7 +3,7 @@
   "category": "equipment",
   "key": {
     "B": {
-      "item": "create:brass_sheet"
+      "tag": "c:plates/brass"
     },
     "C": {
       "item": "create:cogwheel"

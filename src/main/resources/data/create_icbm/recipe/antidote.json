@@ -3,35 +3,35 @@
   "ingredients": [
     [
       {
-        "item": "minecraft:melon_seeds"
+        "tag": "c:seeds/melon"
       },
       {
-        "item": "minecraft:pumpkin_seeds"
+        "tag": "c:seeds/pumpkin"
       },
       {
-        "item": "minecraft:wheat_seeds"
+        "tag": "c:seeds/wheat"
       }
     ],
     [
       {
-        "item": "minecraft:melon_seeds"
+        "tag": "c:seeds/melon"
       },
       {
-        "item": "minecraft:pumpkin_seeds"
+        "tag": "c:seeds/pumpkin"
       },
       {
-        "item": "minecraft:wheat_seeds"
+        "tag": "c:seeds/wheat"
       }
     ],
     [
       {
-        "item": "minecraft:melon_seeds"
+        "tag": "c:seeds/melon"
       },
       {
-        "item": "minecraft:pumpkin_seeds"
+        "tag": "c:seeds/pumpkin"
       },
       {
-        "item": "minecraft:wheat_seeds"
+        "tag": "c:seeds/wheat"
       }
     ],
     {

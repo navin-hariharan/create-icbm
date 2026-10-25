@@ -6,7 +6,7 @@
   <img src="https://img.shields.io/badge/Minecraft-1.21.1-62B47A?style=for-the-badge" alt="Minecraft 1.21.1">
   <img src="https://img.shields.io/badge/NeoForge-21.1.219%2B-E2711D?style=for-the-badge" alt="NeoForge 21.1.219+">
   <img src="https://img.shields.io/badge/Create-6.0.10%2B-C9A45C?style=for-the-badge" alt="Create 6.0.10+">
-  <img src="https://img.shields.io/badge/Release-v1.0.2-22C55E?style=for-the-badge" alt="Release v1.0.2">
+  <img src="https://img.shields.io/badge/Release-v1.0.3-22C55E?style=for-the-badge" alt="Release v1.0.3">
   <img src="https://img.shields.io/badge/License-CC_BY--NC_4.0-3B82F6?style=for-the-badge" alt="CC BY-NC 4.0 licence">
 </p>
 
@@ -93,6 +93,10 @@ It is a new addon, inspired by the classic **ICBM** mod (see [Credits](#credits)
 - **Plays well with storage mods:** hoppers, funnels, chutes and Tom's Simple Storage can stock your launchers.
 - **Live on BlueMap:** with [BlueMap](https://bluemap.bluecolored.de/) installed, flying missiles move across its web
   map. Click one to see who launched it, and every impact leaves a mushroom cloud on the map for a minute.
+- **Airship ready:** with Sable (the physics behind Create Aeronautics) installed, missiles hit ships where they
+  fly, launchers work from a moving deck and blasts tear blocks off nearby ships.
+- **Big modpack ready:** missiles and blasts keep flying when tick optimizers such as Immersive Optimization or
+  ServerCore's activation range slow down entities far from players.
 - **Server friendly:** big blasts are spread over several ticks with a time budget, so a salvo doesn't freeze the
   server.
 
@@ -110,6 +114,8 @@ It is a new addon, inspired by the classic **ICBM** mod (see [Credits](#credits)
 | [JEI](https://modrinth.com/mod/jei) | optional, 19.x, shows every recipe |
 | [Tom's Simple Storage](https://modrinth.com/mod/toms-storage) | optional, for storage automation |
 | [BlueMap](https://modrinth.com/plugin/bluemap) | optional, 5.x, shows missiles on its web map |
+| Sable (Create Aeronautics) | optional, airships can be hit, damaged and fired from |
+| Immersive Optimization, ServerCore | optional, missiles keep flying far from players |
 
 Drop the `create-icbm` jar into your `mods` folder next to Create. The mod is needed on both the server and every
 client.
@@ -1402,6 +1408,7 @@ common configs, so on a server the server's files apply.
 |---|---|---|
 | `speed_direct_fire` | 2 | Speed of turret and handheld missiles, in blocks per tick. |
 | `cruise_fuel`, `handheld_fuel` | 200, 200 | Ticks of thrust for turret and handheld missiles. |
+| `direct_fire_chunk_loading` | `true` | Turret and handheld missiles keep the chunks just ahead of them loaded (short tickets that time out on their own, like a thrown ender pearl), so a long shot doesn't freeze at the edge of the simulation distance. |
 | `arc_distance_limit` | 500 | Targets this far or further send the missile straight up and across the map out of sight. |
 | `simulation_exit_height`, `simulation_enter_height` | 500, 450 | Heights where long-range missiles leave and re-enter the world. |
 | `simulation_flight_speed`, `simulation_enter_speed` | 10, 1 | Speed while out of sight, and while dropping back onto the target. |
@@ -1420,6 +1427,7 @@ common configs, so on a server the server's files apply.
 | Option | Default | What it changes |
 |---|---|---|
 | `blast_ms_per_tick`, `block_edit_ms_per_tick` | 15, 20 | Milliseconds per tick that big blasts may use. Lower is smoother for the server, higher finishes blasts sooner. |
+| `protection_events` | `true` | Every blast asks claim and protection mods (FTB Chunks, Open Parties and Claims...) before it edits blocks, so claimed land is spared. |
 | `block_effects_per_blast`, `block_effects_per_tick` | 64, 1024 | Limits on block particles and sounds. |
 | `blast_do_block_updates` | `false` | Send block updates for every block a blast changes. |
 | `allow_day_night_switch` | `true` | Exothermic and Endothermic change the time of day. |

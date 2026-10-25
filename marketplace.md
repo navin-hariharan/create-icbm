@@ -5,7 +5,7 @@
 <h3 align="center">Missiles, radar and EMP towers, built the Create way.</h3>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Version-1.0.2-8B5CF6?style=for-the-badge" alt="Version 1.0.2">
+  <img src="https://img.shields.io/badge/Version-1.0.3-8B5CF6?style=for-the-badge" alt="Version 1.0.3">
   <img src="https://img.shields.io/badge/Minecraft-1.21.1-62B47A?style=for-the-badge" alt="Minecraft 1.21.1">
   <img src="https://img.shields.io/badge/NeoForge-21.1.219%2B-E2711D?style=for-the-badge" alt="NeoForge 21.1.219+">
   <img src="https://img.shields.io/badge/Create-6.0.10%2B-C9A45C?style=for-the-badge" alt="Create 6.0.10+">
@@ -64,6 +64,8 @@ A brand new addon, inspired by the classic **ICBM** mod (see [Credits](#-credits
 | [JEI](https://modrinth.com/mod/jei) | optional, 19.x, shows every recipe |
 | [Tom's Simple Storage](https://modrinth.com/mod/toms-storage) | optional, for storage automation |
 | [BlueMap](https://modrinth.com/plugin/bluemap) | optional, 5.x, shows missiles on its web map |
+| Sable (Create Aeronautics) | optional, airships can be hit, damaged and fired from |
+| Immersive Optimization, ServerCore | optional, missiles keep flying far from players |
 
 Drop the `create-icbm` jar into your `mods` folder next to Create. The mod is needed on both the server and every
 client.
@@ -1162,6 +1164,7 @@ common configs, so on a server the server's files apply.
 | `max_range` (radar), `min_speed` | 500, 16 | Radar detection range and the RPM the dish needs. |
 | `base_max_range`, `extender_range_bonus` | 150, 20 | EMP Tower radius and the bonus per extender. |
 | `blast_ms_per_tick`, `block_edit_ms_per_tick` | 15, 20 | Milliseconds per tick that big blasts may use. Lower is smoother for the server, higher finishes blasts sooner. |
+| `protection_events` | `true` | Every blast asks claim and protection mods (FTB Chunks, Open Parties and Claims...) before it edits blocks, so claimed land is spared. |
 | `impact_marker_seconds` | 60 | BlueMap: how long impact markers stay on the map. |
 
 Every option is listed in the [full documentation on GitHub](https://github.com/navin-hariharan/create-icbm#configuration).

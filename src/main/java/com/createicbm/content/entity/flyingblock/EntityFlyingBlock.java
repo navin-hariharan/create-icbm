@@ -1,9 +1,12 @@
 package com.createicbm.content.entity.flyingblock;
 
+import com.createicbm.content.blast.BlastProtection;
+import net.minecraft.world.level.Explosion;
 import com.createicbm.CreateICBM;
 import com.createicbm.ICBMConstants;
 import com.createicbm.config.ConfigFlyingBlocks;
 import com.createicbm.content.reg.EntityReg;
+import com.createicbm.lib.EntityTicking;
 import com.createicbm.lib.projectile.EntityProjectile;
 import com.createicbm.lib.saving.NbtSaveHandler;
 import lombok.AccessLevel;
@@ -57,6 +60,7 @@ public class EntityFlyingBlock extends EntityProjectile<EntityFlyingBlock> imple
     public EntityFlyingBlock(EntityType<? extends EntityFlyingBlock> type, Level world)
     {
         super(type, world);
+        EntityTicking.keepTicking(this);
         this.tickCount = 0;
         this.blocksBuilding = true;
         this.inGroundKillTime = ICBMConstants.TICKS_SEC;
@@ -204,6 +208,11 @@ public class EntityFlyingBlock extends EntityProjectile<EntityFlyingBlock> imple
     }
 
     protected boolean tryPlacement(BlockPos pos, BlockHitResult hit) {
+
+        // Debris from a blast must not land inside a claim, asked the way claim mods guard explosions
+        if (!BlastProtection.allowed(level(), new Explosion(level(), this, getX(), getY(), getZ(), 1, false, Explosion.BlockInteraction.DESTROY), pos)) {
+            return false;
+        }
 
         // Attempt to place using item, as it will better handle unique rules
         final ItemStack sourceStack = this.getBlockData().getSourceStack();

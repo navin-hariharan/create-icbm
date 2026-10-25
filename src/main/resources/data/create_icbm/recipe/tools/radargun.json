@@ -4,13 +4,13 @@
   "category": "misc",
   "key": {
     "G": {
-      "item": "minecraft:glass"
+      "tag": "c:glass_blocks/colorless"
     },
     "E": {
       "item": "create:electron_tube"
     },
     "S": {
-      "item": "create:iron_sheet"
+      "tag": "c:plates/iron"
     },
     "B": {
       "item": "minecraft:stone_button"

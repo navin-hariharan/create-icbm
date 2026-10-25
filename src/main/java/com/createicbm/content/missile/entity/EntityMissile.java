@@ -11,6 +11,8 @@ import com.createicbm.client.ICBMSounds;
 import com.createicbm.config.missile.ConfigMissile;
 import com.createicbm.content.missile.logic.flight.BallisticFlightLogicOld;
 import com.createicbm.content.missile.logic.flight.DeadFlightLogic;
+import com.createicbm.content.missile.tracker.MissileChunkLoader;
+import com.createicbm.lib.EntityTicking;
 import com.createicbm.lib.RegistryHelper;
 import com.createicbm.lib.capability.chicken.CapSpaceChicken;
 import com.createicbm.lib.capability.holder.ICapabilityHolderEntity;
@@ -76,10 +78,14 @@ public abstract class EntityMissile<E extends EntityMissile<E>> extends EntityPr
     /** Set when the missile is removed to be simulated rather than because its flight ended */
     private boolean leftForSimulation = false;
 
+    /** Server only: chunks held ahead of a straight flying missile so it doesn't freeze at the simulation distance */
+    private final MissileChunkLoader chunkLoader = new MissileChunkLoader();
+
     public EntityMissile(EntityType<? extends EntityMissile> type, Level world)
     {
         super(type, world);
         this.hasHealth = true;
+        EntityTicking.keepTicking(this);
     }
 
     @Nullable
@@ -105,6 +111,10 @@ public abstract class EntityMissile<E extends EntityMissile<E>> extends EntityPr
     @Override
     public void tick() {
         super.tick();
+
+        if (!level().isClientSide() && !isRemoved()) {
+            chunkLoader.update(this);
+        }
 
         if(syncClient) {
             this.syncClient = false;
@@ -299,6 +309,12 @@ public abstract class EntityMissile<E extends EntityMissile<E>> extends EntityPr
     @Override
     protected boolean ignoreImpact(HitResult hit)
     {
+        // Impacts are the server's call. The client copy only follows the synced position, and impacting it there
+        // removed the missile early on screen, ran the warhead's client side and fired the impact events twice.
+        if (level().isClientSide())
+        {
+            return true;
+        }
         return NeoForge.EVENT_BUS.post(new MissileEvent.PreImpact(getMissileCapability(), this, hit)).isCanceled();
     }
 
@@ -352,7 +368,7 @@ public abstract class EntityMissile<E extends EntityMissile<E>> extends EntityPr
         // TODO make optional via config
         // TODO log to ICBM file separated from main config
         // TODO offer hook for database logging
-        final String formatString = "Missile[%s] (%sx, %sy, %sz, %sd) impacted at (%s, %s, %s)";
+        final String formatString = "Missile[%s] (%sx, %sy, %sz, %s) impacted at (%s, %s, %s)";
         final String formattedMessage = String.format(formatString,
             this.getId(),
             xi(),

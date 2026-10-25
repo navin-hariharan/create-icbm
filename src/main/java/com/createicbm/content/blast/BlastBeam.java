@@ -10,8 +10,10 @@ import com.createicbm.lib.thread.IThreadWork;
 import com.createicbm.lib.thread.WorkerThreadManager;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -142,6 +144,7 @@ public abstract class BlastBeam extends Blast implements IBlastTickable
             scheduleOnServerThread(() ->
             {
                 releaseChunkSnapshot();
+                filterBlockEdits(edits);
                 blocksToRemove.addAll(edits);
                 hasGeneratedFlyingBlocks = false;
                 hasCompletedFirstThread = true;
@@ -154,6 +157,7 @@ public abstract class BlastBeam extends Blast implements IBlastTickable
             scheduleOnServerThread(() ->
             {
                 releaseChunkSnapshot();
+                filterBlockEdits(edits);
                 blocksToRemove.addAll(edits);
                 hasPlacedBlocks = false;
                 hasCompetedSecondThread = true;
@@ -199,6 +203,30 @@ public abstract class BlastBeam extends Blast implements IBlastTickable
     }
 
     protected abstract void mutateBlocks(List<BlockPos> edits);
+
+    /**
+     * Blocks next to the edits that {@link #mutateBlocks(List)} also changes (fire or snow on top, magma below) are
+     * checked against claims like the edits themselves
+     *
+     * @return the neighbours that must be left alone
+     */
+    protected Set<BlockPos> deniedNeighbourEdits(Collection<BlockPos> edits, Direction... sides)
+    {
+        final Set<BlockPos> own = new HashSet<>(edits);
+        final Set<BlockPos> neighbours = new HashSet<>();
+        for (BlockPos pos : edits)
+        {
+            for (Direction side : sides)
+            {
+                final BlockPos neighbour = pos.relative(side);
+                if (!own.contains(neighbour))
+                {
+                    neighbours.add(neighbour);
+                }
+            }
+        }
+        return deniedBlockEdits(neighbours);
+    }
 
     @Override
     protected void onBlastCompleted()

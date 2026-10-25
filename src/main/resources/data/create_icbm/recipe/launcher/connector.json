@@ -6,7 +6,7 @@
       "item": "create:andesite_alloy"
     },
     "W": {
-      "item": "create:copper_sheet"
+      "tag": "c:plates/copper"
     },
     "H": {
       "item": "minecraft:hopper"

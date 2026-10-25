@@ -12,6 +12,7 @@ import com.createicbm.lib.capability.holder.ICapabilityHolderItem;
 import com.createicbm.lib.network.IPacket;
 import com.createicbm.lib.network.IPacketIDReceiver;
 import com.createicbm.lib.network.packet.PacketPlayerItem;
+import com.createicbm.mods.sable.SableProxy;
 import com.createicbm.prefab.item.ItemBase;
 import io.netty.buffer.ByteBuf;
 import net.minecraft.network.chat.Component;
@@ -118,7 +119,7 @@ public class ItemRadarGun extends ItemBase implements IPacketIDReceiver, ICapabi
 
         if (world.isClientSide())
         {
-            final HitResult objectMouseOver = player.pick(MAX_RANGE, 1, false);
+            final HitResult objectMouseOver = SableProxy.INSTANCE.toWorld(world, player.pick(MAX_RANGE, 1, false));
             if (objectMouseOver.getType() != HitResult.Type.MISS && objectMouseOver instanceof BlockHitResult blockHit)
             { // TODO add message saying that the gps target is out of range.
                 final BlockEntity tileEntity = world.getBlockEntity(blockHit.getBlockPos());

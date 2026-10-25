@@ -6,6 +6,7 @@ import com.createicbm.content.missile.logic.source.cause.EntityCause;
 import com.createicbm.content.reg.BlockReg;
 import com.createicbm.content.reg.EntityReg;
 import com.createicbm.content.reg.ItemReg;
+import com.createicbm.lib.EntityTicking;
 import com.createicbm.lib.capability.ex.CapabilityExplosiveEntity;
 import com.createicbm.prefab.tile.BlockICBM;
 import net.minecraft.core.Direction;
@@ -50,6 +51,7 @@ public class EntityBombCart extends MinecartTNT implements IEntityWithComplexSpa
     public EntityBombCart(EntityType<? extends EntityBombCart> type, Level level)
     {
         super(type, level);
+        EntityTicking.keepTicking(this);
     }
 
     public EntityBombCart(Level level)

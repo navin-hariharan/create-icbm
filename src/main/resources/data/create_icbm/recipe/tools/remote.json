@@ -4,7 +4,7 @@
   "category": "misc",
   "key": {
     "S": {
-      "item": "create:iron_sheet"
+      "tag": "c:plates/iron"
     },
     "T": {
       "item": "create:transmitter"

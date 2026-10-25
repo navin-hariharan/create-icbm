@@ -6,7 +6,7 @@
       "item": "minecraft:spyglass"
     },
     "R": {
-      "item": "minecraft:redstone"
+      "tag": "c:dusts/redstone"
     },
     "E": {
       "item": "create:electron_tube"

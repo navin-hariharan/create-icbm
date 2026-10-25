@@ -9,6 +9,7 @@ import com.createicbm.config.ConfigDebug;
 import com.createicbm.content.blast.Blast;
 import com.createicbm.content.missile.logic.source.ActionSource;
 import com.createicbm.content.missile.logic.source.cause.EntityCause;
+import com.createicbm.lib.EntityTicking;
 import com.createicbm.lib.NBTConstants;
 import com.createicbm.lib.actions.WorkTickingActionHandler;
 import lombok.Getter;
@@ -42,6 +43,7 @@ public class EntityExplosion extends Entity implements IEntityWithComplexSpawn
     public EntityExplosion(EntityType<? extends EntityExplosion> type, Level world)
     {
         super(type, world);
+        EntityTicking.keepTicking(this);
         this.blocksBuilding = false;
         this.noPhysics = true;
         this.noCulling = true;

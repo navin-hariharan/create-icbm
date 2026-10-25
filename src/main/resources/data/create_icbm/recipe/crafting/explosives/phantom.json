@@ -12,7 +12,7 @@
       "item": "minecraft:spider_eye"
     },
     "G": {
-      "item": "minecraft:gunpowder"
+      "tag": "c:gunpowders"
     },
     "B": {
       "item": "minecraft:blaze_powder"

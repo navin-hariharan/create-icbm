@@ -2,9 +2,11 @@ package com.createicbm.content.entity;
 
 import com.createicbm.content.blast.ICBMDamageTypes;
 import com.createicbm.content.reg.EntityReg;
+import com.createicbm.lib.EntityTicking;
 import com.createicbm.lib.NBTConstants;
 import com.createicbm.lib.world.IProjectileBlockInteraction;
 import com.createicbm.lib.world.ProjectileBlockInteraction;
+import com.createicbm.mods.sable.SableProxy;
 import lombok.Setter;
 import lombok.experimental.Accessors;
 import net.minecraft.core.BlockPos;
@@ -72,6 +74,7 @@ public class EntityFragments extends Entity implements IEntityWithComplexSpawn
     public EntityFragments(EntityType<? extends EntityFragments> type, Level level)
     {
         super(type, level);
+        EntityTicking.keepTicking(this);
     }
 
     public EntityFragments(Level level)
@@ -219,7 +222,7 @@ public class EntityFragments extends Entity implements IEntityWithComplexSpawn
             //Check for block collision
             Vec3 start = this.position();
             Vec3 end = start.add(motion.x * 2, motion.y * 2, motion.z * 2);
-            HitResult raytraceresult = this.level().clip(new ClipContext(start, end, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, this));
+            HitResult raytraceresult = SableProxy.INSTANCE.toWorld(level(), this.level().clip(new ClipContext(start, end, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, this)));
             if (raytraceresult.getType() == HitResult.Type.MISS)
             {
                 raytraceresult = null;

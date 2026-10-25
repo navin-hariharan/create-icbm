@@ -4,7 +4,7 @@
   "category": "misc",
   "key": {
     "C": {
-      "item": "create:copper_sheet"
+      "tag": "c:plates/copper"
     },
     "P": {
       "item": "create:precision_mechanism"

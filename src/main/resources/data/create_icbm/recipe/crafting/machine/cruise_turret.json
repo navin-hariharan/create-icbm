@@ -3,7 +3,7 @@
   "category": "redstone",
   "key": {
     "B": {
-      "item": "create:brass_sheet"
+      "tag": "c:plates/brass"
     },
     "T": {
       "item": "create:turntable"
@@ -18,7 +18,7 @@
       "item": "create:precision_mechanism"
     },
     "K": {
-      "item": "create:copper_sheet"
+      "tag": "c:plates/copper"
     },
     "C": {
       "item": "create:brass_casing"

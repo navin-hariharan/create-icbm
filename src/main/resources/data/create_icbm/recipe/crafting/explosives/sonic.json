@@ -9,7 +9,7 @@
       "item": "create:steam_whistle"
     },
     "S": {
-      "item": "create:iron_sheet"
+      "tag": "c:plates/iron"
     },
     "R": {
       "type": "neoforge:components",

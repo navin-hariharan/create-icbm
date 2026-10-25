@@ -1,0 +1,22 @@
+{
+  "replace": false,
+  "values": [
+    "create_icbm:block.gravity",
+    "create_icbm:block.fragment",
+    "create_icbm:block.explosive",
+    "create_icbm:explosive_missile",
+    "create_icbm:generic_missile",
+    "create_icbm:surface_to_air_missile",
+    "create_icbm:delivery_missile",
+    "create_icbm:holder.explosion",
+    "create_icbm:beam.light",
+    "create_icbm:cart.bomb",
+    "create_icbm:holder.seat",
+    "create_icbm:redmatter",
+    "create_icbm:smoke",
+    "create_icbm:phantom_zombie",
+    "create_icbm:phantom_husk",
+    "create_icbm:phantom_spider",
+    "create_icbm:phantom_creeper"
+  ]
+}

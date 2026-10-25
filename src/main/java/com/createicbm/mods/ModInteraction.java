@@ -2,6 +2,8 @@ package com.createicbm.mods;
 
 import com.createicbm.mods.bluemap.BlueMapProxy;
 import com.createicbm.mods.mekanism.MekProxy;
+import com.createicbm.mods.sable.SableProxy;
+import com.createicbm.mods.servercore.ServerCoreProxy;
 
 public class ModInteraction {
 
@@ -13,6 +15,8 @@ public class ModInteraction {
     public static void init() {
         MekProxy.INSTANCE.init();
         BlueMapProxy.INSTANCE.init();
+        SableProxy.INSTANCE.init();
+        ServerCoreProxy.INSTANCE.init();
     }
 
     public static void postInit() {

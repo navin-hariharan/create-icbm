@@ -3,10 +3,10 @@
   "category": "redstone",
   "key": {
     "G": {
-      "item": "create:golden_sheet"
+      "tag": "c:plates/gold"
     },
     "B": {
-      "item": "create:brass_sheet"
+      "tag": "c:plates/brass"
     },
     "E": {
       "item": "create:electron_tube"

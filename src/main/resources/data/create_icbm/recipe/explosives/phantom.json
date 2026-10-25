@@ -22,7 +22,7 @@
       "item": "minecraft:spider_eye"
     },
     {
-      "item": "minecraft:gunpowder"
+      "tag": "c:gunpowders"
     }
   ],
   "results": [

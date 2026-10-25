@@ -50,6 +50,7 @@ public class BlastAntiGravitational extends BlastThreaded implements IBlastTicka
                 if (this.thread.isComplete) {
                     if (results == null) {
                         results = new ArrayList(getThreadResults());
+                        filterBlockEdits(results);
                         Collections.shuffle(results);
                         results.sort(Comparator.comparingInt(r -> -r.getY()));
                         this.threadResults.clear();

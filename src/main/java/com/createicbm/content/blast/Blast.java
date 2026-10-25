@@ -17,6 +17,7 @@ import com.createicbm.lib.NBTConstants;
 import com.createicbm.lib.actions.WorkTickingActionHandler;
 import com.createicbm.lib.actions.status.ActionResponses;
 import com.createicbm.lib.transform.vector.Location;
+import com.createicbm.mods.sable.SableProxy;
 import com.mojang.datafixers.util.Pair;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.item.ItemEntity;
@@ -47,7 +48,9 @@ import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 /**
@@ -162,6 +165,9 @@ public abstract class Blast implements IBlastInit, IBlastRestore
 
                 //Play audio to confirm explosion triggered
                 playExplodeSound();
+
+                // Sable ships nearby keep their blocks in a plot the blast doesn't reach
+                SableProxy.INSTANCE.damageShips(world, exploder, x, y, z, getShipDamageRadius());
 
                 //Start explosion
                 if (this instanceof IBlastTickable)
@@ -372,6 +378,33 @@ public abstract class Blast implements IBlastInit, IBlastRestore
         affectedBlockPositions.addAll(explosion.getToBlow());
     }
 
+    /**
+     * For blasts that edit blocks on their own instead of through {@link #fireDetonateEvent(List)}: hands the
+     * positions to {@link ExplosionEvent.Detonate} so claim and protection mods can take theirs out, the same way they
+     * guard vanilla explosions. See {@link BlastProtection}.
+     *
+     * @param positions blocks the blast is about to edit, filtered in place
+     */
+    protected void filterBlockEdits(Collection<BlockPos> positions)
+    {
+        final Set<BlockPos> denied = deniedBlockEdits(positions);
+        if (!denied.isEmpty())
+        {
+            positions.removeIf(denied::contains);
+        }
+    }
+
+    /**
+     * Asks claim and protection mods about the positions, see {@link #filterBlockEdits(Collection)}. Server thread only.
+     *
+     * @param positions blocks the blast wants to edit, not changed
+     * @return the positions a listener took out, empty when all are allowed
+     */
+    protected Set<BlockPos> deniedBlockEdits(Collection<BlockPos> positions)
+    {
+        return BlastProtection.denied(world, asVanillaExplosion(), positions);
+    }
+
     public float getBlockResistance(BlockPos pos, BlockState state)
     {
         return state.getExplosionResistance(world, pos, asVanillaExplosion());
@@ -477,6 +510,14 @@ public abstract class Blast implements IBlastInit, IBlastRestore
                 SoundSource.BLOCKS,
                 4.0F,
                 (1.0F + (this.world.random.nextFloat() - this.world.random.nextFloat()) * 0.2F) * 0.7F);
+    }
+
+    /**
+     * @return radius of ship blocks this blast breaks, see {@link SableProxy#damageShips}. 0 for blasts that don't break blocks
+     */
+    protected float getShipDamageRadius()
+    {
+        return 0;
     }
 
     /**

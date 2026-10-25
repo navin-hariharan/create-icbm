@@ -6,6 +6,7 @@ import com.createicbm.config.ConfigDebug;
 import com.createicbm.config.blast.ConfigBlast;
 import com.createicbm.config.blast.types.ConfigAntimatter;
 import com.createicbm.content.blast.BlastHelpers;
+import com.createicbm.content.blast.BlastProtection;
 import com.createicbm.content.blast.redmatter.EntityRedmatter;
 import com.createicbm.lib.transform.BlockEditHandler;
 import net.minecraft.world.level.block.FallingBlock;
@@ -18,6 +19,7 @@ import com.createicbm.content.blast.helpers.BlastBlockHelpers;
 import java.util.concurrent.ThreadLocalRandom;
 
 import java.util.List;
+import java.util.Set;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
@@ -36,14 +38,16 @@ public class BlastAntimatter extends BlastThreaded
     @Override
     public void destroyBlock(BlockPos blockPos)
     {
-        final BlockState blockState = world.getBlockState(blockPos);
-        if (!blockState.isAir())
+        if (willEditBlock(blockPos, world.getBlockState(blockPos)))
         {
-            if (blockState.getDestroySpeed(world, blockPos) >= 0 || ConfigBlast.antimatter.damageUnbreakable)
-            {
-                world.setBlock(blockPos, replaceState, ConfigBlast.BLAST_DO_BLOCKUPDATES ? 3 : 2);
-            }
+            world.setBlock(blockPos, replaceState, ConfigBlast.BLAST_DO_BLOCKUPDATES ? 3 : 2);
         }
+    }
+
+    @Override
+    protected boolean willEditBlock(BlockPos pos, BlockState state)
+    {
+        return !state.isAir() && (ConfigBlast.antimatter.damageUnbreakable || state.getDestroySpeed(world, pos) >= 0);
     }
 
     @Override
@@ -104,8 +108,17 @@ public class BlastAntimatter extends BlastThreaded
 
         long time = System.currentTimeMillis();
 
-        //Remove any blocks that could cause issues when queued
-        removeFirst.forEach(blockPos -> world.setBlock(blockPos, replaceState, 2));
+        //Remove any blocks that could cause issues when queued, minus the ones claim and protection mods guard
+        final Set<BlockPos> denied = BlastProtection.denied(world, asVanillaExplosion(), removeFirst.stream()
+                .filter(pos -> !world.getBlockState(pos).isAir())
+                .collect(Collectors.toList()));
+        for (BlockPos blockPos : removeFirst)
+        {
+            if (!denied.contains(blockPos))
+            {
+                world.setBlock(blockPos, replaceState, 2);
+            }
+        }
 
         time = System.currentTimeMillis() - time;
         if(ConfigDebug.DEBUG_EXPLOSIVES) {
@@ -114,8 +127,8 @@ public class BlastAntimatter extends BlastThreaded
 
         time = System.currentTimeMillis();
 
-        //Queue edits, even the ones from the previous
-        BlockEditHandler.queue(world, edits, this::destroyBlock);
+        //Queue edits, even the ones from the previous, each batch is checked against claims when applied
+        BlockEditHandler.queueBatches(world, edits, this::applyEdits, null);
 
         time = System.currentTimeMillis() - time;
         if(ConfigDebug.DEBUG_EXPLOSIVES) {
@@ -182,5 +195,11 @@ public class BlastAntimatter extends BlastThreaded
         }
 
         return false;
+    }
+
+    @Override
+    protected float getShipDamageRadius()
+    {
+        return getBlastRadius();
     }
 }

@@ -1,6 +1,8 @@
 package com.createicbm.content.blast.threaded;
 
+import com.createicbm.config.blast.ConfigBlast;
 import com.createicbm.content.blast.Blast;
+import com.createicbm.content.blast.BlastProtection;
 import com.createicbm.lib.explosive.ThreadWorkBlast;
 import com.createicbm.lib.thread.IThreadWork;
 import com.createicbm.lib.thread.WorkerThreadManager;
@@ -10,8 +12,10 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Set;
 import java.util.function.Consumer;
 
 /**
@@ -73,18 +77,55 @@ public abstract class BlastThreaded extends Blast
 
                 if (skipQueue())
                 {
-                    edits.forEach(blockPos -> destroyBlock(blockPos));
+                    applyEdits(edits);
                 }
                 else
                 {
-                    //Queue edits
-                    BlockEditHandler.queue(world, edits, blockPos -> destroyBlock(blockPos));
+                    //Queue edits, each batch is checked against claims right before it is applied
+                    BlockEditHandler.queueBatches(world, edits, this::applyEdits, null);
                 }
 
                 //Notify blast we have entered world again
                 onPostThreadJoinWorld();
             });
         }
+    }
+
+    /**
+     * Applies a batch of edits. Claim and protection mods are asked about the blocks that will really change, as they
+     * are now, so a big blast spread over many ticks still respects claims made or blocks placed meanwhile.
+     */
+    protected void applyEdits(List<BlockPos> batch)
+    {
+        if (!ConfigBlast.PROTECTION_EVENTS)
+        {
+            batch.forEach(this::destroyBlock);
+            return;
+        }
+        final List<BlockPos> changing = new ArrayList<>(batch.size());
+        for (BlockPos pos : batch)
+        {
+            if (willEditBlock(pos, world.getBlockState(pos)))
+            {
+                changing.add(pos);
+            }
+        }
+        final Set<BlockPos> denied = BlastProtection.denied(world, asVanillaExplosion(), changing);
+        for (BlockPos pos : changing)
+        {
+            if (!denied.contains(pos))
+            {
+                destroyBlock(pos);
+            }
+        }
+    }
+
+    /**
+     * @return true if {@link #destroyBlock(BlockPos)} would change the block, only those are checked against claims
+     */
+    protected boolean willEditBlock(BlockPos pos, BlockState state)
+    {
+        return !state.isAir();
     }
 
     protected boolean skipQueue()
@@ -114,7 +155,7 @@ public abstract class BlastThreaded extends Blast
     public void destroyBlock(BlockPos pos)
     {
         BlockState state = this.world().getBlockState(pos);
-        if (!state.isAir())
+        if (willEditBlock(pos, state))
         {
             state.onBlockExploded(this.world(), pos, asVanillaExplosion());
         }

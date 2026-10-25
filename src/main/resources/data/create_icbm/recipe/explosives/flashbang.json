@@ -9,22 +9,22 @@
       }
     },
     {
-      "item": "minecraft:glowstone_dust"
+      "tag": "c:dusts/glowstone"
     },
     {
-      "item": "minecraft:glowstone_dust"
+      "tag": "c:dusts/glowstone"
     },
     {
-      "item": "minecraft:glowstone_dust"
+      "tag": "c:dusts/glowstone"
     },
     {
-      "item": "minecraft:glowstone_dust"
+      "tag": "c:dusts/glowstone"
     },
     {
-      "item": "minecraft:gunpowder"
+      "tag": "c:gunpowders"
     },
     {
-      "item": "minecraft:gunpowder"
+      "tag": "c:gunpowders"
     }
   ],
   "results": [

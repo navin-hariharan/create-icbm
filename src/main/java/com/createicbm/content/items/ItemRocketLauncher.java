@@ -12,6 +12,7 @@ import com.createicbm.content.missile.logic.flight.move.MoveByVec3Logic;
 import com.createicbm.content.missile.logic.source.ActionSource;
 import com.createicbm.content.missile.logic.source.cause.EntityCause;
 import com.createicbm.content.missile.logic.targeting.BasicTargetData;
+import com.createicbm.mods.sable.SableProxy;
 import com.createicbm.prefab.item.ItemICBMElectrical;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.InteractionHand;
@@ -125,7 +126,7 @@ public class ItemRocketLauncher extends ItemICBMElectrical
                                 // Raytrace to set a default target for air-burst missiles
                                 final double traceDistance = 500;
                                 final Vec3 rayEnd = eyePos.add(lookVector.x * traceDistance, lookVector.y * traceDistance, lookVector.z * traceDistance);
-                                final HitResult rayTraceResult = world.clip(new ClipContext(eyePos, rayEnd, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, player));
+                                final HitResult rayTraceResult = SableProxy.INSTANCE.toWorld(world, world.clip(new ClipContext(eyePos, rayEnd, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, player)));
 
                                 if(rayTraceResult != null && rayTraceResult.getType() != HitResult.Type.MISS) {
 
@@ -141,6 +142,9 @@ public class ItemRocketLauncher extends ItemICBMElectrical
                                 }
 
                                 missile.launch();
+
+                                // Fired from a moving Sable ship the missile keeps the ship's speed, like an arrow does
+                                missileEntity.setDeltaMovement(missileEntity.getDeltaMovement().add(SableProxy.INSTANCE.getShipVelocity(player)));
 
                                 //Spawn entity into world
                                 if(world.addFreshEntity(missileEntity))

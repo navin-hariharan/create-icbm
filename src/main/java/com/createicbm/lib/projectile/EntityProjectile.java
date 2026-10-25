@@ -11,6 +11,7 @@ import com.createicbm.lib.saving.NbtSaveHandler;
 import com.createicbm.lib.transform.vector.Pos;
 import com.createicbm.lib.world.IProjectileBlockInteraction;
 import com.createicbm.lib.world.ProjectileBlockInteraction;
+import com.createicbm.mods.sable.SableProxy;
 import com.createicbm.prefab.entity.EntityICBM;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -237,7 +238,8 @@ public abstract class EntityProjectile<PROJECTILE extends EntityProjectile<PROJE
                 final double scale = (velocity + 1) / velocity;
                 final Vec3 blockRayStart = new Vec3(this.getX(), this.getY(), this.getZ());
                 final Vec3 blockRayEnd = new Vec3(this.getX() + motion.x * scale, this.getY() + motion.y * scale, this.getZ() + motion.z * scale);
-                final BlockHitResult blockHit = this.level().clip(new ClipContext(blockRayStart, blockRayEnd, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, this));
+                // Hits on a Sable ship come back in its plot far away, moving there made the projectile vanish
+                final BlockHitResult blockHit = SableProxy.INSTANCE.toWorld(level(), this.level().clip(new ClipContext(blockRayStart, blockRayEnd, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, this)));
                 if (blockHit.getType() != HitResult.Type.MISS)
                 {
                     rayHit = blockHit;
@@ -417,7 +419,7 @@ public abstract class EntityProjectile<PROJECTILE extends EntityProjectile<PROJE
 
         final float mag = (float) Math.sqrt(deltaX * deltaX + deltaY * deltaY + deltaZ * deltaZ);
         final double vecX = (deltaX / (double) mag) * offset;
-        final double vecY = (deltaX / (double) mag) * offset;
+        final double vecY = (deltaY / (double) mag) * offset;
         final double vecZ = (deltaZ / (double) mag) * offset;
 
         setPos(hit.x + vecX, hit.y + vecY, hit.z + vecZ);

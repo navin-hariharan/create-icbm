@@ -9,28 +9,28 @@
       }
     },
     {
-      "item": "minecraft:red_dye"
+      "tag": "c:dyes/red"
     },
     {
-      "item": "minecraft:red_dye"
+      "tag": "c:dyes/red"
     },
     {
-      "item": "minecraft:yellow_dye"
+      "tag": "c:dyes/yellow"
     },
     {
-      "item": "minecraft:yellow_dye"
+      "tag": "c:dyes/yellow"
     },
     {
-      "item": "minecraft:green_dye"
+      "tag": "c:dyes/green"
     },
     {
-      "item": "minecraft:green_dye"
+      "tag": "c:dyes/green"
     },
     {
-      "item": "minecraft:blue_dye"
+      "tag": "c:dyes/blue"
     },
     {
-      "item": "minecraft:blue_dye"
+      "tag": "c:dyes/blue"
     }
   ],
   "results": [

@@ -6,7 +6,7 @@
       "item": "create:electron_tube"
     },
     "S": {
-      "item": "create:iron_sheet"
+      "tag": "c:plates/iron"
     },
     "E": {
       "type": "neoforge:components",

@@ -3,10 +3,10 @@
   "category": "misc",
   "key": {
     "K": {
-      "item": "create:copper_sheet"
+      "tag": "c:plates/copper"
     },
     "G": {
-      "item": "minecraft:gunpowder"
+      "tag": "c:gunpowders"
     },
     "C": {
       "type": "neoforge:components",

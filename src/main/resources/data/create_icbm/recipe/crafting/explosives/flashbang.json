@@ -3,10 +3,10 @@
   "category": "misc",
   "key": {
     "G": {
-      "item": "minecraft:glowstone_dust"
+      "tag": "c:dusts/glowstone"
     },
     "P": {
-      "item": "minecraft:gunpowder"
+      "tag": "c:gunpowders"
     },
     "X": {
       "type": "neoforge:components",

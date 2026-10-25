@@ -3,13 +3,13 @@
   "category": "redstone",
   "key": {
     "S": {
-      "item": "create:iron_sheet"
+      "tag": "c:plates/iron"
     },
     "K": {
-      "item": "create:copper_sheet"
+      "tag": "c:plates/copper"
     },
     "R": {
-      "item": "minecraft:redstone"
+      "tag": "c:dusts/redstone"
     },
     "C": {
       "item": "create:copper_casing"

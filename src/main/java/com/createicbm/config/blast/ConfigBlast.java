@@ -126,6 +126,10 @@ public class ConfigBlast
     @Config.RangeInt(min = 1, max = 1000)
     public static int BLOCK_EDIT_MS_PER_TICK = 20;
 
+    @Config.Name("protection_events")
+    @Config.Comment("Asks claim and protection mods (FTB Chunks, Open Parties and Claims, ...) about every block a blast edits, through the explosion event they already listen to.\nWithout it only TNT style blasts honour claims. Turn off if a mod that rebuilds explosion damage (creeper healing) also rebuilds nuclear craters.")
+    public static boolean PROTECTION_EVENTS = true;
+
     @Config.Name("block_effects_per_blast")
     @Config.Comment("Most debris effect packets a TNT style blast (condensed, repulsive, attractive...) sends, it was one per destroyed block. 0 turns the debris effect off.")
     @Config.RangeInt(min = 0, max = 100000)

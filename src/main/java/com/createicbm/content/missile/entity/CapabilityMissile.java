@@ -13,6 +13,7 @@ import com.createicbm.content.missile.logic.source.MissileSender;
 import com.createicbm.lib.CalculationHelpers;
 import com.createicbm.lib.radar.RadarRegistry;
 import com.createicbm.lib.saving.NbtSaveHandler;
+import com.createicbm.mods.sable.SableProxy;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
@@ -147,6 +148,12 @@ public class CapabilityMissile implements IMissile, INBTSerializable<CompoundTag
     @Override
     public void launch()
     {
+        // A launcher on a Sable ship spawns its missile in the ship's plot, the flight path has to start from the world
+        if (!world().isClientSide())
+        {
+            SableProxy.INSTANCE.moveToWorld(missile);
+        }
+
         //Tell missile to start moving
         this.doFlight = true;
         triggerFlightLogic();

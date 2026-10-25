@@ -9,7 +9,7 @@
       "item": "create:electron_tube"
     },
     "I": {
-      "item": "create:iron_sheet"
+      "tag": "c:plates/iron"
     },
     "B": {
       "item": "minecraft:stone_button"

@@ -4,7 +4,7 @@
   "category": "misc",
   "key": {
     "G": {
-      "item": "minecraft:glass"
+      "tag": "c:glass_blocks/colorless"
     },
     "E": {
       "item": "create:electron_tube"
@@ -16,7 +16,7 @@
       "item": "create:analog_lever"
     },
     "S": {
-      "item": "create:copper_sheet"
+      "tag": "c:plates/copper"
     }
   },
   "pattern": [

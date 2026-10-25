@@ -260,4 +260,10 @@ public class BlastNuclear extends BlastThreaded {
             }
         }
     }
+
+    @Override
+    protected float getShipDamageRadius()
+    {
+        return getBlastRadius();
+    }
 }

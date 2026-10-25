@@ -4,10 +4,10 @@
   "category": "misc",
   "key": {
     "B": {
-      "item": "create:brass_sheet"
+      "tag": "c:plates/brass"
     },
     "G": {
-      "item": "create:golden_sheet"
+      "tag": "c:plates/gold"
     },
     "P": {
       "item": "create:precision_mechanism"

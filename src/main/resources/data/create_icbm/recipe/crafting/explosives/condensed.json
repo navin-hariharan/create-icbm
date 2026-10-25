@@ -6,10 +6,10 @@
       "item": "minecraft:tnt"
     },
     "S": {
-      "item": "create:iron_sheet"
+      "tag": "c:plates/iron"
     },
     "R": {
-      "item": "minecraft:redstone"
+      "tag": "c:dusts/redstone"
     },
     "A": {
       "item": "create:andesite_alloy"

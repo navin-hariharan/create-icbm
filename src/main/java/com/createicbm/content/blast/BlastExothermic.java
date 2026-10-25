@@ -5,6 +5,7 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.GameRules;
 import net.minecraft.server.level.ServerLevel;
@@ -12,6 +13,7 @@ import net.minecraft.world.level.block.BaseFireBlock;
 import com.createicbm.content.blast.helpers.BlastBlockHelpers;
 
 import java.util.List;
+import java.util.Set;
 
 public class BlastExothermic extends BlastBeam
 {
@@ -28,6 +30,7 @@ public class BlastExothermic extends BlastBeam
         final double radius = this.getBlastRadius();
         final double radiusDecay = Math.max(1, radius * 0.3); //TODO config
         final double radiusEnsured = Math.max(1, radius * 0.1); //TODO config
+        final Set<BlockPos> denied = deniedNeighbourEdits(edits, Direction.UP, Direction.DOWN);
         for (BlockPos targetPosition : edits)
         {
             final double delta_x = location.xi() - targetPosition.getX();
@@ -73,12 +76,15 @@ public class BlastExothermic extends BlastBeam
                     //Coin flip to turn to magma
                     else if (this.world().random.nextBoolean()) //TODO add config
                     {
-                        this.world().setBlock(targetPosition.below(), Blocks.MAGMA_BLOCK.defaultBlockState(), 3);
+                        if (!denied.contains(targetPosition.below()))
+                        {
+                            this.world().setBlock(targetPosition.below(), Blocks.MAGMA_BLOCK.defaultBlockState(), 3);
+                        }
                     }
                     //Coin flip to turn to netherrack
                     else if (this.world().random.nextBoolean() || distance <= radiusEnsured) //TODO add config
                     {
-                        placeNetherrack(world, targetPosition);
+                        placeNetherrack(world, targetPosition, denied);
                     }
                 }
 
@@ -87,30 +93,33 @@ public class BlastExothermic extends BlastBeam
                 {
                     if (this.world().random.nextBoolean()) //TODO add config
                     {
-                        this.world().setBlock(targetPosition.below(), Blocks.SOUL_SAND.defaultBlockState(), 3);
+                        if (!denied.contains(targetPosition.below()))
+                        {
+                            this.world().setBlock(targetPosition.below(), Blocks.SOUL_SAND.defaultBlockState(), 3);
+                        }
                     }
                     else
                     {
-                        placeNetherrack(world, targetPosition);
+                        placeNetherrack(world, targetPosition, denied);
                     }
                 }
 
                 //Ground replacement
                 else if (BlastBlockHelpers.isGroundMaterial(blockState))
                 {
-                    placeNetherrack(world, targetPosition);
+                    placeNetherrack(world, targetPosition, denied);
                 }
 
                 //Randomly place fire TODO move to outside mutate so we always place fire while charging up
                 if (Math.random() < distanceScale)
                 {
-                    tryPlaceFire(world, targetPosition.above(), false);
+                    tryPlaceFire(world, targetPosition.above(), false, denied);
                 }
             }
         }
     }
 
-    private static void placeNetherrack(Level world, BlockPos pos)
+    private static void placeNetherrack(Level world, BlockPos pos, Set<BlockPos> denied)
     {
         if (!world.setBlock(pos, Blocks.NETHERRACK.defaultBlockState(), 3))
         {
@@ -118,12 +127,12 @@ public class BlastExothermic extends BlastBeam
         }
 
         //Place fire randomly above netherrack
-        tryPlaceFire(world, pos.above(), true);
+        tryPlaceFire(world, pos.above(), true, denied);
     }
 
-    private static void tryPlaceFire(Level world, BlockPos pos, boolean random)
+    private static void tryPlaceFire(Level world, BlockPos pos, boolean random, Set<BlockPos> denied)
     {
-        if (!random || world.random.nextBoolean())
+        if (!denied.contains(pos) && (!random || world.random.nextBoolean()))
         {
             //Place fire
             final BlockState blockState = world.getBlockState(pos);

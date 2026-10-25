@@ -7,6 +7,9 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.BaseFireBlock;
 import net.minecraft.core.BlockPos;
 
+import java.util.LinkedHashMap;
+import java.util.Map;
+
 public class BlastFire extends Blast
 {
     public BlastFire()
@@ -19,6 +22,8 @@ public class BlastFire extends Blast
         if (!this.world().isClientSide())
         {
             int radius = (int) this.getBlastRadius();
+            // Collected first so claim and protection mods can take out what they guard, see filterBlockEdits
+            final Map<BlockPos, BlockState> fireEdits = new LinkedHashMap<>();
 
             for (int x = 0; x < radius; ++x) //TODO replace with edge-raytracer
             {
@@ -66,11 +71,11 @@ public class BlastFire extends Blast
 
                                         if (canReplace && fireState.canSurvive(world(), targetPosition))
                                         {
-                                            world.setBlock(targetPosition, fireState, 3);
+                                            fireEdits.put(targetPosition, fireState);
                                         }
                                         else if (block == Blocks.ICE)
                                         {
-                                            world.removeBlock(targetPosition, false);
+                                            fireEdits.put(targetPosition, Blocks.AIR.defaultBlockState());
                                         }
                                     }
                                 }
@@ -83,6 +88,19 @@ public class BlastFire extends Blast
                     }
                 }
             }
+
+            filterBlockEdits(fireEdits.keySet());
+            fireEdits.forEach((pos, state) ->
+            {
+                if (state.isAir())
+                {
+                    world.removeBlock(pos, false);
+                }
+                else
+                {
+                    world.setBlock(pos, state, 3);
+                }
+            });
         }
 
         ICBMSounds.EXPLOSION_FIRE.play(world, location.x() + 0.5D, location.y() + 0.5D, location.z() + 0.5D, 4.0F, (1.0F + (world().random.nextFloat() - world().random.nextFloat()) * 0.2F) * 1F, true);

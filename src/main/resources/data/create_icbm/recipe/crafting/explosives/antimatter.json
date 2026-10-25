@@ -3,7 +3,7 @@
   "category": "misc",
   "key": {
     "S": {
-      "item": "minecraft:nether_star"
+      "tag": "c:nether_stars"
     },
     "P": {
       "item": "create:precision_mechanism"

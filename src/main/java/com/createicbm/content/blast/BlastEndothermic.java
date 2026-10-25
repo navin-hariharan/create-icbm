@@ -19,6 +19,7 @@ import com.createicbm.content.blast.helpers.BlastBlockHelpers;
 
 import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 
 public class BlastEndothermic extends BlastBeam
 {
@@ -34,6 +35,7 @@ public class BlastEndothermic extends BlastBeam
     {
         final double radius = this.getBlastRadius();
         final double radiusDecay = Math.max(1, radius * 0.3); //TODO config
+        final Set<BlockPos> denied = deniedNeighbourEdits(edits, Direction.UP);
         for (BlockPos targetPosition : edits)
         {
             final double delta_x = location.xi() - targetPosition.getX();
@@ -102,7 +104,7 @@ public class BlastEndothermic extends BlastBeam
                 }
 
                 //Randomly place fire TODO move to outside mutate so we always place snow while charging up
-                if (Math.random() < distanceScale)
+                if (Math.random() < distanceScale && !denied.contains(targetPosition.above()))
                 {
                     tryPlaceSnow(world, targetPosition.above(), false);
                 }

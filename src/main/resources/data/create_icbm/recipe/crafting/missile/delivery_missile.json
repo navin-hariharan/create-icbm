@@ -3,13 +3,13 @@
   "category": "misc",
   "key": {
     "C": {
-      "item": "minecraft:chest"
+      "tag": "c:chests/wooden"
     },
     "A": {
       "item": "create:andesite_alloy"
     },
     "B": {
-      "item": "create:brass_sheet"
+      "tag": "c:plates/brass"
     },
     "M": {
       "type": "neoforge:components",

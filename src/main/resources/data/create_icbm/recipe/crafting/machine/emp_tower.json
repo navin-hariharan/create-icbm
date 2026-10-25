@@ -3,7 +3,7 @@
   "category": "redstone",
   "key": {
     "K": {
-      "item": "create:copper_sheet"
+      "tag": "c:plates/copper"
     },
     "Q": {
       "item": "create:polished_rose_quartz"

@@ -8,6 +8,7 @@ import com.createicbm.api.tile.IRotatable;
 import com.createicbm.content.missile.logic.source.ActionSource;
 import com.createicbm.content.missile.logic.source.cause.EntityCause;
 import com.createicbm.content.reg.EntityReg;
+import com.createicbm.lib.EntityTicking;
 import com.createicbm.lib.NBTConstants;
 import com.createicbm.lib.capability.emp.CapabilityEmpKill;
 import com.createicbm.lib.capability.ex.CapabilityExplosiveEntity;
@@ -47,6 +48,7 @@ public class EntityExplosive extends Entity implements IRotatable, IEntityWithCo
     public EntityExplosive(EntityType<? extends EntityExplosive> type, Level level)
     {
         super(type, level);
+        EntityTicking.keepTicking(this);
         this.blocksBuilding = true;
     }
 

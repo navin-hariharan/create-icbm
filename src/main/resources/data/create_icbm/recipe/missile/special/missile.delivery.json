@@ -4,7 +4,7 @@
   "category": "misc",
   "key": {
     "C": {
-      "item": "minecraft:chest"
+      "tag": "c:chests/wooden"
     },
     "A": {
       "item": "create:andesite_alloy"

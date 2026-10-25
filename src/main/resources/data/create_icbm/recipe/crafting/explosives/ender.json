@@ -3,10 +3,10 @@
   "category": "misc",
   "key": {
     "N": {
-      "item": "minecraft:end_stone"
+      "tag": "c:end_stones"
     },
     "P": {
-      "item": "minecraft:ender_pearl"
+      "tag": "c:ender_pearls"
     },
     "E": {
       "item": "minecraft:ender_eye"

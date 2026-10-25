@@ -53,6 +53,10 @@ public class ConfigMissile
     @Config.RangeInt(min = 0)
     public static int HANDHELD_FUEL = 200;
 
+    @Config.Name("direct_fire_chunk_loading")
+    @Config.Comment("Missiles flying in a straight line (handheld and cruise launchers) keep the chunks just ahead of them loaded, so they don't freeze and vanish at the edge of the simulation distance")
+    public static boolean DIRECT_FIRE_CHUNK_LOADING = true;
+
     @Config.Name("health_tier_1")
     @Config.Comment("Amount of damage a missile can take from any source before death")
     @Config.RangeInt(min = 1)

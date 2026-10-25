@@ -32,10 +32,17 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.phys.Vec3;
 
+import com.createicbm.content.blast.BlastProtection;
+import net.minecraft.world.level.Explosion;
+import net.minecraft.world.level.Level;
 import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Queue;
+import java.util.Set;
 
 /**
  * Handles logic of the redmatter tick
@@ -190,11 +197,13 @@ public class RedmatterLogic
     {
         //Loop targets and trace limit per tick
         final Vec3 center = host.position();
+        candidates.clear();
         while (!shouldStopBreakingBlocks() && !rayTraceTargets.isEmpty())
         {
             raytracesThisTick++;
             rayTraceTowardsBlock(center, rayTraceTargets.poll());
         }
+        removeCandidates();
     }
 
     /** Triggers the next block cycle finding all raytrace paths */
@@ -261,7 +270,7 @@ public class RedmatterLogic
     protected boolean shouldStopBreakingBlocks()
     {
         return raytracesThisTick > ConfigBlast.redmatter.DEFAULT_BLOCK_RAYTRACE_PER_TICK
-                || blockDestroyedThisTick > getBlocksPerTick()
+                || blockDestroyedThisTick + candidates.size() > getBlocksPerTick()
                 || host.isRemoved();
     }
 
@@ -275,42 +284,80 @@ public class RedmatterLogic
         final double dist = Math.sqrt(host.distanceToSqr(Vec3.atCenterOf(blockPos)));
 
         //We are looping in a shell orbit around the center
-        if (dist < (this.currentBlockDestroyRadius + 1))
+        if (dist < (this.currentBlockDestroyRadius + 1) && !candidates.containsKey(blockPos))
         {
             final BlockCaptureData blockCaptureData = new BlockCaptureData(host.level(), blockPos);
             if (shouldRemoveBlock(blockPos, blockCaptureData.getBlockState())) //TODO calculate a pressure or pull force to destroy weaker blocks before stronger blocks
             {
-                //TODO handle multi-blocks
-                //TODO: render fluid streams moving into hole
-
-                if (host.level().setBlock(blockPos, Blocks.AIR.defaultBlockState(), 3))
-                {
-                    //Freeze fluid blocks to improve pull rate
-                    if (blockCaptureData.getBlockState().getBlock() == Blocks.WATER)
-                    {
-                        freezeWaterAround(blockPos);
-                    }
-
-                    //Convert a random amount of destroyed blocks into flying blocks for visuals
-                    if (canTurnIntoFlyingBlock(blockCaptureData.getBlockState()) && host.level().random.nextFloat() > ConfigBlast.redmatter.CHANCE_FOR_FLYING_BLOCK)
-                    {
-                        spawnFlyingBlock(blockPos, blockCaptureData);
-                    }
-                    markBlockRemoved();
-                }
+                //Removed at the end of the tick, once claim and protection mods were asked about all of them
+                candidates.put(blockPos.immutable(), blockCaptureData);
             }
         }
     }
 
-    private void freezeWaterAround(BlockPos pos) //TODO convert to map<Block, Action> to allow introducing more effects
+    /**
+     * Removes the blocks found this tick. Claim and protection mods are asked about all of them in one go, through the
+     * explosion event they listen to, centered where the redmatter is now.
+     */
+    protected void removeCandidates()
     {
-        for (Direction side : Direction.values())
+        if (candidates.isEmpty())
         {
-            final BlockPos blockPos = pos.relative(side);
-            final BlockState blockState = host.level().getBlockState(blockPos);
-            if (blockState.getBlock() == Blocks.WATER)
+            return;
+        }
+        final Level level = host.level();
+        final Explosion explosion = ConfigBlast.PROTECTION_EVENTS ? createProtectionExplosion() : null;
+        final Set<BlockPos> denied = explosion != null ? BlastProtection.denied(level, explosion, candidates.keySet()) : Collections.emptySet();
+        final Set<BlockPos> freeze = new LinkedHashSet<>();
+
+        for (Map.Entry<BlockPos, BlockCaptureData> entry : candidates.entrySet())
+        {
+            final BlockPos blockPos = entry.getKey();
+            final BlockCaptureData blockCaptureData = entry.getValue();
+            if (denied.contains(blockPos))
             {
-                host.level().setBlock(blockPos, Blocks.ICE.defaultBlockState(), 3); //TODO turn into fake ice that melts randomly
+                continue;
+            }
+
+            //TODO handle multi-blocks
+            //TODO: render fluid streams moving into hole
+            if (level.setBlock(blockPos, Blocks.AIR.defaultBlockState(), 3))
+            {
+                //Freeze fluid blocks to improve pull rate
+                if (blockCaptureData.getBlockState().getBlock() == Blocks.WATER)
+                {
+                    for (Direction side : Direction.values())
+                    {
+                        freeze.add(blockPos.relative(side));
+                    }
+                }
+
+                //Convert a random amount of destroyed blocks into flying blocks for visuals
+                if (canTurnIntoFlyingBlock(blockCaptureData.getBlockState()) && level.random.nextFloat() > ConfigBlast.redmatter.CHANCE_FOR_FLYING_BLOCK)
+                {
+                    spawnFlyingBlock(blockPos, blockCaptureData);
+                }
+                markBlockRemoved();
+            }
+        }
+        candidates.clear();
+
+        if (!freeze.isEmpty())
+        {
+            freezeWater(freeze, explosion);
+        }
+    }
+
+    private void freezeWater(Set<BlockPos> positions, Explosion explosion) //TODO convert to map<Block, Action> to allow introducing more effects
+    {
+        final Level level = host.level();
+        positions.removeIf(pos -> level.getBlockState(pos).getBlock() != Blocks.WATER);
+        final Set<BlockPos> denied = explosion != null ? BlastProtection.denied(level, explosion, positions) : Collections.emptySet();
+        for (BlockPos blockPos : positions)
+        {
+            if (!denied.contains(blockPos))
+            {
+                level.setBlock(blockPos, Blocks.ICE.defaultBlockState(), 3); //TODO turn into fake ice that melts randomly
             }
         }
     }
@@ -337,6 +384,17 @@ public class RedmatterLogic
                 && (BlastBlockHelpers.isFlowingWater(blockState) || !isFluid && blockState.getDestroySpeed(host.level(), blockPos) >= 0);
 
     }
+
+    /**
+     * @return explosion carrying the redmatter as the source of the claim check, at its current position, never exploded
+     */
+    protected Explosion createProtectionExplosion()
+    {
+        return new Explosion(host.level(), host, host.getX(), host.getY(), host.getZ(), Math.max(1, host.getBlastSize()), false, Explosion.BlockInteraction.DESTROY);
+    }
+
+    /** Blocks found this tick in the order the rays hit them, removed together by {@link #removeCandidates()} */
+    private final Map<BlockPos, BlockCaptureData> candidates = new LinkedHashMap<>();
 
     protected boolean canTurnIntoFlyingBlock(BlockState blockState)
     {

@@ -8,6 +8,7 @@ import com.createicbm.lib.network.IPacketIDReceiver;
 import com.createicbm.lib.network.packet.PacketPlayerItem;
 import com.createicbm.lib.radio.RadioRegistry;
 import com.createicbm.lib.radio.messages.TriggerActionTargetMessage;
+import com.createicbm.mods.sable.SableProxy;
 import com.createicbm.prefab.FakeRadioSender;
 import com.createicbm.prefab.item.ItemRadio;
 import io.netty.buffer.ByteBuf;
@@ -55,7 +56,7 @@ public class ItemLaserDetonator extends ItemRadio implements IPacketIDReceiver
         if (world.isClientSide() && clientCooldownTicks <= 0)
         {
             clientCooldownTicks = COOLDOWN;
-            final HitResult objectMouseOver = player.pick(RANGE, 1, false);
+            final HitResult objectMouseOver = SableProxy.INSTANCE.toWorld(world, player.pick(RANGE, 1, false));
             if (objectMouseOver.getType() != HitResult.Type.MISS && objectMouseOver instanceof BlockHitResult blockHit) // ignore failed raytraces
             {
                 final BlockEntity tileEntity = world.getBlockEntity(blockHit.getBlockPos());

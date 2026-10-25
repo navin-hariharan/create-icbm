@@ -4,16 +4,16 @@
   "category": "misc",
   "key": {
     "S": {
-      "item": "create:iron_sheet"
+      "tag": "c:plates/iron"
     },
     "R": {
-      "item": "minecraft:redstone"
+      "tag": "c:dusts/redstone"
     },
     "C": {
       "item": "create:copper_casing"
     },
     "G": {
-      "item": "create:golden_sheet"
+      "tag": "c:plates/gold"
     }
   },
   "pattern": [

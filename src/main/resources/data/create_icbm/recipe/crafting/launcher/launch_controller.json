@@ -15,7 +15,7 @@
       "item": "create:analog_lever"
     },
     "K": {
-      "item": "create:copper_sheet"
+      "tag": "c:plates/copper"
     }
   },
   "pattern": [

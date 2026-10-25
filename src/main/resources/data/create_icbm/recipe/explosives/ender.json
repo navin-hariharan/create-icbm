@@ -22,16 +22,16 @@
       "item": "minecraft:ender_eye"
     },
     {
-      "item": "minecraft:end_stone"
+      "tag": "c:end_stones"
     },
     {
-      "item": "minecraft:end_stone"
+      "tag": "c:end_stones"
     },
     {
-      "item": "minecraft:end_stone"
+      "tag": "c:end_stones"
     },
     {
-      "item": "minecraft:end_stone"
+      "tag": "c:end_stones"
     }
   ],
   "results": [

@@ -1,0 +1,10 @@
+{
+  "replace": false,
+  "values": [
+    "create_icbm:holder.explosion",
+    "create_icbm:beam.light",
+    "create_icbm:holder.seat",
+    "create_icbm:redmatter",
+    "create_icbm:smoke"
+  ]
+}

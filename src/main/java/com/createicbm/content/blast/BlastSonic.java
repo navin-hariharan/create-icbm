@@ -22,6 +22,8 @@ import java.util.List;
 public class BlastSonic extends Blast implements IBlastTickable
 {
     private boolean hasShockWave = false;
+    /** Claim and protection mods were asked about the blocks the thread found, see {@link #filterBlockEdits} */
+    private boolean protectionChecked = false;
 
     public BlastSonic()
     {
@@ -54,6 +56,11 @@ public class BlastSonic extends Blast implements IBlastTickable
         {
             if (isThreadCompleted())
             {
+                if (!protectionChecked)
+                {
+                    protectionChecked = true;
+                    filterBlockEdits(getThreadResults());
+                }
                 if (!getThreadResults().isEmpty())
                 {
                     final Iterator<BlockPos> it = getThreadResults().iterator();

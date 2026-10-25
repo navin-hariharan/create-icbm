@@ -3,16 +3,16 @@
   "category": "misc",
   "key": {
     "R": {
-      "item": "minecraft:red_dye"
+      "tag": "c:dyes/red"
     },
     "Y": {
-      "item": "minecraft:yellow_dye"
+      "tag": "c:dyes/yellow"
     },
     "G": {
-      "item": "minecraft:green_dye"
+      "tag": "c:dyes/green"
     },
     "B": {
-      "item": "minecraft:blue_dye"
+      "tag": "c:dyes/blue"
     },
     "X": {
       "type": "neoforge:components",
@@ -22,16 +22,16 @@
       }
     },
     "O": {
-      "item": "minecraft:orange_dye"
+      "tag": "c:dyes/orange"
     },
     "P": {
-      "item": "minecraft:purple_dye"
+      "tag": "c:dyes/purple"
     },
     "M": {
-      "item": "minecraft:magenta_dye"
+      "tag": "c:dyes/magenta"
     },
     "L": {
-      "item": "minecraft:lime_dye"
+      "tag": "c:dyes/lime"
     }
   },
   "pattern": [

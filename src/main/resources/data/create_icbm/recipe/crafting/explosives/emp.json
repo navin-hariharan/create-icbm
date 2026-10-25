@@ -3,13 +3,13 @@
   "category": "misc",
   "key": {
     "K": {
-      "item": "create:copper_sheet"
+      "tag": "c:plates/copper"
     },
     "E": {
       "item": "create:electron_tube"
     },
     "R": {
-      "item": "minecraft:redstone_block"
+      "tag": "c:storage_blocks/redstone"
     },
     "S": {
       "type": "neoforge:components",

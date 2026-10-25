@@ -11,9 +11,11 @@ import net.neoforged.neoforge.event.level.LevelEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.bus.api.SubscribeEvent;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Queue;
 import java.util.function.Consumer;
 
@@ -117,34 +119,46 @@ public class BlockEditHandler
 
     public static void queue(Level world, Collection<BlockPos> edits, Consumer<BlockPos> onEditBlock, Runnable onCompleteCallback)
     {
+        queueBatches(world, edits, batch -> batch.forEach(onEditBlock), onCompleteCallback);
+    }
+
+    /**
+     * Like {@link #queue(Level, Collection, Consumer, Runnable)} but hands over each batch of positions at once, so
+     * work such as claim checks can be done once per batch, right before the blocks are edited
+     */
+    public static void queueBatches(Level world, Collection<BlockPos> edits, Consumer<List<BlockPos>> onEditBatch, Runnable onCompleteCallback)
+    {
         final ResourceKey<Level> dim = world.dimension();
         if (!worldToRemoveQueue.containsKey(dim))
         {
             worldToRemoveQueue.put(dim, new LinkedList<>());
         }
-        worldToRemoveQueue.get(dim).add(new EditQueue(edits, onEditBlock, onCompleteCallback));
+        worldToRemoveQueue.get(dim).add(new EditQueue(edits, onEditBatch, onCompleteCallback));
     }
 
     public static class EditQueue
     {
         final Queue<BlockPos> queue = new LinkedList<>();
-        final Consumer<BlockPos> onEditBlock;
+        final Consumer<List<BlockPos>> onEditBatch;
         final Runnable onCompleteCallback;
 
-        public EditQueue(Collection<BlockPos> edits, Consumer<BlockPos> onEditBlock, Runnable onCompleteCallback)
+        public EditQueue(Collection<BlockPos> edits, Consumer<List<BlockPos>> onEditBatch, Runnable onCompleteCallback)
         {
             queue.addAll(edits);
-            this.onEditBlock = onEditBlock;
+            this.onEditBatch = onEditBatch;
             this.onCompleteCallback = onCompleteCallback;
         }
 
         void doWork(int limit)
         {
-            int editsCount = 0;
-            while (editsCount <= limit && !queue.isEmpty())
+            final List<BlockPos> batch = new ArrayList<>(Math.min(limit + 1, queue.size()));
+            while (batch.size() <= limit && !queue.isEmpty())
             {
-                onEditBlock.accept(queue.poll());
-                editsCount++;
+                batch.add(queue.poll());
+            }
+            if (!batch.isEmpty())
+            {
+                onEditBatch.accept(batch);
             }
 
             if (queue.isEmpty() && onCompleteCallback != null)

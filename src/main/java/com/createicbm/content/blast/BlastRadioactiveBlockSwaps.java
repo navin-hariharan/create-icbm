@@ -33,4 +33,10 @@ public class BlastRadioactiveBlockSwaps extends BlastThreaded implements IBlastT
             replacement.apply(world, targetPosition);
         }
     }
+
+    @Override
+    protected boolean willEditBlock(BlockPos pos, BlockState state)
+    {
+        return RadioactiveHandler.radioactiveBlockSwaps.getValue(state) != null;
+    }
 }
