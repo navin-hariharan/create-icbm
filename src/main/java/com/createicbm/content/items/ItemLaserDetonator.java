@@ -5,6 +5,8 @@ import com.createicbm.api.CreateICBMHelpers;
 import com.createicbm.api.events.LaserRemoteTriggerEvent;
 import com.createicbm.lib.network.IPacket;
 import com.createicbm.lib.network.IPacketIDReceiver;
+import com.createicbm.lib.network.PacketRateLimit;
+import com.createicbm.api.data.IWorldPosition;
 import com.createicbm.lib.network.packet.PacketPlayerItem;
 import com.createicbm.lib.radio.RadioRegistry;
 import com.createicbm.lib.radio.messages.TriggerActionTargetMessage;
@@ -89,9 +91,23 @@ public class ItemLaserDetonator extends ItemRadio implements IPacketIDReceiver
         super.inventoryTick(stack, world, entity, itemSlot, isSelected);
     }
 
+    /** Each designation broadcasts a radio message, the client's 20 tick cooldown is enforced here too */
+    private final PacketRateLimit designationLimit = new PacketRateLimit(10);
+
+    @Override
+    public boolean shouldReadPacket(Player player, IWorldPosition receiveLocation, IPacket packet)
+    {
+        return !player.level().isClientSide() && designationLimit.tryAccept(player);
+    }
+
     @Override
     public boolean read(ByteBuf buf, int id, Player player, IPacket packet)
     {
+        // Three doubles, anything shorter is from a broken or modified client
+        if (buf == null || buf.readableBytes() < 3 * Double.BYTES)
+        {
+            return false;
+        }
         // Use the slot the packet was sent for, off hand included
         final ItemStack stack = packet instanceof PacketPlayerItem itemPacket && itemPacket.slotId >= 0
             ? player.getInventory().getItem(itemPacket.slotId)

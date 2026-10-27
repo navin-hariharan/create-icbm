@@ -1,5 +1,6 @@
 package com.createicbm.content.blast;
 
+import com.createicbm.CreateICBM;
 import com.mojang.datafixers.util.Pair;
 import com.createicbm.config.blast.ConfigBlast;
 import com.createicbm.lib.NBTConstants;
@@ -47,6 +48,8 @@ public class BlastTNT extends Blast
     private static long effectTick = Long.MIN_VALUE;
     /** Debris effect packets sent by all TNT style blasts in {@link #effectTick} */
     private static int effectsThisTick = 0;
+    /** Blocks this blast failed to break, only the first is logged */
+    private int blockErrors = 0;
 
     public BlastTNT()
     {
@@ -261,7 +264,11 @@ public class BlastTNT extends Blast
                         }
                         catch (Exception e)
                         {
-                            e.printStackTrace();
+                            // One block failing (usually another mod's block) must not stop the blast or flood the log
+                            if (blockErrors++ == 0)
+                            {
+                                CreateICBM.logger().error("{}: failed to break {} at {}, later failures of this blast are only counted", this, blockState, blockDestroyedPos, e);
+                            }
                         }
                     }
                 }

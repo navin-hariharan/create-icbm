@@ -1,5 +1,6 @@
 package com.createicbm.lib.tracker;
 
+import com.createicbm.CreateICBM;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import net.minecraft.world.entity.Entity;
@@ -134,7 +135,7 @@ final class EventTrackerData {
 
     private void debug(String msg, int depth) {
         if(DEBUG) {
-            System.out.println("EvenTrackerData: " + StringUtils.repeat("\t", depth) + msg);
+            CreateICBM.logger().info("EventTrackerData: " + StringUtils.repeat("\t", depth) + msg);
         }
     }
 }

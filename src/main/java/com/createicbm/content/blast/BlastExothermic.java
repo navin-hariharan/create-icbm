@@ -121,10 +121,8 @@ public class BlastExothermic extends BlastBeam
 
     private static void placeNetherrack(Level world, BlockPos pos, Set<BlockPos> denied)
     {
-        if (!world.setBlock(pos, Blocks.NETHERRACK.defaultBlockState(), 3))
-        {
-            System.out.println("Failed to place netherrack at " + pos);
-        }
+        // A refused placement (protected or unchanged block) is normal, nothing to report
+        world.setBlock(pos, Blocks.NETHERRACK.defaultBlockState(), 3);
 
         //Place fire randomly above netherrack
         tryPlaceFire(world, pos.above(), true, denied);

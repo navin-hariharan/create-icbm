@@ -58,21 +58,23 @@ public class PacketPlayerItem extends PacketBase<PacketPlayerItem>
     @Override
     public void handleServerSide(Player player)
     {
+        final Item item;
         if (slotId < 0)
         {
-            final Item item = BuiltInRegistries.ITEM.byId(Math.abs(this.slotId));
-            if (item instanceof IPacketIDReceiver)
-            {
-                ((IPacketIDReceiver) item).read(data(), id, player, this);
-            }
+            item = BuiltInRegistries.ITEM.byId(Math.abs(this.slotId));
+        }
+        else if (slotId < player.getInventory().getContainerSize())
+        {
+            item = player.getInventory().getItem(this.slotId).getItem();
         }
         else
         {
-            final ItemStack stack = player.getInventory().getItem(this.slotId);
-            if (stack.getItem() instanceof IPacketIDReceiver)
-            {
-                ((IPacketIDReceiver) stack.getItem()).read(data(), id, player, this);
-            }
+            // Sent by a broken or modified client
+            return;
+        }
+        if (item instanceof IPacketIDReceiver receiver && receiver.shouldReadPacket(player, null, this))
+        {
+            receiver.read(data(), id, player, this);
         }
     }
 }

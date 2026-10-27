@@ -71,8 +71,9 @@ public class MissileTrackerWorld extends SavedData
     /**
      * Called to simulate the missile
      * @param missile
+     * @return true if the missile left the world for the simulation, false if it has no target to fly to
      */
-    void simulateMissile(EntityMissile<?> missile)
+    boolean simulateMissile(EntityMissile<?> missile)
     {
         if(ConfigDebug.DEBUG_MISSILE_TRACKER) {
             final String formatted = String.format("MissileTracker[%s]: Simulating missile: %s",
@@ -106,7 +107,9 @@ public class MissileTrackerWorld extends SavedData
 
             //Mark that we need to save
             this.setDirty();
+            return true;
         }
+        return false;
     }
 
     /**

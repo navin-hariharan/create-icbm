@@ -18,8 +18,12 @@ import net.minecraft.resources.ResourceLocation;
 
 import javax.annotation.Nonnull;
 import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
+import java.io.Reader;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.AtomicMoveNotSupportedException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.*;
 
 /**
@@ -225,7 +229,7 @@ public class ExplosiveRegistry implements IExplosiveRegistry
 
         if (file.exists())
         {
-            try (FileReader reader = new FileReader(file))
+            try (Reader reader = Files.newBufferedReader(file.toPath(), StandardCharsets.UTF_8))
             {
                 JsonElement element = JsonParser.parseReader(reader);
                 if (element.isJsonObject())
@@ -296,15 +300,24 @@ public class ExplosiveRegistry implements IExplosiveRegistry
             saveFile.getParentFile().mkdirs();
         }
 
-        //Write string to file
-        try (FileWriter fileWriter = new FileWriter(saveFile))
+        //Write to a temporary file first and move it over the old one, a crash mid save leaves the old file intact
+        final Path target = saveFile.toPath();
+        final Path temp = target.resolveSibling(target.getFileName() + ".tmp");
+        try
         {
-            fileWriter.write(json);
+            Files.writeString(temp, json, StandardCharsets.UTF_8);
+            try
+            {
+                Files.move(temp, target, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
+            }
+            catch (AtomicMoveNotSupportedException e)
+            {
+                Files.move(temp, target, StandardCopyOption.REPLACE_EXISTING);
+            }
         }
         catch (Exception e)
         {
-            CreateICBM.logger().error("ExplosiveRegistry: Failed to save registry to file, File: " + saveFile);
-            e.printStackTrace();
+            CreateICBM.logger().error("ExplosiveRegistry: Failed to save registry to file, File: " + saveFile, e);
         }
     }
 

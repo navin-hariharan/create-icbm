@@ -1,17 +1,18 @@
 package com.createicbm.content.missile.tracker;
 
+import com.createicbm.CreateICBM;
 import com.createicbm.ICBMConstants;
 import com.createicbm.api.events.MissileEvent;
 import com.createicbm.content.missile.entity.EntityMissile;
 import com.createicbm.content.missile.entity.delivery.EntityDeliveryMissile;
 import com.createicbm.content.missile.entity.explosive.EntityExplosiveMissile;
+import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.saveddata.SavedData;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -68,11 +69,20 @@ public class MissileTrackerHandler
             }
 
             final MissileTrackerWorld handler = getOrCreateHandler(missile.level(), true);
-            if (handler != null) {
-                handler.simulateMissile(missile);
-            }
+            return handler != null && handler.simulateMissile(missile);
         }
         return false;
+    }
+
+    /**
+     * @return hand over to this tracker for a flight logic, logs the first time a missile is refused
+     */
+    public static SimulationHandOver<Entity> newHandOver()
+    {
+        return new SimulationHandOver<>(
+            entity -> entity instanceof EntityMissile<?> missile && simulateMissile(missile),
+            entity -> CreateICBM.logger().warn("{}: the missile tracker could not take this missile (another mod cancelled it, or it has no target). "
+                + "It flies on as an entity with the chunks on its path kept loaded, and is offered again every {} ticks.", entity, SimulationHandOver.RETRY_TICKS));
     }
 
     /**
@@ -98,10 +108,11 @@ public class MissileTrackerHandler
      */
     public static boolean canEntitiesTick(ServerLevel level, int chunkX, int chunkZ)
     {
-        final ChunkPos chunkPos = new ChunkPos(chunkX, chunkZ);
-        // Same two checks ServerLevel#tick applies to entities: the entity section is ticking (ENTITY_TICKING chunk)
-        // and the chunk is in entity ticking range of the simulation distance or a ticking forced chunk
-        return level.isNaturalSpawningAllowed(chunkPos) && level.isNaturalSpawningAllowed(chunkPos.getWorldPosition());
+        // The same two checks ServerLevel#tick applies to each entity: its section is in the ticking entity list
+        // (entity manager) and its chunk is in entity ticking range of the distance manager, which covers the
+        // simulation distance and ticking tickets (forced chunks, chunk loader mods, our own missile tickets).
+        // Both overloads of isNaturalSpawningAllowed only ask the entity manager, the second check was missing.
+        return level.isPositionEntityTicking(new BlockPos(chunkX << 4, 0, chunkZ << 4));
     }
 
     /**

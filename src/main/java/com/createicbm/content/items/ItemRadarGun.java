@@ -11,6 +11,8 @@ import com.createicbm.lib.capability.gps.CapabilityGPSDataItem;
 import com.createicbm.lib.capability.holder.ICapabilityHolderItem;
 import com.createicbm.lib.network.IPacket;
 import com.createicbm.lib.network.IPacketIDReceiver;
+import com.createicbm.lib.network.PacketRateLimit;
+import com.createicbm.api.data.IWorldPosition;
 import com.createicbm.lib.network.packet.PacketPlayerItem;
 import com.createicbm.mods.sable.SableProxy;
 import com.createicbm.prefab.item.ItemBase;
@@ -167,9 +169,22 @@ public class ItemRadarGun extends ItemBase implements IPacketIDReceiver, ICapabi
         CreateICBM.packetHandler.sendToServer(new PacketPlayerItem(slot).addData(hand == InteractionHand.MAIN_HAND).addData(hit));
     }
 
+    private final PacketRateLimit traceLimit = new PacketRateLimit(5);
+
+    @Override
+    public boolean shouldReadPacket(Player player, IWorldPosition receiveLocation, IPacket packet)
+    {
+        return !player.level().isClientSide() && traceLimit.tryAccept(player);
+    }
+
     @Override
     public boolean read(ByteBuf buf, int id, Player player, IPacket packet)
     {
+        // A boolean and three doubles, anything shorter is from a broken or modified client
+        if (buf == null || buf.readableBytes() < 1 + 3 * Double.BYTES)
+        {
+            return false;
+        }
         final InteractionHand hand = buf.readBoolean() ? InteractionHand.MAIN_HAND : InteractionHand.OFF_HAND;
         final Vec3 pos = new Vec3(buf.readDouble(), buf.readDouble(), buf.readDouble());
 

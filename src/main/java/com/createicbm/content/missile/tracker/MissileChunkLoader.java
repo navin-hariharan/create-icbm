@@ -21,6 +21,7 @@ import net.minecraft.world.phys.Vec3;
  * Ballistic and arc missiles hand over to the missile tracker before they reach a chunk where entities don't tick.
  * Missiles fired straight (handheld and cruise launchers, see {@link DeadFlightLogic}) have nothing to hand over to,
  * so they used to fly into the first chunk past the simulation distance and freeze there until a player came close.
+ * The same goes for arc missiles the tracker refused to take, see {@link ISimulatedFlight}.
  * <p>
  * Tickets time out on their own after {@link #TICKET_TICKS}, so nothing is saved, nothing leaks when a missile is
  * removed or the server stops, and chunks load in the background instead of on the server thread.
@@ -113,7 +114,8 @@ public class MissileChunkLoader
     }
 
     /**
-     * @return true for missiles flying under their own power with nothing to take them through unloaded chunks
+     * @return true for missiles flying under their own power with nothing to take them through unloaded chunks, and
+     * for missiles the tracker refused to take
      */
     public static boolean shouldLoad(EntityMissile<?> missile)
     {
@@ -127,6 +129,7 @@ public class MissileChunkLoader
             return false;
         }
         final IMissileFlightLogic logic = missile.getMissileCapability().getFlightLogic();
-        return logic == null || logic instanceof DeadFlightLogic;
+        return logic == null || logic instanceof DeadFlightLogic
+            || logic instanceof ISimulatedFlight flight && flight.isSimulationRefused();
     }
 }

@@ -102,6 +102,15 @@ dependencies {
 
     // BlueMap (optional), shows missiles on its web maps
     compileOnly "de.bluecolored:bluemap-api:${bluemap_api_version}"
+
+    // Unit tests for logic that runs without a game
+    testImplementation platform("org.junit:junit-bom:${junit_version}")
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+tasks.named('test', Test) {
+    useJUnitPlatform()
 }
 
 var generateModMetadata = tasks.register("generateModMetadata", ProcessResources) {

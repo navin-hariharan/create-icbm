@@ -9,7 +9,9 @@ import com.createicbm.api.missiles.parts.IMissileTarget;
 import com.createicbm.api.reg.obj.IBuilderRegistry;
 import com.createicbm.config.missile.ConfigMissile;
 import com.createicbm.content.missile.entity.EntityMissile;
+import com.createicbm.content.missile.tracker.ISimulatedFlight;
 import com.createicbm.content.missile.tracker.MissileTrackerHandler;
+import com.createicbm.content.missile.tracker.SimulationHandOver;
 import com.createicbm.lib.buildable.BuildableObject;
 import com.createicbm.lib.saving.NbtSaveHandler;
 import net.minecraft.world.entity.Entity;
@@ -22,7 +24,7 @@ import net.minecraft.world.level.Level;
  * @deprecated replaced with modular flight systems, kept for loading old save data
  */
 @Deprecated
-public class BallisticFlightLogicOld extends BuildableObject<BallisticFlightLogicOld, IBuilderRegistry<IMissileFlightLogic>> implements IMissileFlightLogic
+public class BallisticFlightLogicOld extends BuildableObject<BallisticFlightLogicOld, IBuilderRegistry<IMissileFlightLogic>> implements IMissileFlightLogic, ISimulatedFlight
 {
     //TODO recode to break apart movement into sub-logic
     //  Change silo startup to act as a delayed launch
@@ -74,7 +76,8 @@ public class BallisticFlightLogicOld extends BuildableObject<BallisticFlightLogi
 
     private int ticksFlight = 0;
 
-    private boolean wasSimulationBlocked = false;
+    /** Hand over to the missile tracker, not saved so a missile refused before a reload is offered again */
+    private final SimulationHandOver<Entity> simulation = MissileTrackerHandler.newHandOver();
 
     public BallisticFlightLogicOld(int lockHeight) {
         this();
@@ -219,11 +222,13 @@ public class BallisticFlightLogicOld extends BuildableObject<BallisticFlightLogi
             alignWithMotion(entity);
 
             // Sim system
-            if (MissileTrackerHandler.canSimulate(entity) && shouldSimulate(entity))
-            {
-                wasSimulationBlocked = !MissileTrackerHandler.simulateMissile((EntityMissile<?>) entity);
-            }
+            simulation.tick(entity, e -> MissileTrackerHandler.canSimulate(e) && shouldSimulate(e));
         }
+    }
+
+    @Override
+    public boolean isSimulationRefused() {
+        return simulation.isRefused();
     }
 
     @Override
@@ -278,7 +283,7 @@ public class BallisticFlightLogicOld extends BuildableObject<BallisticFlightLogi
 
     protected boolean shouldSimulate(Entity entity)
     {
-        if (wasSimulationBlocked || EntityMissile.hasPlayerRiding(entity))
+        if (EntityMissile.hasPlayerRiding(entity))
         {
             return false;
         }
@@ -336,7 +341,6 @@ public class BallisticFlightLogicOld extends BuildableObject<BallisticFlightLogi
         //Stuck in ground data
         .addRoot("flags")
         /* */.nodeBoolean("flight_started", (bl) -> bl.hasStartedFlight, (bl, data) -> bl.hasStartedFlight = data)
-        /* */.nodeBoolean("block_simulation", (bl) -> bl.wasSimulationBlocked, (bl, data) -> bl.wasSimulationBlocked = data)
         .base()
         .addRoot("inputs")
         /* */.nodeDouble("start_x", (bl) -> bl.startX, (bl, i) -> bl.startX = i)

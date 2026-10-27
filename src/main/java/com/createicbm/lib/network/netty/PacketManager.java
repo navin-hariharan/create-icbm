@@ -48,6 +48,19 @@ public class PacketManager
 {
     private static final List<Supplier<IPacket<?>>> FACTORIES = new ArrayList<>();
     private static final Map<Class<?>, Integer> IDS = new HashMap<>();
+    /** Registered packet classes in id order, part of the protocol version */
+    private static final List<String> NAMES = new ArrayList<>();
+
+    /**
+     * Bump when the data a packet writes changes. The list of packets is added on its own, so a client and server with
+     * a different set or order of packets get NeoForge's clean "incompatible" message instead of silently mixing ids.
+     */
+    private static final int PROTOCOL_REVISION = 2;
+
+    /** Errors handling packets are logged at most this often (ms), a bad client could otherwise flood the log */
+    private static final long ERROR_LOG_INTERVAL = 10_000;
+    private static long lastErrorLog = 0;
+    private static int suppressedErrors = 0;
 
     static
     {
@@ -76,6 +89,7 @@ public class PacketManager
     {
         IDS.put(clazz, FACTORIES.size());
         FACTORIES.add((Supplier) factory);
+        NAMES.add(clazz.getName());
     }
 
     static int getDiscriminator(IPacket<?> packet)
@@ -100,8 +114,16 @@ public class PacketManager
     /** Mod bus listener, registers the payload */
     public static void registerPayloads(RegisterPayloadHandlersEvent event)
     {
-        final PayloadRegistrar registrar = event.registrar("1");
+        final PayloadRegistrar registrar = event.registrar(protocolVersion());
         registrar.playBidirectional(ICBMPayload.TYPE, ICBMPayload.STREAM_CODEC, PacketManager::handle);
+    }
+
+    /**
+     * @return protocol version both sides must match, see {@link #PROTOCOL_REVISION}
+     */
+    static String protocolVersion()
+    {
+        return PROTOCOL_REVISION + "-" + Integer.toHexString(String.join(",", NAMES).hashCode());
     }
 
     private static void handle(ICBMPayload payload, IPayloadContext context)
@@ -134,8 +156,22 @@ public class PacketManager
         }
         catch (Exception e)
         {
-            CreateICBM.logger().error("Failed to handle packet " + packet, e);
+            logError(packet, context, e);
         }
+    }
+
+    private static void logError(IPacket<?> packet, IPayloadContext context, Exception e)
+    {
+        final long now = System.currentTimeMillis();
+        if (now - lastErrorLog < ERROR_LOG_INTERVAL)
+        {
+            suppressedErrors++;
+            return;
+        }
+        lastErrorLog = now;
+        final String from = context.flow().isClientbound() ? "the server" : "player " + context.player().getName().getString();
+        CreateICBM.logger().error("Failed to handle packet {} from {} ({} more errors were not logged)", packet, from, suppressedErrors, e);
+        suppressedErrors = 0;
     }
 
     /**

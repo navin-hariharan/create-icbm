@@ -65,7 +65,7 @@ public final class CreateICBMHelpers
         {
             return data;
         }
-        System.out.println("CreateICBMAPI: Error - Failed to locate explosive for Name[" + name + "] this may cause unexpected logic");
+        CreateICBM.logger().warn("CreateICBMAPI: Failed to locate explosive for Name[{}], this may cause unexpected logic", name);
         return returnNull ? null : ICBMExplosives.CONDENSED;
     }
 
