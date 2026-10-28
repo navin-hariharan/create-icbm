@@ -8,6 +8,7 @@ import net.minecraft.nbt.CompoundTag;
  * @deprecated will be replaced with {@link com.createicbm.api.actions.IAction} which doesn't do save/load as
  * it is instant.
  */
+@Deprecated
 public interface IBlastRestore extends IBlast
 {
     void load(CompoundTag nbt);

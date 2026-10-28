@@ -41,11 +41,6 @@ public class InventorySlot {
         this.validator = validator;
     }
 
-    public InventorySlot withTick(Function<ItemStack, ItemStack> onTick) {
-        this.onTick = onTick;
-        return this;
-    }
-
     public InventorySlot withChangeCallback(Consumer<ItemStack> onChange) {
         this.onContentChanged = onChange;
         return this;

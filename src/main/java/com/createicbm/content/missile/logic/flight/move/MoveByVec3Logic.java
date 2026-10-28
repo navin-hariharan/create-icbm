@@ -2,7 +2,6 @@ package com.createicbm.content.missile.logic.flight.move;
 
 import com.createicbm.ICBMConstants;
 import com.createicbm.api.missiles.IMissile;
-import com.createicbm.content.missile.logic.flight.prefab.AccelerateByFacingLogic;
 import com.createicbm.content.missile.logic.flight.prefab.AccelerateByVec3Logic;
 import com.createicbm.lib.saving.NbtSaveHandler;
 import lombok.Getter;
@@ -11,7 +10,6 @@ import lombok.experimental.Accessors;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
 
 import javax.annotation.Nonnull;

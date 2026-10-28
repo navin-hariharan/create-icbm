@@ -106,4 +106,11 @@ public class BlastFire extends Blast
         ICBMSounds.EXPLOSION_FIRE.play(world, location.x() + 0.5D, location.y() + 0.5D, location.z() + 0.5D, 4.0F, (1.0F + (world().random.nextFloat() - world().random.nextFloat()) * 0.2F) * 1F, true);
         return true;
     }
+
+    /** Not an explosion, so no distant boom for people who can see it */
+    @Override
+    protected boolean playsDistantSound()
+    {
+        return false;
+    }
 }

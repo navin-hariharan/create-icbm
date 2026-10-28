@@ -1,5 +1,6 @@
 package com.createicbm.client.sound;
 
+import com.createicbm.CreateICBM;
 import com.createicbm.client.ICBMSounds;
 import com.createicbm.content.missile.entity.EntityMissile;
 import net.minecraft.client.Minecraft;
@@ -19,12 +20,16 @@ import java.util.List;
  */
 public class MissileEngineSound extends AbstractTickableSoundInstance
 {
-    /** Volume above 1 makes the engine carry further, 2 is heard out to 32 blocks */
-    private static final float VOLUME = 2.0F;
-    /** Engine sounds closer than this start playing */
-    private static final double START_RANGE = 40;
-    /** Engine sounds stop again past this */
-    private static final double STOP_RANGE = 56;
+    /** Engine sounds start within the render distance of the player, they stop again a bit past it */
+    private static double startRange()
+    {
+        return Math.max(40, CreateICBM.proxy.getViewDistanceBlocks(Minecraft.getInstance().level));
+    }
+
+    private static double stopRange()
+    {
+        return startRange() + 16;
+    }
     /** Most engine sounds playing at once, so a big salvo doesn't use up all the sound channels */
     private static final int MAX_PLAYING = 16;
 
@@ -45,7 +50,7 @@ public class MissileEngineSound extends AbstractTickableSoundInstance
         this.missile = missile;
         this.looping = true;
         this.delay = 0;
-        this.volume = VOLUME;
+        this.volume = ICBMSounds.viewVolume(missile.level());
         this.pitch = 0.7F + random.nextFloat() * 0.15F;
         this.relative = false;
         this.attenuation = SoundInstance.Attenuation.LINEAR;
@@ -67,7 +72,7 @@ public class MissileEngineSound extends AbstractTickableSoundInstance
             return;
         }
         final Player player = Minecraft.getInstance().player;
-        if (player == null || player.distanceToSqr(missile) > START_RANGE * START_RANGE)
+        if (player == null || player.distanceToSqr(missile) > startRange() * startRange())
         {
             return;
         }
@@ -120,7 +125,7 @@ public class MissileEngineSound extends AbstractTickableSoundInstance
     {
         final Player player = Minecraft.getInstance().player;
         final boolean engineOff = missile.tickCount - missile.lastEngineTick > 2;
-        if (missile.isRemoved() || engineOff || player == null || player.distanceToSqr(missile) > STOP_RANGE * STOP_RANGE)
+        if (missile.isRemoved() || engineOff || player == null || player.distanceToSqr(missile) > stopRange() * stopRange())
         {
             finish();
             return;

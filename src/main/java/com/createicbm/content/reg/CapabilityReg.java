@@ -1,7 +1,6 @@
 package com.createicbm.content.reg;
 
 import com.createicbm.api.CreateICBMAPI;
-import com.createicbm.lib.capability.emp.CapabilityEMP;
 import com.createicbm.lib.capability.holder.ICapabilityHolderEntity;
 import com.createicbm.lib.capability.holder.ICapabilityHolderItem;
 import com.createicbm.lib.capability.holder.ICapabilityHolderTile;
@@ -27,7 +26,6 @@ public final class CapabilityReg
     /** Block capabilities ICBM block entities may expose */
     @SuppressWarnings("unchecked")
     private static final List<BlockCapability<?, @Nullable Direction>> BLOCK_CAPS = List.of(
-        CreateICBMAPI.EMP_BLOCK_CAPABILITY,
         CreateICBMAPI.MISSILE_HOLDER_CAPABILITY,
         CreateICBMAPI.MISSILE_LAUNCHER_CAPABILITY,
         CreateICBMAPI.RADIO_CAPABILITY,
@@ -37,7 +35,6 @@ public final class CapabilityReg
 
     /** Entity capabilities ICBM entities may expose */
     private static final List<EntityCapability<?, Void>> ENTITY_CAPS = List.of(
-        CreateICBMAPI.EMP_ENTITY_CAPABILITY,
         CreateICBMAPI.MISSILE_CAPABILITY,
         CreateICBMAPI.EXPLOSIVE_ENTITY_CAPABILITY,
         CreateICBMAPI.BLAST_CAPABILITY,
@@ -52,7 +49,6 @@ public final class CapabilityReg
 
     /** Item capabilities ICBM items may expose */
     private static final List<ItemCapability<?, Void>> ITEM_CAPS = List.of(
-        CreateICBMAPI.EMP_ITEM_CAPABILITY,
         CreateICBMAPI.RADIO_ITEM_CAPABILITY,
         CreateICBMAPI.GPS_CAPABILITY,
         CreateICBMAPI.EXPLOSIVE_ITEM_CAPABILITY,
@@ -82,9 +78,6 @@ public final class CapabilityReg
                 registerItem(event, holder.get());
             }
         }
-
-        // Vanilla objects (item entities, creepers, energy items...)
-        CapabilityEMP.registerCapabilities(event);
     }
 
     @SuppressWarnings({"unchecked", "rawtypes"})

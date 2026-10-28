@@ -1,4 +1,0 @@
-{
-	"parent": "create_icbm:block/explosive_crate",
-	"textures": {"label": "create_icbm:block/explosive/emp", "band": "create_icbm:block/explosive/band_tier3"}
-}

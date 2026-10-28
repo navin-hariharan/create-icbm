@@ -68,10 +68,6 @@ public class ConfigBlast
     @Config.Comment("Settings for nuclear explosive")
     public static ConfigNuclear nuclear = new ConfigNuclear();
 
-    @Config.LangKey("config.create_icbm:blast.emp.title")
-    @Config.Comment("Settings for emp explosive")
-    public static ConfigEmp emp = new ConfigEmp();
-
     @Config.LangKey("config.create_icbm:blast.exothermic.title")
     @Config.Comment("Settings for exothermic explosive")
     public static ConfigExBasics exothermic = new ConfigExBasics(30);
@@ -100,6 +96,10 @@ public class ConfigBlast
     @Config.Comment("Settings for the flashbang missile")
     public static ConfigFlashbang flashbang = new ConfigFlashbang();
 
+    @Config.LangKey("config.create_icbm:blast.ender.title")
+    @Config.Comment("Settings for the ender missile")
+    public static ConfigEnder ender = new ConfigEnder();
+
     @Config.LangKey("config.create_icbm:blast.recon.title")
     @Config.Comment("Settings for the recon missile")
     public static ConfigRecon recon = new ConfigRecon();
@@ -125,6 +125,15 @@ public class ConfigBlast
     @Config.Comment("Server time in milliseconds per tick, shared by all dimensions, that big threaded blasts (nuclear, antimatter...) may spend removing and placing blocks.\nLower keeps the tick rate steady, higher finishes big blasts sooner.")
     @Config.RangeInt(min = 1, max = 1000)
     public static int BLOCK_EDIT_MS_PER_TICK = 20;
+
+    @Config.Name("adaptive_budget")
+    @Config.Comment("Lowers the block edit and blast budgets by itself when the server tick is running long (lagging), and gives them back when it recovers.\nKeeps a big blast from making an already busy modpack server worse.")
+    public static boolean ADAPTIVE_BUDGET = true;
+
+    @Config.Name("max_blast_edit_blocks_per_tick")
+    @Config.Comment("Hard cap on blocks a single paced blast (antimatter) removes per tick, whatever the time budget says")
+    @Config.RangeInt(min = 100, max = 1000000)
+    public static int MAX_PACED_BLOCKS_PER_TICK = 20000;
 
     @Config.Name("protection_events")
     @Config.Comment("Asks claim and protection mods (FTB Chunks, Open Parties and Claims, ...) about every block a blast edits, through the explosion event they already listen to.\nWithout it only TNT style blasts honour claims. Turn off if a mod that rebuilds explosion damage (creeper healing) also rebuilds nuclear craters.")

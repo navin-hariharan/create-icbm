@@ -39,8 +39,8 @@ import java.util.UUID;
 /**
  * Missile carrying one stack of items. On impact it puts the stack into the container it hit (chest, barrel,
  * Create vault or anything with an item handler) and packs what doesn't fit into a {@link BlockMail} parcel where it
- * landed, labelled with the sender. The missile is used up and does no damage. If it is shot down, knocked out by an
- * EMP or removed mid-flight, the parcel lands on the ground below.
+ * landed, labelled with the sender. The missile is used up and does no damage. If it is shot down, removed by a command or times out,
+ * the parcel lands on the ground below.
  */
 public class EntityDeliveryMissile extends EntityMissile<EntityDeliveryMissile>
 {
@@ -128,7 +128,7 @@ public class EntityDeliveryMissile extends EntityMissile<EntityDeliveryMissile>
     }
 
     /**
-     * Any other end of the flight (EMP, timing out, removed by a command) still leaves the cargo in a parcel. Impacts
+     * Any other end of the flight (timing out, removed by a command) still leaves the cargo in a parcel. Impacts
      * and hits have already emptied it, unloading and changing dimension keep it with the missile.
      */
     @Override

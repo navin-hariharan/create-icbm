@@ -56,11 +56,4 @@ public class GuiTextFieldBase extends EditBox implements IGuiComponent {
         return bordered;
     }
 
-    public String getText() {
-        return getValue();
-    }
-
-    public void setText(String text) {
-        setValue(text);
-    }
 }

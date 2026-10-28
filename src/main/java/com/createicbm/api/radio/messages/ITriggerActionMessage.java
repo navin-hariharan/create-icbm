@@ -8,6 +8,7 @@ import com.createicbm.api.radio.IRadioMessage;
  * @deprecated replace with {@link com.createicbm.api.actions.data.IActionFieldProvider} to avoid
  * needing different interfaces for each version. When we can just pass fields.
  */
+@Deprecated
 public interface ITriggerActionMessage extends IRadioMessage {
 
     /**

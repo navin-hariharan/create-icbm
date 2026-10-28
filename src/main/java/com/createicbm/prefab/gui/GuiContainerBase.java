@@ -55,31 +55,9 @@ public abstract class GuiContainerBase<T extends AbstractContainerMenu> extends 
         this.components.clear();
     }
 
-    /**
-     * Adds a button to the GUI
-     */
-    @Deprecated
-    protected <E extends AbstractWidget> E addButton(E button)
-    {
-        if (button instanceof IGuiComponent)
-        {
-            addComponent((IGuiComponent) button);
-        }
-        else
-        {
-            addRenderableWidget(button);
-        }
-        return button;
-    }
-
     protected void drawString(GuiGraphics graphics, String str, int x, int y, int color)
     {
         graphics.drawString(Minecraft.getInstance().font, str, x, y, color, false);
-    }
-
-    protected void drawStringCentered(GuiGraphics graphics, String str, int x, int y, int color)
-    {
-        drawString(graphics, str, x - (Minecraft.getInstance().font.width(str) / 2), y, color);
     }
 
     protected <C extends IGuiComponent> C addComponent(C field)
@@ -202,66 +180,6 @@ public abstract class GuiContainerBase<T extends AbstractContainerMenu> extends 
             }
         });
         return result;
-    }
-
-    /**
-     * Draws a rectangle with an increased or decreased width value
-     * <p>
-     * This works by duplicating the middle (3, width - 3) of the rectangle
-     *
-     * @param texture  - texture to draw from
-     * @param x        - render pos
-     * @param y        - render pos
-     * @param u        - x pos of the texture in it's texture sheet
-     * @param v        - y pos of the texture in it's texture sheet
-     * @param width    - width of the texture
-     * @param height   - height of the texture
-     * @param newWidth - new width to render the rectangle, minimal size of 6
-     */
-    protected void drawRectWithScaledWidth(GuiGraphics graphics, ResourceLocation texture, int x, int y, int u, int v, int width, int height, int newWidth)
-    {
-        if (width > 0)
-        {
-            //If both widths are the same redirect to original call
-            if (newWidth <= 0 || width == newWidth)
-            {
-                graphics.blit(texture, x, y, u, v, width, height);
-            }
-
-            //Size of the middle section of the image
-            final int midWidth = width - 6;
-
-            //Start cap of image rect
-            graphics.blit(texture, x, y, u, v, 3, height);
-            x += 3;
-
-            //only render middle if it is larger than 6
-            if (newWidth > 6)
-            {
-                //Loop over number of sections that need to be rendered
-                int loops = newWidth / width;
-                while (loops > 0)
-                {
-                    graphics.blit(texture, x, y, u + 3, v, midWidth, height);
-                    x += midWidth;
-                    loops -= 1;
-                }
-
-                //Check if there is a remainder that still needs rendered
-                loops = newWidth % width;
-                if (loops != 0)
-                {
-                    graphics.blit(texture, x, y, u + 3, v, loops, height);
-                    x += loops;
-                }
-            }
-
-            if (width > 3)
-            {
-                //End cap of image rect
-                graphics.blit(texture, x, y, u + width - 3, v, 3, height);
-            }
-        }
     }
 
     /**

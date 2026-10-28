@@ -7,7 +7,6 @@ import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectCategory;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.level.Level;
 
 import java.util.HashMap;
 
@@ -92,11 +91,6 @@ public abstract class Poison extends MobEffect
             return true;
         }
         return false;
-    }
-
-    public int getAntiPoisonBlockCount(Level world, Pos startingPosition, Pos endingPosition)
-    {
-        return 0;
     }
 
     protected abstract void doPoisonEntity(Pos emitPosition, LivingEntity entity, int amplifier);

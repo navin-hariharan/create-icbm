@@ -60,9 +60,6 @@ public class ConfigFuseTimes
         public int NUCLEAR = 100;
 
         @Config.RangeInt(min = 0, max = Integer.MAX_VALUE)
-        public int EMP = 100;
-
-        @Config.RangeInt(min = 0, max = Integer.MAX_VALUE)
         public int EXOTHERMIC = 100;
 
         @Config.RangeInt(min = 0, max = Integer.MAX_VALUE)
@@ -136,9 +133,6 @@ public class ConfigFuseTimes
 
         @Config.RangeInt(min = 0, max = Integer.MAX_VALUE)
         public int NUCLEAR = 100;
-
-        @Config.RangeInt(min = 0, max = Integer.MAX_VALUE)
-        public int EMP = 100;
 
         @Config.RangeInt(min = 0, max = Integer.MAX_VALUE)
         public int EXOTHERMIC = 100;

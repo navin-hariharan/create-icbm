@@ -52,12 +52,6 @@ public class ItemRocketLauncher extends ItemICBMElectrical
         this.fireUpDown = fireUpDown;
     }
 
-    /** @return true if this launcher fires in an arc */
-    public boolean isBallistic()
-    {
-        return fireUpDown;
-    }
-
     @Override
     public void inventoryTick(ItemStack stack, Level world, Entity entity, int itemSlot, boolean isSelected)
     {
@@ -186,6 +180,8 @@ public class ItemRocketLauncher extends ItemICBMElectrical
                                 }
                                 else
                                 {
+                                    // Nothing flew, take the radar contact and launch sound back
+                                    missile.cancelLaunch();
                                     player.displayClientMessage(Component.translatable("item.create_icbm:rocketLauncher.error.spawning"), true);
                                 }
                             }

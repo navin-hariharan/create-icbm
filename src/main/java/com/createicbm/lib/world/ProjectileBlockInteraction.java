@@ -32,13 +32,6 @@ public final class ProjectileBlockInteraction {
 
     // TODO once on 1.19 use TAG system to easily ID blocks "CollisionBasedPortal"
 
-    public static void addBlockStateInteraction(BlockState state, IProjectileBlockInteraction function) {
-        if(stateToInteraction.containsKey(state)) {
-            CreateICBM.logger().warn("interaction already exists for " + state + " replacing", new RuntimeException());
-        }
-        stateToInteraction.put(state, function);
-    }
-
     public static void addBlockInteraction(Block block, IProjectileBlockInteraction function) {
         if(blockToInteraction.containsKey(block)) {
             CreateICBM.logger().warn("interaction already exists for " + block + " replacing", new RuntimeException());

@@ -165,6 +165,12 @@ public class LauncherCapability extends LauncherBaseCapability {
 
     private IActionStatus fireMissile(IMissile missile, ActionSource source, Vec3 target) {
 
+        // Check power before anything is consumed or launched, with firing delay things could have changed. This used to
+        // run after the missile was in the air, which reported an error for a missile that had already flown.
+        if(!host.energyStorage.consumePower(host.getFiringCost(), true)) {
+            return LauncherStatus.ERROR_POWER;
+        }
+
         // Should always work but in rare cases capability might have failed
         if(!host.missileHolder.consumeMissile()) {
             return LauncherStatus.ERROR_INVALID_STACK;
@@ -189,13 +195,11 @@ public class LauncherCapability extends LauncherBaseCapability {
 
         //Spawn entity
         if(!host.getLevel().addFreshEntity(entity)) {
+            // Nothing flew, take the radar contact and launch sound back
+            missile.cancelLaunch();
             return LauncherStatus.ERROR_SPAWN;
         }
 
-        // Check power again, with firing delay things could change
-        if(!host.energyStorage.consumePower(host.getFiringCost(), true)) {
-            return LauncherStatus.ERROR_POWER;
-        }
         host.energyStorage.consumePower(host.getFiringCost(), false);
 
         //Grab rider
@@ -269,7 +273,7 @@ public class LauncherCapability extends LauncherBaseCapability {
         float inaccuracy = (float)ConfigLauncher.MIN_INACCURACY;
 
         // Range drift
-        final double scale = distanceSq / (ConfigLauncher.RANGE * ConfigLauncher.RANGE);
+        final double scale = distanceSq / ((double) ConfigLauncher.RANGE * ConfigLauncher.RANGE);
         inaccuracy += (float) (scale * ConfigLauncher.SCALED_INACCURACY_DISTANCE);
 
         // Add inaccuracy for each launcher fired in circuit

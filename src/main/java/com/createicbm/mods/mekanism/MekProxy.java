@@ -212,7 +212,4 @@ public class MekProxy extends ModProxy
         }
     }
 
-    public boolean isMekanismLoaded() {
-        return isLoaded;
-    }
 }

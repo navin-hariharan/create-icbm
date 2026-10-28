@@ -3,9 +3,6 @@ package com.createicbm.content.reg;
 import com.createicbm.content.blocks.mail.BlockMail;
 import com.createicbm.content.blocks.mail.TileMail;
 import com.createicbm.ICBMConstants;
-import com.createicbm.content.blocks.emptower.BlockEmpTower;
-import com.createicbm.content.blocks.emptower.TileEMPTower;
-import com.createicbm.content.blocks.emptower.TileEmpTowerFake;
 import com.createicbm.content.blocks.explosive.BlockExplosive;
 import com.createicbm.content.blocks.explosive.TileEntityExplosive;
 import com.createicbm.content.blocks.launcher.base.BlockLauncherBase;
@@ -36,7 +33,6 @@ import java.util.function.Supplier;
  * Meta variants were flattened into their own blocks:
  * <ul>
  *     <li>radioactive:0/1 -> radioactive_dirt, radioactive_stone</li>
- *     <li>emptower:1 (extender) stays a state of emptower, placed by the emptower_extender item</li>
  * </ul>
  * Created by Dark(DarkGuardsman, Robin) on 1/7/19.
  */
@@ -52,7 +48,6 @@ public class BlockReg
     public static final DeferredBlock<BlockLaunchFrame> blockLaunchSupport = BLOCKS.register("launcherframe", BlockLaunchFrame::new);
     public static final DeferredBlock<BlockLaunchConnector> blockLaunchConnector = BLOCKS.register("launcher_connector", BlockLaunchConnector::new);
     public static final DeferredBlock<BlockRadarStation> blockRadarStation = BLOCKS.register("radarstation", BlockRadarStation::new);
-    public static final DeferredBlock<BlockEmpTower> blockEmpTower = BLOCKS.register("emptower", BlockEmpTower::new);
     public static final DeferredBlock<BlockCruiseLauncher> blockCruiseLauncher = BLOCKS.register("cruiselauncher", BlockCruiseLauncher::new);
 
     /** Parcel left by delivery missiles, has no item on purpose */
@@ -63,8 +58,6 @@ public class BlockReg
 
     // Block entities, constructors are (BlockPos, BlockState)
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<TileEntityExplosive>> TILE_EXPLOSIVE = tile("explosive", TileEntityExplosive::new, blockExplosive);
-    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<TileEMPTower>> TILE_EMP_TOWER = tile("emptower", TileEMPTower::new, blockEmpTower);
-    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<TileEmpTowerFake>> TILE_EMP_TOWER_FAKE = tile("emptower_fake", TileEmpTowerFake::new, blockEmpTower);
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<TileRadarStation>> TILE_RADAR_STATION = tile("radarstation", TileRadarStation::new, blockRadarStation);
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<TileLauncherFrame>> TILE_LAUNCHER_FRAME = tile("launcherframe", TileLauncherFrame::new, blockLaunchSupport);
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<TileLauncherConnector>> TILE_LAUNCHER_CONNECTOR = tile("launcher_connector", TileLauncherConnector::new, blockLaunchConnector);

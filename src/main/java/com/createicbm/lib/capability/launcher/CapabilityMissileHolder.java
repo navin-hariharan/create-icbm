@@ -29,7 +29,7 @@ public class CapabilityMissileHolder implements IMissileHolder
         if(canSupportMissile(stack)) {
             return inventory.insertItem(slot, stack, simulate);
         }
-        return null;
+        return stack;
     }
 
     @Override

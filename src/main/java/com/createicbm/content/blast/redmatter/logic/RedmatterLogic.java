@@ -8,7 +8,6 @@ import com.createicbm.api.explosion.IBlastIgnore;
 import com.createicbm.api.explosion.redmatter.IBlastVelocity;
 import com.createicbm.client.ICBMSounds;
 import com.createicbm.config.blast.ConfigBlast;
-import com.createicbm.config.blast.types.ConfigRedmatter;
 import com.createicbm.content.blast.helpers.BlastBlockHelpers;
 import com.createicbm.content.blast.redmatter.DamageSourceRedmatter;
 import com.createicbm.content.blast.redmatter.EntityRedmatter;
@@ -481,6 +480,11 @@ public class RedmatterLogic
         if (cap != null && cap.onBlastApplyMotion(host, host.blastData, xDifference, yDifference, zDifference, distance))
         {
             return true;
+        }
+
+        if (distance < 1.0E-4)
+        {
+            return true; // exactly on the center, a zero length direction would turn the velocity into NaN
         }
 
         final double distanceScale = Math.max(0, 1 - (distance / getEntityImpactRange())); //0.0 to 1.0

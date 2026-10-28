@@ -52,13 +52,13 @@ public final class EntityReg
         EntityType.Builder.<EntityExplosive>of(EntityExplosive::new, MobCategory.MISC).sized(0.98F, 0.98F).fireImmune(), 50, 5);
 
     public static final DeferredHolder<EntityType<?>, EntityType<EntityExplosiveMissile>> MISSILE_EXPLOSIVE = register(ICBMEntities.MISSILE_EXPLOSIVE,
-        EntityType.Builder.<EntityExplosiveMissile>of(EntityExplosiveMissile::new, MobCategory.MISC).sized(0.5F, 0.5F), 500, 1);
+        EntityType.Builder.<EntityExplosiveMissile>of(EntityExplosiveMissile::new, MobCategory.MISC).sized(0.5F, 0.5F), 500, 2);
     public static final DeferredHolder<EntityType<?>, EntityType<EntityMissileActionable>> MISSILE_GENERIC = register(ICBMEntities.MISSILE_GENERIC,
-        EntityType.Builder.<EntityMissileActionable>of(EntityMissileActionable::new, MobCategory.MISC).sized(0.5F, 0.5F), 500, 1);
+        EntityType.Builder.<EntityMissileActionable>of(EntityMissileActionable::new, MobCategory.MISC).sized(0.5F, 0.5F), 500, 2);
     public static final DeferredHolder<EntityType<?>, EntityType<EntitySurfaceToAirMissile>> MISSILE_SAM = register(ICBMEntities.MISSILE_SAM,
-        EntityType.Builder.<EntitySurfaceToAirMissile>of(EntitySurfaceToAirMissile::new, MobCategory.MISC).sized(0.5F, 0.5F), 500, 1);
+        EntityType.Builder.<EntitySurfaceToAirMissile>of(EntitySurfaceToAirMissile::new, MobCategory.MISC).sized(0.5F, 0.5F), 500, 2);
     public static final DeferredHolder<EntityType<?>, EntityType<EntityDeliveryMissile>> MISSILE_DELIVERY = register(ICBMEntities.MISSILE_DELIVERY,
-        EntityType.Builder.<EntityDeliveryMissile>of(EntityDeliveryMissile::new, MobCategory.MISC).sized(0.5F, 0.5F), 500, 1);
+        EntityType.Builder.<EntityDeliveryMissile>of(EntityDeliveryMissile::new, MobCategory.MISC).sized(0.5F, 0.5F), 500, 2);
 
     public static final DeferredHolder<EntityType<?>, EntityType<EntityExplosion>> EXPLOSION = register(ICBMEntities.EXPLOSION,
         EntityType.Builder.<EntityExplosion>of(EntityExplosion::new, MobCategory.MISC).sized(0.98F, 0.98F).fireImmune(), 100, 5);

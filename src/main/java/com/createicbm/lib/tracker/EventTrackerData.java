@@ -63,7 +63,8 @@ final class EventTrackerData {
         return this;
     }
 
-    public boolean isValidType(Class objClass) {
+    // Synchronized, events can be posted from several threads and the sets below are plain hash sets
+    public synchronized boolean isValidType(Class objClass) {
         return isValidType(objClass, 0);
     }
 

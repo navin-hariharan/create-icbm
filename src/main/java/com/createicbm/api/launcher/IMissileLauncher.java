@@ -50,6 +50,7 @@ public interface IMissileLauncher
      *
      * @deprecated will be replaced with {@link com.createicbm.api.actions.IPotentialAction#checkAction(Level, double, double, double, IActionSource)}
      */
+    @Deprecated
     IActionStatus preCheckLaunch(IMissileTarget target, @Nullable IActionCause cause);
 
     /**
@@ -66,6 +67,7 @@ public interface IMissileLauncher
      *
      * @deprecated will be replaced with {@link com.createicbm.api.actions.IPotentialAction#doAction(Level, double, double, double, IActionSource)}
      */
+    @Deprecated
     IActionStatus launch(ILauncherSolution firingSolution, @Nullable IActionCause cause, boolean simulate);
 
     /**

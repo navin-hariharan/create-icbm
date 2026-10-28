@@ -11,6 +11,7 @@ import com.createicbm.api.explosion.IBlastInit;
  * @deprecated being replaced with {@link com.createicbm.api.actions.IAction} which will not
  * provide an event for creating. Only an event for pre-run and post-run.
  */
+@Deprecated
 public class BlastBuildEvent extends BlastEvent<IBlastInit>
 {
     public BlastBuildEvent(IBlastInit blast)

@@ -327,6 +327,10 @@ public class BlastTNT extends Blast
 
                 //Get magnitude
                 double mag = Math.sqrt(xDifference * xDifference + yDifference * yDifference + zDifference * zDifference);
+                if (mag < 1.0E-6)
+                {
+                    mag = 1; // exactly on the center, a zero length direction would turn the push into NaN
+                }
 
                 //Normalize difference
                 xDifference /= mag;

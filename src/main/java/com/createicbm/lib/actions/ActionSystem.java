@@ -9,7 +9,6 @@ import com.createicbm.api.actions.data.ActionFields;
 import com.createicbm.api.actions.status.IActionStatus;
 import com.createicbm.api.reg.events.*;
 import com.createicbm.content.actions.ActionProvider;
-import com.createicbm.content.actions.emp.ActionDataEmpArea;
 import com.createicbm.content.blocks.launcher.screen.BlockScreenCause;
 import com.createicbm.content.blocks.launcher.status.LauncherStatus;
 import com.createicbm.content.missile.logic.source.cause.CausedByBlock;
@@ -90,7 +89,6 @@ public final class ActionSystem {
         CreateICBMAPI.ACTION_REGISTRY =  new BuildableObjectRegistry<>("ACTION_DATA", "action.data");
 
         // Register defaults
-        new ActionDataEmpArea().register();
 
         //Fire registry event
         NeoForge.EVENT_BUS.post(new ActionRegistryEvent(CreateICBMAPI.ACTION_REGISTRY));

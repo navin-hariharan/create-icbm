@@ -30,6 +30,17 @@ public class ConfigNuclear {
     @Config.RangeDouble(min = 1, max = Integer.MAX_VALUE)
     public double entityDamageMultiplier = 1000;
 
+    @Config.Comment("Draw a mushroom cloud above the blast for everybody in range, off falls back to the old smoke ring")
+    public boolean mushroomCloud = true;
+
+    @Config.Comment("Size of the mushroom cloud compared to the blast radius, the antimatter cloud is 1.0")
+    @Config.RangeDouble(min = 0.1, max = 4)
+    public double mushroomCloudScale = 0.7;
+
+    @Config.Comment("Blocks around the blast where players see the mushroom cloud")
+    @Config.RangeInt(min = 32, max = 4096)
+    public int mushroomCloudRange = 512;
+
     @Config.Name("radioactive_replacements")
     public BlockReplacements radiationReplacements = new BlockReplacements();
 

@@ -26,7 +26,6 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.level.Level;
 import net.neoforged.neoforge.entity.IEntityWithComplexSpawn;
 
-import java.lang.reflect.Constructor;
 
 /**
  * The Entity handler responsible for entity explosions.

@@ -6,6 +6,7 @@ import com.createicbm.client.ICBMSounds;
 import com.createicbm.config.blast.ConfigBlast;
 import com.createicbm.content.blast.BlastMutation;
 import com.createicbm.content.blast.BlastRadioactiveBlockSwaps;
+import com.createicbm.lib.network.packet.PacketMushroomCloud;
 import com.createicbm.lib.transform.vector.Location;
 import com.createicbm.lib.transform.vector.Pos;
 import net.minecraft.world.level.block.LiquidBlock;
@@ -28,6 +29,12 @@ import static java.lang.Math.sin;
 public class BlastNuclear extends BlastThreaded {
     /** Players further away than this do not get the smoke cloud particles */
     private static final double CLOUD_VIEW_DISTANCE = 256;
+
+    /** Ticks the mushroom cloud takes to rise, a little quicker than the antimatter one */
+    private static final int CLOUD_TICKS = 20 * 14;
+
+    /** Players this close hear the blast itself at full volume, the others in view distance a distant boom */
+    private static final double NEAR_SOUND_RADIUS = 50;
 
     private double energy;
 
@@ -130,33 +137,54 @@ public class BlastNuclear extends BlastThreaded {
     }
 
     @Override
+    protected double getNearSoundRadius() {
+        return NEAR_SOUND_RADIUS;
+    }
+
+    @Override
+    protected ICBMSounds getNearSound() {
+        return ICBMSounds.EXPLOSION;
+    }
+
+    @Override
+    protected void playExplodeSound() {
+        // Played by BlastSounds, to everybody in range and with the delay of distance
+    }
+
+    @Override
     public boolean setupBlast() {
         super.setupBlast();
         if (this.world() != null) {
-            // Players close enough to see the cloud, collected once as the cloud is a few thousand particles
-            final List<ServerPlayer> viewers = getCloudViewers();
+            if (ConfigBlast.nuclear.mushroomCloud && world instanceof ServerLevel level) {
+                // Same cloud as the antimatter blast, a bit smaller, every client draws its own from this one packet
+                final double radius = this.getBlastRadius() * ConfigBlast.nuclear.mushroomCloudScale;
+                PacketMushroomCloud.send(level, location.x(), location.y(), location.z(), (float) radius, CLOUD_TICKS, ConfigBlast.nuclear.mushroomCloudRange);
+            } else {
+                // Players close enough to see the cloud, collected once as the cloud is a few thousand particles
+                final List<ServerPlayer> viewers = getCloudViewers();
 
-            // Spawn nuclear cloud.
-            for (int y = 0; y < 26; y++) {
-                int r = 4;
+                // Spawn nuclear cloud.
+                for (int y = 0; y < 26; y++) {
+                    int r = 4;
 
-                if (y < 8) {
-                    r = Math.max(Math.min((8 - y) * 2, 10), 4);
-                } else if (y > 15) {
-                    r = Math.max(Math.min((y - 15) * 2, 15), 5);
-                }
+                    if (y < 8) {
+                        r = Math.max(Math.min((8 - y) * 2, 10), 4);
+                    } else if (y > 15) {
+                        r = Math.max(Math.min((y - 15) * 2, 15), 5);
+                    }
 
-                for (int x = -r; x < r; x++) {
-                    for (int z = -r; z < r; z++) {
-                        double distance = Math.sqrt(x * x + z * z);
+                    for (int x = -r; x < r; x++) {
+                        for (int z = -r; z < r; z++) {
+                            double distance = Math.sqrt(x * x + z * z);
 
-                        if (r > distance && r - 3 < distance) {
-                            Location spawnPosition = location.add(new Pos(x * 2, (y - 2) * 2, z * 2));
-                            float xDiff = (float) (spawnPosition.x() - location.x());
-                            float zDiff = (float) (spawnPosition.z() - location.z());
-                            // Sent to clients instead, count 0 makes the offsets the particle velocity.
-                            sendCloudParticle(viewers, spawnPosition.x(), spawnPosition.y(), spawnPosition.z(),
-                                xDiff * 0.3 * world().random.nextFloat(), -world().random.nextFloat(), zDiff * 0.3 * world().random.nextFloat()); //(float) (distance / this.getRadius()) * oldWorld().rand.nextFloat(), 0, //0, 8F, 1.2F);
+                            if (r > distance && r - 3 < distance) {
+                                Location spawnPosition = location.add(new Pos(x * 2, (y - 2) * 2, z * 2));
+                                float xDiff = (float) (spawnPosition.x() - location.x());
+                                float zDiff = (float) (spawnPosition.z() - location.z());
+                                // Sent to clients instead, count 0 makes the offsets the particle velocity.
+                                sendCloudParticle(viewers, spawnPosition.x(), spawnPosition.y(), spawnPosition.z(),
+                                    xDiff * 0.3 * world().random.nextFloat(), -world().random.nextFloat(), zDiff * 0.3 * world().random.nextFloat()); //(float) (distance / this.getRadius()) * oldWorld().rand.nextFloat(), 0, //0, 8F, 1.2F);
+                            }
                         }
                     }
                 }
@@ -164,7 +192,6 @@ public class BlastNuclear extends BlastThreaded {
 
             this.doDamageEntities((float)ConfigBlast.nuclear.entityDamageScale, (float) (this.energy * ConfigBlast.nuclear.entityDamageMultiplier));
 
-            ICBMSounds.EXPLOSION.play(world, this.location.x(), this.location.y(), this.location.z(), 7.0F, (1.0F + (this.world().random.nextFloat() - this.world().random.nextFloat()) * 0.2F) * 0.7F, true);
         }
 
         return true;

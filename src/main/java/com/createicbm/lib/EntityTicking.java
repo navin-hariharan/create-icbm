@@ -7,6 +7,11 @@ import net.minecraft.world.entity.Entity;
  * entities far from players. Missiles and blasts then stalled mid-air until a player came close. Those mods let
  * entities with {@link Entity#noCulling} tick every tick, so the server copy is flagged; the client copy keeps normal
  * render culling.
+ * <p>
+ * Not every optimizer honours the flag (Immersive Optimization documents a projectile exemption and a namespace
+ * blacklist, not noCulling, and these entities are not vanilla projectiles). If missiles still stall far from players,
+ * blacklist the {@code create_icbm} namespace in the optimizer's config. Missiles in flight also hold their own chunk
+ * tickets, see {@link com.createicbm.content.missile.tracker.MissileChunkLoader}.
  */
 public final class EntityTicking
 {

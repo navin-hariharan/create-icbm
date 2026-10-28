@@ -1,5 +1,7 @@
 package com.createicbm.client;
 
+import com.createicbm.client.fx.EnderAbductionFx;
+import com.createicbm.client.fx.MushroomCloudFx;
 import com.createicbm.client.fx.ScreenFlash;
 import com.createicbm.client.sound.MissileEngineSound;
 import com.createicbm.client.sound.TrackedSounds;
@@ -22,12 +24,7 @@ import com.createicbm.content.blast.redmatter.render.RenderRedmatter;
 import com.createicbm.client.create.ICBMPartialModels;
 import com.createicbm.client.create.ICBMPonderPlugin;
 import com.createicbm.client.create.ShaftVisuals;
-import com.createicbm.content.blocks.emptower.EmpTowerRenderer;
-import com.createicbm.content.blocks.emptower.TESREmpTower;
 import com.createicbm.content.blocks.radarstation.RadarStationRenderer;
-import com.createicbm.content.blocks.emptower.TileEMPTower;
-import com.createicbm.content.blocks.emptower.TileEmpTowerFake;
-import com.createicbm.content.blocks.emptower.gui.GuiEMPTower;
 import com.createicbm.content.blocks.launcher.base.TESRLauncherBase;
 import com.createicbm.content.blocks.launcher.base.gui.GuiLauncherBase;
 import com.createicbm.content.blocks.launcher.cruise.TESRCruiseLauncher;
@@ -41,7 +38,6 @@ import com.createicbm.content.reg.BlockReg;
 import com.createicbm.content.reg.EntityReg;
 import com.createicbm.content.reg.ItemReg;
 import com.createicbm.content.reg.MenuReg;
-import com.createicbm.lib.colors.ColorHelper;
 import net.minecraft.client.renderer.entity.ChickenRenderer;
 import net.minecraft.client.renderer.entity.CreeperRenderer;
 import net.minecraft.client.renderer.entity.EntityRenderer;
@@ -49,16 +45,14 @@ import net.minecraft.client.renderer.entity.HuskRenderer;
 import net.minecraft.client.renderer.entity.SpiderRenderer;
 import net.minecraft.client.renderer.entity.ZombieRenderer;
 import net.minecraft.client.renderer.item.ItemProperties;
-import net.minecraft.client.resources.model.ModelResourceLocation;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
 import net.neoforged.neoforge.client.event.EntityRenderersEvent;
-import net.neoforged.neoforge.client.event.ModelEvent;
-import net.neoforged.neoforge.client.event.RegisterColorHandlersEvent;
+import net.neoforged.neoforge.client.event.MovementInputUpdateEvent;
+import net.neoforged.neoforge.client.event.ViewportEvent;
 import net.neoforged.neoforge.client.event.RegisterMenuScreensEvent;
 import net.neoforged.neoforge.client.event.ScreenEvent;
 import net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent;
@@ -83,7 +77,6 @@ public final class ClientReg
         // Create: partial models must exist before models load
         ICBMPartialModels.init();
         PonderIndex.addPlugin(new ICBMPonderPlugin());
-        modBus.addListener(ClientReg::registerBlockColor);
         modBus.addListener(ClientReg::registerEntityRenders);
         modBus.addListener(ClientReg::registerLayerDefinitions);
         modBus.addListener(ClientReg::addLayers);
@@ -92,9 +85,18 @@ public final class ClientReg
         // The HUD is drawn under open screens, so the flash is drawn over them again
         NeoForge.EVENT_BUS.addListener(ScreenEvent.Render.Post.class, event -> ScreenFlash.render(event.getGuiGraphics()));
         NeoForge.EVENT_BUS.addListener(ClientTickEvent.Post.class, event -> MissileEngineSound.onClientTick());
+        // Ender missile cutscene
+        NeoForge.EVENT_BUS.addListener(ClientTickEvent.Post.class, event -> EnderAbductionFx.onClientTick());
+        NeoForge.EVENT_BUS.addListener(ClientTickEvent.Post.class, event -> MushroomCloudFx.onClientTick());
+        NeoForge.EVENT_BUS.addListener(ViewportEvent.ComputeCameraAngles.class, EnderAbductionFx::onCameraAngles);
+        NeoForge.EVENT_BUS.addListener(ViewportEvent.ComputeFov.class, EnderAbductionFx::onFov);
+        NeoForge.EVENT_BUS.addListener(MovementInputUpdateEvent.class, EnderAbductionFx::onMovementInput);
         NeoForge.EVENT_BUS.addListener(ClientPlayerNetworkEvent.LoggingOut.class, event -> {
             MissileEngineSound.stopAll();
             TrackedSounds.clear();
+            EnderAbductionFx.clear();
+            MushroomCloudFx.clear();
+            ScreenFlash.clear();
         });
         modBus.addListener(ClientReg::clientSetup);
         modBus.addListener(ExplosiveModels::onRegisterAdditional);
@@ -104,30 +106,6 @@ public final class ClientReg
     // ------------------------------------------------------------------
     // Colors
     // ------------------------------------------------------------------
-
-    public static void registerBlockColor(RegisterColorHandlersEvent.Block event)
-    {
-        event.register((state, worldIn, pos, tintIndex) -> {
-            if (worldIn != null && pos != null)
-            {
-                final BlockEntity tile = worldIn.getBlockEntity(pos);
-                if (tile instanceof TileEMPTower tower)
-                {
-                    //TODO cache as chargePercent(0 to 100 int) -> value
-                    int red = (int) Math.floor(Math.cos(tower.getChargePercentage()) * 255);
-                    int blue = (int) Math.floor(Math.sin(tower.getChargePercentage()) * 255);
-                    return ColorHelper.toRGB(red, 0, blue);
-                }
-                else if (tile instanceof TileEmpTowerFake fake && fake.getHost() != null)
-                {
-                    int red = (int) Math.floor(Math.cos(fake.getHost().getChargePercentage()) * 255);
-                    int blue = (int) Math.floor(Math.sin(fake.getHost().getChargePercentage()) * 255);
-                    return ColorHelper.toRGB(red, 0, blue);
-                }
-            }
-            return 0;
-        }, BlockReg.blockEmpTower.get());
-    }
 
     // ------------------------------------------------------------------
     // Item properties
@@ -180,12 +158,10 @@ public final class ClientReg
         event.registerEntityRenderer(EntityReg.PHANTOM_SPIDER.get(), SpiderRenderer::new);
         event.registerEntityRenderer(EntityReg.PHANTOM_CREEPER.get(), CreeperRenderer::new);
 
-        // Block entities, raw types as the emp tower render is shared by the tower and its fake blocks
+        // Block entities, raw types as some renders are shared between block entity types
         event.registerBlockEntityRenderer((BlockEntityType) BlockReg.TILE_LAUNCHER_BASE.get(), ctx -> new TESRLauncherBase(ctx));
         event.registerBlockEntityRenderer((BlockEntityType) BlockReg.TILE_CRUISE_LAUNCHER.get(), ctx -> new TESRCruiseLauncher(ctx));
-        event.registerBlockEntityRenderer((BlockEntityType) BlockReg.TILE_EMP_TOWER.get(), ctx -> new EmpTowerRenderer(ctx));
         event.registerBlockEntityRenderer((BlockEntityType) BlockReg.TILE_RADAR_STATION.get(), ctx -> new RadarStationRenderer(ctx));
-        event.registerBlockEntityRenderer((BlockEntityType) BlockReg.TILE_EMP_TOWER_FAKE.get(), ctx -> new TESREmpTower(ctx));
         event.registerBlockEntityRenderer(BlockReg.TILE_MAIL.get(), TESRMail::new);
     }
 
@@ -211,11 +187,11 @@ public final class ClientReg
     public static void registerGuiLayers(RegisterGuiLayersEvent event)
     {
         event.registerAboveAll(ResourceLocation.fromNamespaceAndPath(ICBMConstants.DOMAIN, "flashbang"), ScreenFlash::render);
+        event.registerAboveAll(ResourceLocation.fromNamespaceAndPath(ICBMConstants.DOMAIN, "ender_abduction"), EnderAbductionFx::render);
     }
 
     public static void registerScreens(RegisterMenuScreensEvent event)
     {
-        event.register(MenuReg.EMP_TOWER.get(), GuiEMPTower::new);
         event.register(MenuReg.LAUNCHER_BASE.get(), GuiLauncherBase::new);
         event.register(MenuReg.CRUISE_LAUNCHER.get(), GuiCruiseLauncher::new);
         event.register(MenuReg.LAUNCHER_SCREEN.get(), GuiLauncherScreen::new);

@@ -165,6 +165,7 @@ public abstract class Blast implements IBlastInit, IBlastRestore
 
                 //Play audio to confirm explosion triggered
                 playExplodeSound();
+                playBlastSoundForViewers();
 
                 // Sable ships nearby keep their blocks in a plot the blast doesn't reach
                 SableProxy.INSTANCE.damageShips(world, exploder, x, y, z, getShipDamageRadius());
@@ -502,6 +503,43 @@ public abstract class Blast implements IBlastInit, IBlastRestore
         soundKey = 0;
     }
 
+    /**
+     * @return true to play the distant explosion for everybody who can see this blast, see {@link BlastSounds}.
+     * Blasts that are not explosions (gas, effects, vortexes) and the helper blasts of others turn it off.
+     */
+    protected boolean playsDistantSound()
+    {
+        return getBlastRadius() >= 12;
+    }
+
+    /** @return blocks around the blast where {@link #getNearSound()} is played at full volume, 0 for none */
+    protected double getNearSoundRadius()
+    {
+        return 0;
+    }
+
+    /** @return the blast's own sound for players inside {@link #getNearSoundRadius()}, null for none */
+    protected ICBMSounds getNearSound()
+    {
+        return null;
+    }
+
+    /** @return volume of {@link #getNearSound()} */
+    protected float getNearSoundVolume()
+    {
+        return 4.0F;
+    }
+
+    private void playBlastSoundForViewers()
+    {
+        if (world instanceof ServerLevel level && (playsDistantSound() || getNearSound() != null))
+        {
+            BlastSounds.play(level, x, y, z,
+                getNearSound(), getNearSoundVolume(), getNearSoundRadius(),
+                playsDistantSound() ? ICBMSounds.EXPLOSION_DISTANT : null, 1.0F);
+        }
+    }
+
     protected void playExplodeSound()
     {
         this.world.playSound((Player) null,
@@ -569,6 +607,10 @@ public abstract class Blast implements IBlastInit, IBlastRestore
                 double zDifference = entity.getZ() - location.z();
 
                 double mag = Math.sqrt(xDifference * xDifference + yDifference * yDifference + zDifference * zDifference); //TODO switch to sq for better speed
+                if (mag < 1.0E-6)
+                {
+                    mag = 1; // exactly on the center, a zero length direction would turn the velocity into NaN
+                }
 
                 xDifference /= mag;
                 yDifference /= mag;

@@ -8,6 +8,7 @@ package com.createicbm.api.explosion;
  * support tickable actions. Any action that threads or has real time updates will be reworked
  * to use another system or spawn an entity to act as a listener.
  */
+@Deprecated
 public interface IBlastTickable extends IBlast
 {
     /**

@@ -15,6 +15,7 @@ import javax.annotation.Nonnull;
  * Created by Dark(DarkGuardsman, Robin) on 1/3/19.
  * @deprecated being replaced with {@link com.createicbm.api.actions.IActionData#create(Level, double, double, double, IActionSource)} and likely a customization provider
  */
+@Deprecated
 public interface IBlastInit extends IBlast
 {
     default IBlastInit setActionSource(IActionSource source) {

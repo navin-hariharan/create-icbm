@@ -18,6 +18,7 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.level.Level;
 
 /**
@@ -123,31 +124,37 @@ public class BallisticFlightLogicOld extends BuildableObject<BallisticFlightLogi
         // Ground Displacement
         final float flatDistance = (float)Math.sqrt(deltaPathX * deltaPathX + deltaPathZ * deltaPathZ);
 
-        if(flatDistance < 200) {
+        // Over 200 assume we will missile simulate rather than arc. Targets straight above or below have no flat distance and so no arc either
+        final FlightMath.ArcSolution arc = (flatDistance < 200)
+            ? FlightMath.solveArc(flatDistance) : null;
 
-            //Path constants
-            final float ticksPerMeterFlat = 2f;
-            final float heightToDistanceScale = flatDistance > 1000 ? 3f : 1f;
-            final float maxHeight = 1000f;
-            final float initialArcHeight = flatDistance > 100 ? 160f : 0;
-
-            // Parabolic Height
-            // Ballistic flight vars
-            final float arcHeightMax = Math.min(maxHeight, initialArcHeight + (flatDistance * heightToDistanceScale));
-
-            // Flight time
-            missileFlightTime = (int) Math.ceil(ticksPerMeterFlat * flatDistance);
-
-            // Acceleration
-            double heightToDistance = arcHeightMax / flatDistance;
-            double heightToTime = arcHeightMax / missileFlightTime;
-            double timeToDistance = missileFlightTime / flatDistance;
-            this.acceleration = (float) (((arcHeightMax - heightToDistance) * heightToDistance) / (missileFlightTime / timeToDistance) / (heightToTime * flatDistance));
+        if(arc != null) {
+            missileFlightTime = arc.flightTime();
+            this.acceleration = arc.acceleration();
         }
-        // If over 200 assume we will missile simulate rather than arc
         else {
+            this.acceleration = 0;
+            this.missileFlightTime = 0;
             flightUpAlways = true;
         }
+    }
+
+    /**
+     * Fly straight up with a slight lean towards the target, the way targets out of arc range are flown. Also used
+     * when there is no arc to fly (target straight above or below the launcher, or the arc maths gave a value that is
+     * not finite).
+     */
+    protected void startFlyingUp(Entity entity)
+    {
+        flightUpAlways = true;
+        final double flatDistance = Math.sqrt(deltaPathX * deltaPathX + deltaPathZ * deltaPathZ);
+        final float hortSpeed = 0.05f;
+        final float vertSpeed = 2f;
+        // No lean when the target is right above or below, dividing by the zero distance made the motion NaN
+        final boolean lean = flatDistance >= FlightMath.MIN_ARC_DISTANCE;
+        MotionHelper.setMotionX(entity, lean ? (this.deltaPathX / flatDistance) * hortSpeed : 0);
+        MotionHelper.setMotionZ(entity, lean ? (this.deltaPathZ / flatDistance) * hortSpeed : 0);
+        MotionHelper.setMotionY(entity, vertSpeed);
     }
 
     @Override
@@ -181,18 +188,23 @@ public class BallisticFlightLogicOld extends BuildableObject<BallisticFlightLogi
 
             if(!flightUpAlways) {
 
-                MotionHelper.setMotionY(entity, this.acceleration * ((float) missileFlightTime / 2f));
+                final double motionY = this.acceleration * ((float) missileFlightTime / 2f);
+                final double motionX = this.deltaPathX / missileFlightTime;
+                final double motionZ = this.deltaPathZ / missileFlightTime;
 
-                MotionHelper.setMotionX(entity, this.deltaPathX / missileFlightTime);
-                MotionHelper.setMotionZ(entity, this.deltaPathZ / missileFlightTime);
+                if (FlightMath.isFinite(motionX, motionY, motionZ)) {
+                    MotionHelper.setMotionY(entity, motionY);
+                    MotionHelper.setMotionX(entity, motionX);
+                    MotionHelper.setMotionZ(entity, motionZ);
+                }
+                else {
+                    CreateICBM.logger().warn("{}: arc flight gave a motion that is not finite ({}, {}, {}), flying straight up instead", entity, motionX, motionY, motionZ);
+                    this.acceleration = 0;
+                    startFlyingUp(entity);
+                }
             }
             else {
-                final float flatDistance = (float)Math.sqrt(deltaPathX * deltaPathX + deltaPathZ * deltaPathZ);
-                final float hortSpeed = 0.05f;
-                final float vertSpeed = 2f;
-                MotionHelper.setMotionX(entity, (this.deltaPathX / flatDistance) * hortSpeed);
-                MotionHelper.setMotionZ(entity, (this.deltaPathZ / flatDistance) * hortSpeed);
-                MotionHelper.setMotionY(entity, vertSpeed);
+                startFlyingUp(entity);
             }
         }
         //Normal path logic
@@ -246,9 +258,15 @@ public class BallisticFlightLogicOld extends BuildableObject<BallisticFlightLogi
 
     protected void alignWithMotion(Entity entity)
     {
-        entity.setXRot((float) (Math.atan(entity.getDeltaMovement().y / (Math.sqrt(entity.getDeltaMovement().x * entity.getDeltaMovement().x + entity.getDeltaMovement().z * entity.getDeltaMovement().z))) * 180 / Math.PI));
+        // A missile that isn't moving has no direction to face, atan of 0/0 used to make the pitch NaN
+        final Vec3 motion = entity.getDeltaMovement();
+        if (!FlightMath.hasDirection(motion.x, motion.y, motion.z))
+        {
+            return;
+        }
+        entity.setXRot((float) FlightMath.pitchDegrees(motion.x, motion.y, motion.z));
         // Look at the next point
-        entity.setYRot((float) (Math.atan2(entity.getDeltaMovement().x, entity.getDeltaMovement().z) * 180 / Math.PI));
+        entity.setYRot((float) FlightMath.yawDegrees(motion.x, motion.z));
     }
 
     /**
@@ -292,6 +310,13 @@ public class BallisticFlightLogicOld extends BuildableObject<BallisticFlightLogi
             return true;
         }
 
+        // Somebody can see it: it keeps flying as an entity and the chunks ahead are loaded for it, so it is seen all
+        // the way to the ground instead of vanishing mid-air
+        if (MissileTrackerHandler.isWatched(entity))
+        {
+            return false;
+        }
+
         final BlockPos futurePos = predictPosition(entity, BlockPos::containing, 2);
 
         if (!entity.level().hasChunksAt(entity.blockPosition(), futurePos))
@@ -322,12 +347,6 @@ public class BallisticFlightLogicOld extends BuildableObject<BallisticFlightLogi
         }
 
         return builder.apply(x, y, z);
-    }
-
-    @Deprecated
-    public int getPadWarmUpTimer()
-    {
-        return padWarmUpTimer;
     }
 
     @Override

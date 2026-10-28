@@ -67,16 +67,6 @@
       }
     ]
   },
-  "emp": {
-    "category": "block",
-    "subtitle": "subtitle.create_icbm:explosion.emp",
-    "sounds": [
-      {
-        "name": "create_icbm:emp",
-        "stream": false
-      }
-    ]
-  },
   "explosion": {
     "category": "block",
     "subtitle": "subtitle.create_icbm:explosion",
@@ -247,6 +237,46 @@
     "sounds": [
       {
         "name": "create_icbm:mail_ding",
+        "stream": false
+      }
+    ]
+  },
+  "ender_scream": {
+    "category": "hostile",
+    "subtitle": "subtitle.create_icbm:ender_scream",
+    "sounds": [
+      {
+        "name": "create_icbm:ender_scream",
+        "stream": false
+      }
+    ]
+  },
+  "ender_warp": {
+    "category": "hostile",
+    "subtitle": "subtitle.create_icbm:ender_warp",
+    "sounds": [
+      {
+        "name": "create_icbm:ender_warp",
+        "stream": false
+      }
+    ]
+  },
+  "explosion_distant": {
+    "category": "block",
+    "subtitle": "subtitle.create_icbm:explosion_distant",
+    "sounds": [
+      {
+        "name": "create_icbm:explosion_distant",
+        "stream": false
+      }
+    ]
+  },
+  "antimatter_blast": {
+    "category": "block",
+    "subtitle": "subtitle.create_icbm:antimatter_blast",
+    "sounds": [
+      {
+        "name": "create_icbm:antimatter_blast",
         "stream": false
       }
     ]

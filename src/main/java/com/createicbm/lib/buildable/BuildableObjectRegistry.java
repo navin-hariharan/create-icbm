@@ -1,6 +1,5 @@
 package com.createicbm.lib.buildable;
 
-import com.createicbm.CreateICBM;
 import com.createicbm.api.reg.obj.IBuildableObject;
 import com.createicbm.api.reg.obj.IBuilderRegistry;
 import lombok.Getter;
@@ -43,21 +42,6 @@ public class BuildableObjectRegistry<Part extends IBuildableObject> implements I
             throw new RuntimeException(this.loggerPrefix + ": mod '" + activeModId() + "' attempted to override '" + key + "'. " +
                     "This method does not allow replacing existing registries. See implementing class for override call.");
         }
-        builders.put(key, builder);
-    }
-
-    /**
-     * Use this to safely override another mod's content. Make sure to do a dependency on the mod to ensure
-     * your mod loads after. Do not wait for the events to complete as the registry locks and will throw errors.
-     *
-     * @param key of the content to override
-     * @param builder to use for save/load
-     */
-    public void overrideRegistry(ResourceLocation key, Supplier<Part> builder) {
-        if (isLocked) {
-            throw new RuntimeException(this.loggerPrefix + ":mod '" + activeModId() + "' attempted to do a late registry");
-        }
-        CreateICBM.logger().info(this.loggerPrefix + ":'" + key + "' is being overridden by " + activeModId());
         builders.put(key, builder);
     }
 

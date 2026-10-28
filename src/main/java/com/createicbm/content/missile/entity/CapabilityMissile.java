@@ -1,6 +1,7 @@
 package com.createicbm.content.missile.entity;
 
 import com.createicbm.CreateICBM;
+import com.createicbm.content.missile.tracker.MissileChunkLoader;
 import com.createicbm.api.CreateICBMAPI;
 import com.createicbm.api.missiles.IMissile;
 import com.createicbm.api.actions.cause.IActionSource;
@@ -168,22 +169,21 @@ public class CapabilityMissile implements IMissile, INBTSerializable<CompoundTag
         //TODO add generic event
         CreateICBMAPI.EX_MISSILE_REGISTRY.triggerLaunch(this);
 
-        //Trigger events
-        // TODO add an event system here
-        RadarRegistry.add(this.missile); //TODO replace with capability and have radar system listen for entity spawn event
+        // The radar contact is added by EntityMissile#onAddedToLevel once the world has accepted the missile. Adding it
+        // here happened before the spawn result was known, a refused spawn left a contact that never flew.
 
         //Play audio
         if (world().isClientSide())
         {
             ICBMSounds.MISSILE_LAUNCH.play(world(), x(), y(), z(),
-                1F, (1.0F + CalculationHelpers.randFloatRange(world().random, 0.2F)) * 0.7F, true);
+                ICBMSounds.viewVolume(world()), (1.0F + CalculationHelpers.randFloatRange(world().random, 0.2F)) * 0.7F, true);
         }
         else
         {
             launchSoundKey = ICBMSounds.nextTrackedKey();
             launchSoundTime = world().getGameTime();
             ICBMSounds.MISSILE_LAUNCH.playTracked(world(), launchSoundKey, x(), y(), z(),
-                1F, (1.0F + CalculationHelpers.randFloatRange(world().random, 0.2F)) * 0.7F);
+                ICBMSounds.viewVolume(world()), (1.0F + CalculationHelpers.randFloatRange(world().random, 0.2F)) * 0.7F);
         }
 
         if (ConfigDebug.DEBUG_MISSILE_LAUNCHES)
@@ -197,6 +197,24 @@ public class CapabilityMissile implements IMissile, INBTSerializable<CompoundTag
                 )
             );
         }
+    }
+
+    @Override
+    public void cancelLaunch()
+    {
+        doFlight = false;
+        if (missile == null)
+        {
+            return;
+        }
+        if (!world().isClientSide())
+        {
+            // Radar first, it skips entities that are already removed
+            RadarRegistry.remove(missile);
+            MissileChunkLoader.untrack(missile);
+            stopLaunchSound();
+        }
+        missile.discard();
     }
 
     /**

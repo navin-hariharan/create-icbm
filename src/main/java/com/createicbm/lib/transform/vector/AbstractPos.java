@@ -3,7 +3,6 @@ package com.createicbm.lib.transform.vector;
 import com.createicbm.jlib.data.vector.IPos3D;
 import com.createicbm.jlib.data.vector.ITransform;
 import com.createicbm.jlib.data.vector.Pos3D;
-import com.createicbm.CreateICBM;
 import com.createicbm.lib.NBTConstants;
 import com.createicbm.lib.transform.rotation.EulerAngle;
 import io.netty.buffer.ByteBuf;
@@ -101,11 +100,6 @@ public abstract class AbstractPos<R extends AbstractPos> extends Pos3D<R> implem
         return Math.acos((this.cross(other)).magnitude() / (new Pos(other).magnitude() * magnitude()));
     }
 
-    public double anglePreNorm(IPos3D other)
-    {
-        return Math.acos(this.cross(other).magnitude());
-    }
-
     //=========================
     //========Converters=======
     //=========================
@@ -113,24 +107,6 @@ public abstract class AbstractPos<R extends AbstractPos> extends Pos3D<R> implem
     public Vec3 toVec3d()
     {
         return new Vec3(x(), y(), z());
-    }
-
-    public Point toVector2()
-    {
-        return new Point(x(), z());
-    }
-
-    public Direction toDirection()
-    {
-        //TODO maybe add a way to convert convert any vector into a direction from origin
-        for (Direction dir : Direction.values())
-        {
-            if (xi() == dir.getStepX() && yi() == dir.getStepY() && zi() == dir.getStepZ())
-            {
-                return dir;
-            }
-        }
-        return null;
     }
 
     @Deprecated
@@ -247,24 +223,11 @@ public abstract class AbstractPos<R extends AbstractPos> extends Pos3D<R> implem
         return writeNBT(new CompoundTag());
     }
 
-    public CompoundTag toIntNBT()
-    {
-        return writeIntNBT(new CompoundTag());
-    }
-
     public CompoundTag writeNBT(CompoundTag nbt)
     {
         nbt.putDouble(NBTConstants.X, x());
         nbt.putDouble(NBTConstants.Y, y());
         nbt.putDouble(NBTConstants.Z, z());
-        return nbt;
-    }
-
-    public CompoundTag writeIntNBT(CompoundTag nbt)
-    {
-        nbt.putInt(NBTConstants.X, xi());
-        nbt.putInt(NBTConstants.Y, yi());
-        nbt.putInt(NBTConstants.Z, zi());
         return nbt;
     }
 
@@ -554,16 +517,6 @@ public abstract class AbstractPos<R extends AbstractPos> extends Pos3D<R> implem
     {
         final Explosion explosion = new Explosion(world, cause, xx, yy, zz, 1, false, Explosion.BlockInteraction.KEEP);
         return getBlockState(world).getExplosionResistance(world, toBlockPos(), explosion);
-    }
-
-    public boolean isAboveBedrock()
-    {
-        return y() > 0;
-    }
-
-    public boolean isInsideMap()
-    {
-        return isAboveBedrock() && y() < CreateICBM.MAP_HEIGHT;
     }
 
     /**

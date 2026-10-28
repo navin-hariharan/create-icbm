@@ -1,11 +1,11 @@
 package com.createicbm.content.missile.logic.targeting;
 
 import com.createicbm.ICBMConstants;
+import com.createicbm.api.missiles.parts.IMissileTarget;
 import lombok.NoArgsConstructor;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.core.BlockPos;
 import net.minecraft.world.phys.Vec3;
 
 import javax.annotation.Nonnull;
@@ -34,6 +34,18 @@ public class BallisticTargetingData extends BasicTargetData {
 
     public double getImpactHeightOffset() {
         return impactHeightOffset;
+    }
+
+    /**
+     * The copy keeps the type and the impact height, the base copy was a plain target and lost the airburst height
+     * of every missile fired after a delay
+     */
+    @Override
+    public IMissileTarget cloneWithoutDelay() {
+        final BallisticTargetingData copy = new BallisticTargetingData();
+        copy.setPosition(getPosition());
+        copy.impactHeightOffset = impactHeightOffset;
+        return copy;
     }
 
     @Override

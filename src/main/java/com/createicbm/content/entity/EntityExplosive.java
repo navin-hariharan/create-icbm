@@ -1,7 +1,6 @@
 package com.createicbm.content.entity;
 
 import com.createicbm.api.CreateICBMAPI;
-import com.createicbm.api.caps.IEMPReceiver;
 import com.createicbm.api.refs.ICBMExplosives;
 import com.createicbm.api.reg.IExplosiveData;
 import com.createicbm.api.tile.IRotatable;
@@ -10,7 +9,6 @@ import com.createicbm.content.missile.logic.source.cause.EntityCause;
 import com.createicbm.content.reg.EntityReg;
 import com.createicbm.lib.EntityTicking;
 import com.createicbm.lib.NBTConstants;
-import com.createicbm.lib.capability.emp.CapabilityEmpKill;
 import com.createicbm.lib.capability.ex.CapabilityExplosiveEntity;
 import com.createicbm.lib.capability.holder.ICapabilityHolderEntity;
 import com.createicbm.lib.transform.vector.Pos;
@@ -42,7 +40,6 @@ public class EntityExplosive extends Entity implements IRotatable, IEntityWithCo
     private EntityCause igniter;
 
     //Capabilities
-    public final IEMPReceiver capabilityEMP = new CapabilityEmpKill<>(this);
     public final CapabilityExplosiveEntity capabilityExplosive = new CapabilityExplosiveEntity(this);
 
     public EntityExplosive(EntityType<? extends EntityExplosive> type, Level level)
@@ -216,11 +213,7 @@ public class EntityExplosive extends Entity implements IRotatable, IEntityWithCo
     @SuppressWarnings("unchecked")
     public <T> T getEntityCapability(EntityCapability<T, Void> capability)
     {
-        if (capability == CreateICBMAPI.EMP_ENTITY_CAPABILITY)
-        {
-            return (T) capabilityEMP;
-        }
-        else if (capability == CreateICBMAPI.EXPLOSIVE_ENTITY_CAPABILITY)
+        if (capability == CreateICBMAPI.EXPLOSIVE_ENTITY_CAPABILITY)
         {
             return (T) getExplosiveCap();
         }

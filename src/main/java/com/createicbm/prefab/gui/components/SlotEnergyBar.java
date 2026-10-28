@@ -51,11 +51,6 @@ public class SlotEnergyBar implements IGuiComponent, IToolTip {
         this.energyMaxGetter = energyMaxGetter;
     }
 
-    public SlotEnergyBar withTickingCost(Supplier<Integer> getter) {
-        this.tickingCostGetter = getter;
-        return this;
-    }
-
     public SlotEnergyBar withActionCost(Supplier<Integer> getter) {
         this.actionCostGetter = getter;
         return this;

@@ -13,7 +13,6 @@ import com.createicbm.content.missile.logic.source.ActionSource;
 import com.createicbm.lib.actions.fields.ActionFieldProvider;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.core.BlockPos;
-import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.level.Level;

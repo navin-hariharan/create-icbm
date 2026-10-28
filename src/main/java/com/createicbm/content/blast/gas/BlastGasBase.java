@@ -247,6 +247,11 @@ public abstract class BlastGasBase extends Blast implements IBlastTickable
 
     private boolean isValidPath(final BlockPos pos, final Direction direction)
     {
+        // Reading a block in an unloaded chunk would load or generate it, the gas stops at the edge of what is loaded
+        if (!world.hasChunkAt(pos))
+        {
+            return false;
+        }
         final BlockState blockState = world.getBlockState(pos);
         final VoxelShape shape = blockState.getCollisionShape(world, pos);
         if (shape.isEmpty()) // if there is no bounding box, its pass through, so its a valid path
@@ -326,5 +331,12 @@ public abstract class BlastGasBase extends Blast implements IBlastTickable
         super.save(nbt);
         nbt.putInt(NBTConstants.DURATION, this.duration);
         nbt.putBoolean(NBTConstants.PLAY_SHORT_SOUND_FX, this.playShortSoundFX);
+    }
+
+    /** Not an explosion, so no distant boom for people who can see it */
+    @Override
+    protected boolean playsDistantSound()
+    {
+        return false;
     }
 }

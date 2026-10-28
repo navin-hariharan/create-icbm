@@ -7,8 +7,6 @@ import com.createicbm.api.radio.IRadio;
 import com.createicbm.api.radio.IRadioMessage;
 import com.createicbm.api.radio.IRadioReceiver;
 import com.createicbm.api.radio.IRadioSender;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.resources.ResourceKey;
@@ -285,42 +283,6 @@ public class RadioMap
                     receiver.onMessage(sender, packet);
                 }
             }
-        }
-    }
-
-    /**
-     * Updates the list of receivers for this sender.
-     * <p>
-     * Make sure if you call this you clear your
-     * cache when the sender is no longer valid
-     * use {@link BlockEntity#setRemoved()}
-     * or {@link Entity#discard()} to
-     * clear the cache.
-     * <p>
-     * As well make sure to call this method
-     * every so often. As the cache is not maintained
-     * often or quickly. It is only updated
-     * when receives are added or removed. So
-     * if the sender's range changes this method
-     * needs to be called.
-     * <p>
-     * Make sure to not call this method often
-     * as its a high CPU task.
-     *
-     * @param sender - object that needs to
-     *               have receivers cache. Needs
-     *               to have a valid {@link IRadioSender#getRange()}
-     *               value in order to be cached.
-     */
-    public void updateCache(IRadioSender sender)
-    {
-        //Clear cache value
-        sender_to_receivers_cache.remove(sender);
-
-        final IBoundBox<BlockPos> range = sender.getRange();
-        if (range != null)
-        {
-            sender_to_receivers_cache.put(sender, getReceiversInRange(range, sender instanceof IRadioReceiver ? (IRadioReceiver) sender : (IRadioReceiver) null));
         }
     }
 

@@ -39,4 +39,11 @@ public class BlastRadioactiveBlockSwaps extends BlastThreaded implements IBlastT
     {
         return RadioactiveHandler.radioactiveBlockSwaps.getValue(state) != null;
     }
+
+    /** Not an explosion, so no distant boom for people who can see it */
+    @Override
+    protected boolean playsDistantSound()
+    {
+        return false;
+    }
 }

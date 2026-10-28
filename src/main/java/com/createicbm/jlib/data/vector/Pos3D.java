@@ -9,6 +9,7 @@ import java.util.Random;
  * Abstracted positional data
  * @deprecated just use vec3d with helpers
  */
+@Deprecated
 public abstract class Pos3D<R extends Pos3D> extends Pos2D<R>
 {
     final double z;
@@ -150,12 +151,12 @@ public abstract class Pos3D<R extends Pos3D> extends Pos2D<R>
 
     public R cross(IPos3D other)
     {
-        return newPos(other.x(), other.y(), other.z());
+        return cross(other.x(), other.y(), other.z());
     }
 
     public R cross(double x, double y, double z)
     {
-        return newPos(y() * z - z * y, z * x - x() * z, x() * y - y() * x);
+        return newPos(y() * z - z() * y, z() * x - x() * z, x() * y - y() * x);
     }
 
     //https://keithmaggio.wordpress.com/2011/02/15/math-magician-lerp-slerp-and-nlerp/
@@ -187,12 +188,7 @@ public abstract class Pos3D<R extends Pos3D> extends Pos2D<R>
      */
     public R min(IPos3D other)
     {
-        return newPos(Math.min(x(), other.x()), Math.min(y(), other.y()), Math.max(z(), other.z()));
-    }
-
-    public R midPoint(IPos3D pos)
-    {
-        return newPos((x() + pos.x()) / 2, (y() + pos.y()) / 2, (z + pos.z()) / 2);
+        return newPos(Math.min(x(), other.x()), Math.min(y(), other.y()), Math.min(z(), other.z()));
     }
 
     @Override
@@ -242,6 +238,17 @@ public abstract class Pos3D<R extends Pos3D> extends Pos2D<R>
     public R zCross()
     {
         return newPos(-this.y(), this.x(), 0.0D);
+    }
+
+    @Override
+    public R normalize()
+    {
+        final double magnitude = magnitude();
+        if (magnitude == 0)
+        {
+            return newPos(0, 0, 0);
+        }
+        return divide(magnitude);
     }
 
     @Override

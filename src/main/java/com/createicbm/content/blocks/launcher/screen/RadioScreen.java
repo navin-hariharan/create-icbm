@@ -6,7 +6,6 @@ import com.createicbm.api.radio.IRadioSender;
 import com.createicbm.api.radio.messages.ITargetMessage;
 import com.createicbm.api.radio.messages.ITriggerActionMessage;
 import com.createicbm.config.missile.ConfigMissile;
-import com.createicbm.content.reg.ItemReg;
 import com.createicbm.lib.radio.imp.RadioTile;
 import com.createicbm.prefab.FakeRadioSender;
 import com.createicbm.lib.radio.messages.RadioTranslations;

@@ -77,4 +77,16 @@ public interface IMissile extends IWorldPosition // TODO add registry and requir
      * Once launched don't expect the flight logic or other systems to allow modifications.
      */
     void launch();
+
+    /**
+     * Undoes {@link #launch()} when the launched entity could not be added to the world (another mod refused the
+     * spawn, or the chunk is not loaded). Stops the launch sound, takes the missile off the radar and discards the
+     * entity, so a missile that never flew doesn't linger as a contact. Launch events that already fired can't be
+     * taken back.
+     * <p>
+     * Does nothing by default, for missiles that have nothing to undo.
+     */
+    default void cancelLaunch()
+    {
+    }
 }

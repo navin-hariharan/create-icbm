@@ -13,7 +13,6 @@ import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.neoforged.neoforge.common.util.INBTSerializable;
 
-import java.util.List;
 import java.util.function.Consumer;
 
 /**
@@ -61,10 +60,6 @@ public class FiringPackage implements INBTSerializable<CompoundTag>, ITick {
                 onTriggerCallback.accept(status);
             }
         }
-    }
-
-    public boolean isReady() {
-        return !hasFired;
     }
 
     @Override

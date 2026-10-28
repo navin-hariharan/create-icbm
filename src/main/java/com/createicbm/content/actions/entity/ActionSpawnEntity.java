@@ -82,10 +82,6 @@ public class ActionSpawnEntity extends ActionBase {
         if (pitch != null) {
             entity.setXRot(pitch);
             entity.xRotO = pitch;
-        } else {
-            final float randomYaw = Mth.wrapDegrees(getWorld().random.nextFloat() * 360.0F);
-            entity.setYRot(randomYaw);
-            entity.yRotO = randomYaw;
         }
 
         // Handle data loading

@@ -7,7 +7,6 @@ import com.createicbm.api.events.LauncherSetTargetEvent;
 import com.createicbm.config.ConfigMain;
 import com.createicbm.config.machines.ConfigLauncher;
 import com.createicbm.content.blocks.launcher.FiringPackage;
-import com.createicbm.content.blocks.launcher.LauncherLangs;
 import com.createicbm.content.blocks.launcher.cruise.gui.ContainerCruiseLauncher;
 import com.createicbm.content.blocks.launcher.network.ILauncherComponent;
 import com.createicbm.content.blocks.launcher.network.LauncherNode;
@@ -48,7 +47,6 @@ import net.minecraft.network.Connection;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.phys.AABB;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.phys.Vec3;
@@ -258,6 +256,9 @@ public class TileCruiseLauncher extends TileKineticMachine implements IGuiTile, 
 
             // Only fire packet server side to avoid description packet triggering events
             if(isServer()) {
+                if (target != null && !(Double.isFinite(target.x) && Double.isFinite(target.y) && Double.isFinite(target.z))) {
+                    return;
+                }
                 final LauncherSetTargetEvent event = new LauncherSetTargetEvent(level, getBlockPos(), target);
 
                 if (!NeoForge.EVENT_BUS.post(event).isCanceled()) {

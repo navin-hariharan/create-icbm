@@ -3,7 +3,6 @@ package com.createicbm.content.missile.entity;
 import com.createicbm.CreateICBM;
 import com.createicbm.ICBMConstants;
 import com.createicbm.api.CreateICBMAPI;
-import com.createicbm.api.caps.IEMPReceiver;
 import com.createicbm.api.events.MissileEvent;
 import com.createicbm.api.events.MissileRideEvent;
 import com.createicbm.api.missiles.parts.IMissileFlightLogic;
@@ -62,9 +61,6 @@ public abstract class EntityMissile<E extends EntityMissile<E>> extends EntityPr
     @Getter
     private final CapabilityMissile missileCapability = new CapabilityMissile(this); //TODO refactor to use interface so parts can be better customized
 
-    @Getter
-    private final IEMPReceiver empCapability = new CapabilityEmpMissile(getMissileCapability());
-
     /** Toggle to note the missile has impacted something and already triggered impact logic */
     protected boolean hasImpacted = false;
 
@@ -75,10 +71,16 @@ public abstract class EntityMissile<E extends EntityMissile<E>> extends EntityPr
     /** Client only: last tick the engine effects ran, the engine sound stops once they do */
     public int lastEngineTick;
 
+    /** Client only: keeps the missile flying smoothly between the position updates of the server */
+    private final MissileInterpolator interpolator = new MissileInterpolator();
+    /** Client only: flight logic of this tick when its engine effects are due, they run once the position is final */
+    private IMissileFlightLogic pendingEngineLogic;
+
     /** Set when the missile is removed to be simulated rather than because its flight ended */
     private boolean leftForSimulation = false;
 
     /** Server only: chunks held ahead of a straight flying missile so it doesn't freeze at the simulation distance */
+    @Getter
     private final MissileChunkLoader chunkLoader = new MissileChunkLoader();
 
     public EntityMissile(EntityType<? extends EntityMissile> type, Level world)
@@ -92,10 +94,7 @@ public abstract class EntityMissile<E extends EntityMissile<E>> extends EntityPr
     @Override
     public <T> T getEntityCapability(EntityCapability<T, Void> capability)
     {
-        if (capability == CreateICBMAPI.EMP_ENTITY_CAPABILITY)
-        {
-            return (T) getEmpCapability();
-        } else if (capability == CreateICBMAPI.MISSILE_CAPABILITY)
+        if (capability == CreateICBMAPI.MISSILE_CAPABILITY)
         {
             return (T) getMissileCapability();
         }
@@ -112,10 +111,21 @@ public abstract class EntityMissile<E extends EntityMissile<E>> extends EntityPr
     public void tick() {
         super.tick();
 
-        if (!level().isClientSide() && !isRemoved()) {
-            chunkLoader.update(this);
+        if (level().isClientSide() && !isRemoved())
+        {
+            smoothClientMotion();
+
+            // Smoke and sound follow the smoothed position, the trail is drawn along the way flown this tick
+            final IMissileFlightLogic logic = pendingEngineLogic;
+            if (logic != null)
+            {
+                pendingEngineLogic = null;
+                CreateICBM.proxy.spawnMissileSmoke(this, logic, ticksInAir);
+                CreateICBM.proxy.onMissileEngineTick(this);
+            }
         }
 
+        // Chunk tickets are renewed by MissileChunkLoader from the level tick, a frozen missile doesn't reach this
         if(syncClient) {
             this.syncClient = false;
             if(!level().isClientSide()) {
@@ -133,11 +143,8 @@ public abstract class EntityMissile<E extends EntityMissile<E>> extends EntityPr
             if (logic != null) {
                 logic.onEntityTick(this, missileCapability, ticksInAir);
 
-                if(logic.shouldRunEngineEffects(this)) {
-                    CreateICBM.proxy.spawnMissileSmoke(this, logic, ticksInAir);
-                    if (level().isClientSide()) {
-                        CreateICBM.proxy.onMissileEngineTick(this);
-                    }
+                if(logic.shouldRunEngineEffects(this) && level().isClientSide()) {
+                    pendingEngineLogic = logic;
                 }
             }
 
@@ -146,6 +153,40 @@ public abstract class EntityMissile<E extends EntityMissile<E>> extends EntityPr
         }
 
         super.updateMotion();
+    }
+
+    /**
+     * Client only. The server position of a missile arrives every tick or two and is a few ticks old, jumping to it
+     * made a fast missile move in 20 steps a second. The missile flies on by itself with its velocity and is only
+     * pulled towards the server position, see {@link MissileInterpolator}.
+     */
+    private void smoothClientMotion()
+    {
+        if (freezeMotion || !interpolator.hasTarget())
+        {
+            return;
+        }
+        final Vec3 motion = getDeltaMovement();
+        interpolator.step(getX(), getY(), getZ(), motion.x, motion.y, motion.z);
+        setPos(interpolator.x(), interpolator.y(), interpolator.z());
+        setYRot(interpolator.yaw(getYRot()));
+        setXRot(interpolator.pitch(getXRot()));
+        if (interpolator.snapped())
+        {
+            // A jump (teleport, dimension hop) must not be drawn as a very fast flight
+            setOldPosAndRot();
+        }
+    }
+
+    @Override
+    public void lerpTo(double x, double y, double z, float yaw, float pitch, int posRotationIncrements)
+    {
+        if (!interpolator.hasTarget())
+        {
+            // First update, the missile appears there
+            super.lerpTo(x, y, z, yaw, pitch, posRotationIncrements);
+        }
+        interpolator.setTarget(x, y, z, yaw, pitch);
     }
 
     @Override
@@ -201,6 +242,7 @@ public abstract class EntityMissile<E extends EntityMissile<E>> extends EntityPr
             // PERF: players tracking the missile were just sent its spawn data, which already holds everything the
             // description packet would resend on the first tick (setFlightLogic during spawn/load sets the flag)
             this.syncClient = false;
+            MissileChunkLoader.track(this);
             if (getMissileCapability().canRunFlightLogic())
             {
                 RadarRegistry.add(this);
@@ -214,6 +256,7 @@ public abstract class EntityMissile<E extends EntityMissile<E>> extends EntityPr
         if (!level().isClientSide())
         {
             RadarRegistry.remove(this);
+            MissileChunkLoader.untrack(this);
             if (!leftForSimulation)
             {
                 missileCapability.stopLaunchSound();

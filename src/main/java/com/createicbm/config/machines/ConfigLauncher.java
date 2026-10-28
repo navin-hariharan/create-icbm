@@ -14,6 +14,7 @@ public class ConfigLauncher
 {
     @Config.Name("max_range")
     @Config.Comment("Range of silo launcher in blocks (meters)")
+    @Config.RangeInt(min = 1)
     public static int RANGE = 10000;
 
     @Config.Name("min_inaccuracy_range")

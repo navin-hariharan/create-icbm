@@ -2,7 +2,6 @@ package com.createicbm.content.blocks.launcher.screen;
 
 import net.minecraft.world.entity.Entity;
 import com.createicbm.content.missile.logic.source.cause.EntityCause;
-import com.createicbm.CreateICBM;
 import com.createicbm.ICBMConstants;
 import com.createicbm.api.CreateICBMAPI;
 import com.createicbm.api.events.LauncherSetTargetEvent;
@@ -12,7 +11,6 @@ import com.createicbm.api.launcher.IMissileLauncher;
 import com.createicbm.api.actions.cause.IActionCause;
 import com.createicbm.api.missiles.parts.IMissileTarget;
 import com.createicbm.config.ConfigMain;
-import com.createicbm.config.machines.ConfigLauncher;
 import com.createicbm.content.blocks.launcher.LauncherLangs;
 import com.createicbm.content.blocks.launcher.LauncherSolution;
 import com.createicbm.content.blocks.launcher.network.ILauncherComponent;
@@ -28,8 +26,6 @@ import com.createicbm.lib.radio.RadioRegistry;
 import com.createicbm.lib.saving.NbtSaveHandler;
 import com.createicbm.lib.tile.TickAction;
 import com.createicbm.prefab.gui.IPlayerUsing;
-import com.createicbm.prefab.inventory.InventorySlot;
-import com.createicbm.prefab.inventory.InventoryWithSlots;
 import com.createicbm.prefab.tile.IGuiTile;
 import com.createicbm.prefab.tile.TileMachine;
 import lombok.Getter;
@@ -358,6 +354,9 @@ public class TileLauncherScreen extends TileMachine implements ILauncherComponen
 
             // Only fire packet server side to avoid description packet triggering events
             if(isServer()) {
+                if (target != null && !(Double.isFinite(target.x) && Double.isFinite(target.y) && Double.isFinite(target.z))) {
+                    return;
+                }
                 final LauncherSetTargetEvent event = new LauncherSetTargetEvent(level, getBlockPos(), target);
 
                 if (!NeoForge.EVENT_BUS.post(event).isCanceled()) {

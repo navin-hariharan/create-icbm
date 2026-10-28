@@ -30,12 +30,6 @@ public class BlastSonic extends Blast implements IBlastTickable
 
     }
 
-    public Blast setShockWave()
-    {
-        this.hasShockWave = true;
-        return this;
-    }
-
     public void firstTick()
     {
         //TODO remove thread
@@ -136,6 +130,10 @@ public class BlastSonic extends Blast implements IBlastTickable
 
                 //Normalize
                 float distance = (float) Math.sqrt(xDelta * xDelta + yDelta * yDelta + zDelta * zDelta);
+                if (distance < 1.0E-4F)
+                {
+                    continue; // exactly on the center, a zero length direction would turn the velocity into NaN
+                }
                 xDelta = xDelta / (double) distance;
                 yDelta = yDelta / (double) distance;
                 zDelta = zDelta / (double) distance;
@@ -155,5 +153,12 @@ public class BlastSonic extends Blast implements IBlastTickable
         }
 
         return this.callCount > this.getBlastRadius();
+    }
+
+    /** Not an explosion, so no distant boom for people who can see it */
+    @Override
+    protected boolean playsDistantSound()
+    {
+        return false;
     }
 }

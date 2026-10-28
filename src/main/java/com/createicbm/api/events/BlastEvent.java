@@ -12,6 +12,7 @@ import net.neoforged.bus.api.Event;
  *
  * @deprecated will be replaced with an event providing {@link com.createicbm.api.actions.IAction}
  */
+@Deprecated
 public abstract class BlastEvent<B extends IBlast> extends Event
 {
     /** Source of the event */

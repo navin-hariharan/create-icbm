@@ -239,4 +239,11 @@ public abstract class BlastBeam extends Blast implements IBlastTickable
             this.lightBeam.setTargetBeamProgress(0f);
         }
     }
+
+    /** Not an explosion, so no distant boom for people who can see it */
+    @Override
+    protected boolean playsDistantSound()
+    {
+        return false;
+    }
 }

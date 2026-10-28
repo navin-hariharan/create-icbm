@@ -16,6 +16,7 @@ import javax.annotation.Nullable;
  * @deprecated being replaced with {@link com.createicbm.api.actions.IAction} that will provide a movement
  * action for adjustment or blocking. This avoids needing to add a capability to entity directly.
  */
+@Deprecated
 public interface IBlastVelocity
 {
     /**

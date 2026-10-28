@@ -16,7 +16,6 @@ import com.createicbm.api.reg.IExplosiveRegistry;
 import com.createicbm.api.reg.content.IExplosiveContentRegistry;
 import net.minecraft.resources.ResourceLocation;
 
-import javax.annotation.Nonnull;
 import java.io.File;
 import java.io.Reader;
 import java.nio.charset.StandardCharsets;

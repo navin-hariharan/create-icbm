@@ -13,7 +13,6 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.level.Level;
-import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.FriendlyByteBuf;
@@ -207,15 +206,6 @@ public abstract class AbstractLocation<R extends AbstractLocation> extends Abstr
     }
 
     /**
-     * @Depricated use {@link #toPos()}
-     */
-    @Deprecated
-    public Pos toVector3()
-    {
-        return new Pos(x(), y(), z());
-    }
-
-    /**
      * Converts the location to a position
      *
      * @return new position from the location data
@@ -233,7 +223,7 @@ public abstract class AbstractLocation<R extends AbstractLocation> extends Abstr
     @Deprecated //Use getBlockState()
     public Block getBlock()
     {
-        if (world != null && world.hasChunk(xi() / 16, zi() / 16))
+        if (world != null && world.hasChunk(xi() >> 4, zi() >> 4))
         {
             return super.getBlock(world);
         }
@@ -245,7 +235,7 @@ public abstract class AbstractLocation<R extends AbstractLocation> extends Abstr
 
     public BlockState getBlockState()
     {
-        if (world != null && world.hasChunk(xi() / 16, zi() / 16))
+        if (world != null && world.hasChunk(xi() >> 4, zi() >> 4))
         {
             return super.getBlockState(world);
         }
@@ -386,16 +376,6 @@ public abstract class AbstractLocation<R extends AbstractLocation> extends Abstr
     public boolean canSeeSky()
     {
         return super.canSeeSky(world);
-    }
-
-    /**
-     * Checks if the chunk is loaded at the location
-     *
-     * @return true if the chunk is loaded
-     */
-    public boolean isChunkLoaded()
-    {
-        return world.hasChunk(xi() >> 4, zi() >> 4);
     }
 
     /**

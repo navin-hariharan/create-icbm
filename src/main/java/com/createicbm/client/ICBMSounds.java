@@ -1,10 +1,10 @@
 package com.createicbm.client;
 
 import com.createicbm.jlib.data.vector.IPos3D;
+import com.createicbm.CreateICBM;
 import com.createicbm.ICBMConstants;
 import com.createicbm.lib.network.packet.PacketTrackedSound;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.sounds.SoundEvents;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.sounds.SoundEvent;
@@ -30,7 +30,6 @@ public enum ICBMSounds
     BEAM_CHARGING("beamcharging"),
     COLLAPSE("collapse"),
     DEBILITATION("debilitation"),
-    EMP("emp"),
     EXPLOSION("explosion"),
     EXPLOSION_FIRE("explosionfire"),
     GAS_LEAK("gasleak"),
@@ -47,11 +46,17 @@ public enum ICBMSounds
     PHANTOM_SUMMON("phantom_summon", SoundSource.HOSTILE),
     PHANTOM_POOF("phantom_poof", SoundSource.HOSTILE),
     DARKNESS("darkness"),
-    MAIL_DING("mail_ding", SoundSource.BLOCKS);
+    MAIL_DING("mail_ding", SoundSource.BLOCKS),
+    ENDER_SCREAM("ender_scream", SoundSource.HOSTILE),
+    ENDER_WARP("ender_warp", SoundSource.HOSTILE),
+    EXPLOSION_DISTANT("explosion_distant"),
+    ANTIMATTER_BLAST("antimatter_blast");
 
     public static final DeferredRegister<SoundEvent> SOUNDS = DeferredRegister.create(Registries.SOUND_EVENT, ICBMConstants.DOMAIN);
 
     private static final AtomicLong TRACKED_KEYS = new AtomicLong();
+    /** 24 is heard out to 384 blocks */
+    private static final float MAX_VIEW_VOLUME = 24F;
 
     private final ResourceLocation location;
     private final SoundSource category;
@@ -152,6 +157,17 @@ public enum ICBMSounds
         {
             PacketTrackedSound.sendStop(world, key);
         }
+    }
+
+    /**
+     * Volume that makes a sound carry as far as players can see: a sound is heard 16 blocks out per volume above 1
+     * (the loudness itself stays the same, it just fades over a longer way)
+     *
+     * @param level server level or client level
+     */
+    public static float viewVolume(Level level)
+    {
+        return (float) Math.max(1.0, Math.min(MAX_VIEW_VOLUME, CreateICBM.proxy.getViewDistanceBlocks(level) / 16.0));
     }
 
     public static long nextTrackedKey()

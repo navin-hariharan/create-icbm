@@ -79,10 +79,10 @@ public class Pos2DBean implements Cloneable
 
     public int compare(IPos2D pos)
     {
-        if (x < pos.y() || y < pos.y())
+        if (x < pos.x() || y < pos.y())
             return -1;
 
-        if (x > pos.y() || y > pos.y())
+        if (x > pos.x() || y > pos.y())
             return 1;
 
         return 0;

@@ -18,6 +18,8 @@ public class MissileTrackerData
 {
     public int preLoadChunkTimer;   //Seconds before the missiles spawns in the loaded chunk
     public int spawnRetries;
+    /** Times the world refused the missile when it was spawned, not saved so a reload gives it fresh tries */
+    public int spawnRefusals;
 
     public int ticksLeftToTarget;   //Seconds left before the missile reaches the target area (1 Tick = 1 Second)
     public Pos targetPos;           //Target coordinates

@@ -4,12 +4,10 @@ import com.createicbm.jlib.data.network.IByteBufWriter;
 import com.createicbm.jlib.data.vector.IPos3D;
 import com.createicbm.CreateICBM;
 import com.createicbm.lib.NBTConstants;
-import com.createicbm.lib.transform.vector.Point;
 import com.createicbm.lib.transform.vector.Pos;
 import io.netty.buffer.ByteBuf;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.phys.Vec3;
@@ -79,12 +77,6 @@ public class Cube extends Shape3D implements Cloneable, IByteBufWriter
         this(new Pos(buf), new Pos(buf));
     }
 
-    public Cube enableEdits()
-    {
-        canEdit = true;
-        return this;
-    }
-
     public Cube disableEdits()
     {
         canEdit = false;
@@ -116,11 +108,6 @@ public class Cube extends Shape3D implements Cloneable, IByteBufWriter
     public AABB getAABB()
     {
         return new AABB(min().x(), min().y(), min().z(), max().x(), max().y(), max().z());
-    }
-
-    public Rectangle toRectangle()
-    {
-        return isValid() ? new Rectangle(new Point(min()), new Point(max())) : null;
     }
 
     public CompoundTag toNBT()
@@ -322,11 +309,6 @@ public class Cube extends Shape3D implements Cloneable, IByteBufWriter
         return isWithinX(pos.x()) && isWithinY(pos.y()) && isWithinZ(pos.z());
     }
 
-    public boolean isWithinInt(IPos3D pos)
-    {
-        return isWithinX(pos.xi()) && isWithinY(pos.yi()) && isWithinZ(pos.zi());
-    }
-
     /**
      * Checks to see if a line segment is within the defined line. Assume the lines overlap each other.
      *
@@ -454,16 +436,6 @@ public class Cube extends Shape3D implements Cloneable, IByteBufWriter
         return higherPoint;
     }
 
-    public boolean isSquared()
-    {
-        return getSizeX() == getSizeY() && getSizeY() == getSizeZ();
-    }
-
-    public boolean isSquaredInt()
-    {
-        return (int) getSizeX() == (int) getSizeY() && (int) getSizeY() == (int) getSizeZ();
-    }
-
     public double distance(Vec3 v)
     {
         if (!isValid())
@@ -551,28 +523,6 @@ public class Cube extends Shape3D implements Cloneable, IByteBufWriter
     }
 
     /**
-     * Scans threw the loaded chunks grab all tiles
-     *
-     * @param world - world to scan
-     * @return list
-     */
-    public List<BlockEntity> getTilesInArea(Level world)
-    {
-        List<BlockEntity> tilesInArea = new ArrayList();
-        for (LevelChunk chunk : getChunks(world))
-        {
-            for (Object object : chunk.getBlockEntities().values())
-            {
-                if (object instanceof BlockEntity && ((BlockEntity) object).isRemoved() && ((BlockEntity) object).getLevel() != null && isWithin(((BlockEntity) object).getBlockPos()))
-                {
-                    tilesInArea.add((BlockEntity) object);
-                }
-            }
-        }
-        return tilesInArea;
-    }
-
-    /**
      * Grabs chunks loaded in the region
      *
      * @param world - world to search
@@ -632,24 +582,6 @@ public class Cube extends Shape3D implements Cloneable, IByteBufWriter
     //////////////////////
     ///Setters
     /////////////////////
-
-    public void setPointOne(IPos3D pos)
-    {
-        if (canEdit)
-        {
-            this.pointOne = pos;
-            recalc();
-        }
-    }
-
-    public void setPointTwo(IPos3D pos)
-    {
-        if (canEdit)
-        {
-            this.pointTwo = pos;
-            recalc();
-        }
-    }
 
     public void set(IPos3D min, IPos3D max)
     {
@@ -715,73 +647,6 @@ public class Cube extends Shape3D implements Cloneable, IByteBufWriter
     }
 
     /**
-     * Mainly used by the selection render to see if camera is close enough to
-     * the bounds to render. Mainly checks for distance to corner, center, and is
-     * in side bounds.
-     *
-     * @param pos      - location to check from
-     * @param distance - distance to check
-     * @return true if any conditions are meet
-     */
-    public boolean isCloseToAnyCorner(IPos3D pos, int distance)
-    {
-        if (pos != null)
-        {
-            //If we are near the center return true even if the corners are too far away
-            if (center != null && center.distance(pos) <= distance)
-            {
-                return true;
-            }
-
-            //If we are inside then we should be able to render the bounds
-            if (isWithin(pos))
-            {
-                return true;
-            }
-
-            if (lowerPoint != null && higherPoint != null)
-            {
-                if (pos.x() <= lowerPoint.x() && lowerPoint.x() - pos.x() >= distance)
-                {
-                    return false;
-                }
-
-                if (pos.y() <= lowerPoint.y() && lowerPoint.y() - pos.y() >= distance)
-                {
-                    return false;
-                }
-
-                if (pos.z() <= lowerPoint.z() && lowerPoint.z() - pos.z() >= distance)
-                {
-                    return true;
-                }
-
-                if (pos.x() >= higherPoint.x() && pos.x() - higherPoint.x() >= distance)
-                {
-                    return false;
-                }
-
-                if (pos.y() >= higherPoint.y() && pos.y() - higherPoint.y() >= distance)
-                {
-                    return false;
-                }
-
-                return !(pos.z() >= higherPoint.z() && pos.z() - higherPoint.z() >= distance);
-
-            }
-            else if (lowerPoint != null)
-            {
-                return lowerPoint.distance(pos) <= distance;
-            }
-            else if (higherPoint != null)
-            {
-                return higherPoint.distance(pos) <= distance;
-            }
-        }
-        return false;
-    }
-
-    /**
      * Limits the cube to the world bounds
      *
      * @return this
@@ -792,11 +657,11 @@ public class Cube extends Shape3D implements Cloneable, IByteBufWriter
         Pos two = max();
         if (min().y() < 0)
         {
-            one = new Pos(min().x(), 0, min().y());
+            one = new Pos(min().x(), 0, min().z());
         }
         if (max().y() > CreateICBM.MAP_HEIGHT)
         {
-            two = new Pos(min().x(), CreateICBM.MAP_HEIGHT, min().y());
+            two = new Pos(max().x(), CreateICBM.MAP_HEIGHT, max().z());
         }
         set(one, two);
         return this;

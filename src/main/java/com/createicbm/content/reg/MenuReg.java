@@ -1,8 +1,6 @@
 package com.createicbm.content.reg;
 
 import com.createicbm.ICBMConstants;
-import com.createicbm.content.blocks.emptower.TileEMPTower;
-import com.createicbm.content.blocks.emptower.gui.ContainerEMPTower;
 import com.createicbm.content.blocks.launcher.base.TileLauncherBase;
 import com.createicbm.content.blocks.launcher.base.gui.ContainerLaunchBase;
 import com.createicbm.content.blocks.launcher.cruise.TileCruiseLauncher;
@@ -32,8 +30,6 @@ public final class MenuReg
 {
     public static final DeferredRegister<MenuType<?>> MENUS = DeferredRegister.create(Registries.MENU, ICBMConstants.DOMAIN);
 
-    public static final DeferredHolder<MenuType<?>, MenuType<ContainerEMPTower>> EMP_TOWER = MENUS.register("emptower",
-        () -> IMenuTypeExtension.create((id, inv, buf) -> new ContainerEMPTower(id, inv.player, tile(inv, buf, TileEMPTower.class))));
     public static final DeferredHolder<MenuType<?>, MenuType<ContainerLaunchBase>> LAUNCHER_BASE = MENUS.register("launcherbase",
         () -> IMenuTypeExtension.create((id, inv, buf) -> new ContainerLaunchBase(id, inv.player, tile(inv, buf, TileLauncherBase.class))));
     public static final DeferredHolder<MenuType<?>, MenuType<ContainerCruiseLauncher>> CRUISE_LAUNCHER = MENUS.register("cruiselauncher",

@@ -8,14 +8,12 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.Block;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.items.IItemHandler;
 import net.neoforged.neoforge.items.IItemHandlerModifiable;
 
 import javax.annotation.Nullable;
-import java.util.Objects;
 
 /**
  * Series of helper classes for dealing with any kind of inventory
@@ -107,31 +105,4 @@ public class InventoryUtility
         return null;
     }
 
-    /**
-     * Checks if the two item stacks match each other exactly. Item, meta, stacksize, nbt
-     *
-     * @param stackA - item stack a
-     * @param stackB - item stack a
-     * @return true if they match
-     */
-    public static boolean stacksMatchExact(ItemStack stackA, ItemStack stackB)
-    {
-        if (!stackA.isEmpty() && !stackB.isEmpty())
-        {
-            return ItemStack.isSameItem(stackA, stackB) && doesStackNBTMatch(stackA, stackB) && stackA.getCount() == stackB.getCount();
-        }
-        return stackA.isEmpty() && stackB.isEmpty();
-    }
-
-    /**
-     * Checks if two itemStack's nbt matches exactly. Does not check item, stacksize, or damage value.
-     *
-     * @param stackA - item stack a, can't be null
-     * @param stackB - item stack a, can't be null
-     * @return true if the stack's nbt matches
-     */
-    public static boolean doesStackNBTMatch(ItemStack stackA, ItemStack stackB)
-    {
-        return Objects.equals(stackA.getComponentsPatch(), stackB.getComponentsPatch());
-    }
 }

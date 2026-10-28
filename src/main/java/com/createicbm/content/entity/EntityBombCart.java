@@ -174,11 +174,6 @@ public class EntityBombCart extends MinecartTNT implements IEntityWithComplexSpa
         }
     }
 
-    public void ignite()
-    {
-        primeFuse();
-    }
-
     /** Vanilla checks its own (unused) fuse here, which would re-prime the cart every tick */
     @Override
     public void activateMinecart(int x, int y, int z, boolean receivingPower)

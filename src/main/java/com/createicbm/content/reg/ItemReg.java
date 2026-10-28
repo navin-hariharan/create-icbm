@@ -1,7 +1,6 @@
 package com.createicbm.content.reg;
 
 import com.createicbm.ICBMConstants;
-import com.createicbm.content.blocks.emptower.ItemBlockEmpTower;
 import com.createicbm.content.blocks.explosive.ItemBlockExplosive;
 import com.createicbm.content.items.ItemAntidote;
 import com.createicbm.content.items.ItemBombCart;
@@ -51,8 +50,6 @@ public class ItemReg
 
     //Block items
     public static final DeferredItem<ItemBlockExplosive> itemBlockExplosive = ITEMS.register("explosives", () -> new ItemBlockExplosive(BlockReg.blockExplosive.get()));
-    public static final DeferredItem<ItemBlockEmpTower> itemEmpTower = ITEMS.register("emptower", () -> new ItemBlockEmpTower(BlockReg.blockEmpTower.get(), false));
-    public static final DeferredItem<ItemBlockEmpTower> itemEmpTowerExtender = ITEMS.register("emptower_extender", () -> new ItemBlockEmpTower(BlockReg.blockEmpTower.get(), true));
     public static final DeferredItem<BlockItem> itemRadarStation = blockItem(BlockReg.blockRadarStation);
     public static final DeferredItem<BlockItem> itemLaunchSupport = blockItem(BlockReg.blockLaunchSupport);
     public static final DeferredItem<BlockItem> itemLaunchBase = blockItem(BlockReg.blockLaunchBase);

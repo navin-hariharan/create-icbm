@@ -49,7 +49,7 @@ public abstract class Radio implements IRadio, INBTSerializable<CompoundTag>, IR
 
     @Override
     public void deserializeNBT(HolderLookup.Provider provider, CompoundTag nbt) {
-        this.channel = nbt.getString("channel");
+        this.channel = nbt.contains("channel") ? nbt.getString("channel") : null;
         this.isDisabled = nbt.getBoolean("disabled");
     }
 }

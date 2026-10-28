@@ -1,7 +1,6 @@
 package com.createicbm.content.blast.threaded;
 
 import com.createicbm.CreateICBM;
-import com.createicbm.api.refs.ICBMExplosives;
 import com.createicbm.client.ICBMSounds;
 import com.createicbm.config.blast.ConfigBlast;
 import com.createicbm.lib.transform.vector.Location;

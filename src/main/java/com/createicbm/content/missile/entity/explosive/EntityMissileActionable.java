@@ -2,7 +2,6 @@ package com.createicbm.content.missile.entity.explosive;
 
 import com.createicbm.api.actions.IActionData;
 import com.createicbm.api.actions.data.ActionFields;
-import com.createicbm.api.actions.data.IActionFieldProvider;
 import com.createicbm.api.actions.status.ActionStatusTypes;
 import com.createicbm.api.actions.status.IActionStatus;
 import com.createicbm.content.missile.entity.EntityMissile;

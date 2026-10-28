@@ -9,6 +9,7 @@ public class ConfigRadar
 {
     @Config.Name("max_range")
     @Config.Comment("Max range of radar in blocks (meters) to detect entities")
+    @Config.RangeInt(min = 1)
     public static int MAX_RANGE = 500;
 
     @Config.Name("min_speed")

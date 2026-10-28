@@ -1,7 +1,6 @@
 package com.createicbm.config;
 
 import com.createicbm.ICBMConstants;
-import com.createicbm.content.actions.emp.EmpHandler;
 import com.createicbm.content.entity.flyingblock.FlyingBlock;
 import com.createicbm.content.gas.ProtectiveArmorHandler;
 import com.createicbm.content.radioactive.RadioactiveHandler;
@@ -64,7 +63,6 @@ public class ConfigMain
             FlyingBlock.loadFromConfig();
             RadioactiveHandler.loadFromConfig();
             ProtectiveArmorHandler.loadFromConfig();
-            EmpHandler.loadFromConfig();
         }
     }
 }

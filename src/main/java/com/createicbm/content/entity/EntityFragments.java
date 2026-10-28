@@ -178,9 +178,10 @@ public class EntityFragments extends Entity implements IEntityWithComplexSpawn
             this.xRotO = this.getXRot();
         }
 
-        BlockState iblockstate = this.level().getBlockState(inTilePosition);
+        // Only once it hit a block, the position is (0, 0, 0) until then and reading it loads the chunk there every tick
+        final BlockState iblockstate = this.inTile != null ? this.level().getBlockState(inTilePosition) : null;
 
-        if (!iblockstate.isAir())
+        if (iblockstate != null && !iblockstate.isAir())
         {
             final VoxelShape shape = iblockstate.getCollisionShape(this.level(), inTilePosition);
             if (!shape.isEmpty())
@@ -409,9 +410,12 @@ public class EntityFragments extends Entity implements IEntityWithComplexSpawn
             this.setDeltaMovement(mx, my, mz);
 
             double f2 = Math.sqrt(mx * mx + my * my + mz * mz);
-            this.setPos(this.getX() - mx / f2 * 0.05000000074505806D,
-                this.getY() - my / f2 * 0.05000000074505806D,
-                this.getZ() - mz / f2 * 0.05000000074505806D);
+            if (f2 > 1.0E-6)
+            {
+                this.setPos(this.getX() - mx / f2 * 0.05000000074505806D,
+                    this.getY() - my / f2 * 0.05000000074505806D,
+                    this.getZ() - mz / f2 * 0.05000000074505806D);
+            }
 
             this.playSound(SoundEvents.ARROW_HIT, 1.0F, 1.2F / (this.random.nextFloat() * 0.2F + 0.9F));
 

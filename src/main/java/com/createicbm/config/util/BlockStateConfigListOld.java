@@ -196,6 +196,7 @@ public class BlockStateConfigListOld {
     boolean handleSimpleBlock(String entry) {
         final ResourceLocation blockKey = this.getBlockKey(entry);
         if(blockKey == null) {
+            CreateICBM.logger().error(name + ": Invalid block id in entry `" + entry + "`, expected `mod:block`");
             return false;
         }
 
@@ -232,7 +233,7 @@ public class BlockStateConfigListOld {
         // Block data
         final ResourceLocation regName = this.getBlockKey(nameVsPropSplit[0]);
         if (regName == null) {
-            // TODO log formatting issue
+            CreateICBM.logger().error(name + ": Invalid block id in entry `" + entry + "`, expected `mod:block[property:value]`");
             return false;
         }
 
@@ -243,12 +244,20 @@ public class BlockStateConfigListOld {
         final Block block = BuiltInRegistries.BLOCK.get(regName);
 
         // Properties
+        if (nameVsPropSplit.length < 2) {
+            CreateICBM.logger().error(name + ": No block properties found in entry `" + entry + "`, expected `mod:block[property:value]`");
+            return false;
+        }
         final String[] properties = nameVsPropSplit[1].replace("]", "").split(",");
 
         final Map<Property, Function<Comparable, Boolean>> matchers = new HashMap();
 
         for (String propEntry : properties) {
             final String[] stateSplit = propEntry.split(":");
+            if (stateSplit.length != 2) {
+                CreateICBM.logger().error(name + ": Invalid property `" + propEntry + "` in entry `" + entry + "`, expected `property:value`");
+                return false;
+            }
             final String propName = stateSplit[0].trim();
             final String propValue = stateSplit[1].trim();
 
@@ -362,13 +371,4 @@ public class BlockStateConfigListOld {
         this.fuzzyBlockChecks.get(domain).add(check);
     }
 
-    public List<String> dumpBlocksContained() {
-        final List<String> list = new ArrayList<>();
-        BuiltInRegistries.BLOCK.forEach(block -> {
-            if(this.contains(block.defaultBlockState())) {
-                list.add(block.builtInRegistryHolder().key().location().toString());
-            }
-        });
-        return list;
-    }
 }

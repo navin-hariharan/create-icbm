@@ -73,8 +73,14 @@ public class BlastAntiGravitational extends BlastThreaded implements IBlastTicka
                             double deltaZ = targetPosition.getZ() - this.location.getZ();
                             double mag = Math.sqrt(deltaX * deltaX + deltaZ * deltaZ);
 
-                            deltaX /= mag;
-                            deltaZ /= mag;
+                            if (mag > 1.0E-6) {
+                                deltaX /= mag;
+                                deltaZ /= mag;
+                            } else {
+                                // Straight above or below the center, there is no horizontal direction
+                                deltaX = 0;
+                                deltaZ = 0;
+                            }
 
                             entity.setDeltaMovement(entity.getDeltaMovement().add(deltaX * (1 - world().random.nextFloat()), 0, deltaZ * (1 - world().random.nextFloat())));
 
@@ -118,5 +124,12 @@ public class BlastAntiGravitational extends BlastThreaded implements IBlastTicka
     @Override
     protected void onBlastCompleted() {
         flyingBlocks.forEach(EntityFlyingBlock::restoreGravity);
+    }
+
+    /** Not an explosion, so no distant boom for people who can see it */
+    @Override
+    protected boolean playsDistantSound()
+    {
+        return false;
     }
 }

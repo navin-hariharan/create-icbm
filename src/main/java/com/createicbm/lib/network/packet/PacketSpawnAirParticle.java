@@ -4,7 +4,6 @@ import com.createicbm.CreateICBM;
 import com.createicbm.lib.network.IPacket;
 import com.createicbm.lib.network.TargetPoint;
 import net.minecraft.client.Minecraft;
-import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.resources.ResourceKey;

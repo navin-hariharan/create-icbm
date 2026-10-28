@@ -35,9 +35,10 @@ public class RenderFragments extends EntityRenderer<EntityFragments>
     {
         if (entity.isAnvil)
         {
-            final BlockState blockState = (entity.level().random.nextInt(2) == 0 ? Blocks.ANVIL : Blocks.CHIPPED_ANVIL).defaultBlockState()
-                    .setValue(AnvilBlock.FACING, ANVIL_FACINGS[entity.level().random.nextInt(3)]);
-            //TODO store rotation and damage in entity to reduce random nature
+            // Picked from the entity id, a new random roll every frame made the anvil flicker between models and facings
+            final int variant = entity.getId();
+            final BlockState blockState = ((variant & 1) == 0 ? Blocks.ANVIL : Blocks.CHIPPED_ANVIL).defaultBlockState()
+                    .setValue(AnvilBlock.FACING, ANVIL_FACINGS[Math.floorMod(variant >> 1, ANVIL_FACINGS.length)]);
 
             final BlockRenderDispatcher blockrendererdispatcher = Minecraft.getInstance().getBlockRenderer();
 

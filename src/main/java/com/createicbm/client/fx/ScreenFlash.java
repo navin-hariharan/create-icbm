@@ -9,13 +9,21 @@ import net.minecraft.client.gui.GuiGraphics;
  */
 public final class ScreenFlash
 {
-    /** Fade out after the fully white part */
-    private static final long FADE_MS = 500;
+    /** Fade out after the fully white part when nothing else is asked for */
+    private static final long DEFAULT_FADE_MS = 500;
 
     private static long fullUntil = 0;
+    private static long fadeMs = DEFAULT_FADE_MS;
 
     private ScreenFlash()
     {
+    }
+
+    /** Ends a running flash, called when leaving a world so it doesn't carry over to the next one */
+    public static void clear()
+    {
+        fullUntil = 0;
+        fadeMs = DEFAULT_FADE_MS;
     }
 
     /**
@@ -23,7 +31,23 @@ public final class ScreenFlash
      */
     public static void start(int ticks)
     {
-        fullUntil = Math.max(fullUntil, Util.getMillis() + ticks * 50L);
+        start(ticks, 10);
+    }
+
+    /**
+     * @param ticks     the screen stays fully white for
+     * @param fadeTicks ticks it takes to fade back to the game afterwards
+     */
+    public static void start(int ticks, int fadeTicks)
+    {
+        final long now = Util.getMillis();
+        final long end = now + ticks * 50L + fadeTicks * 50L;
+        // A weaker flash must not cut a stronger one that is still running short
+        if (end > fullUntil + fadeMs)
+        {
+            fullUntil = now + ticks * 50L;
+            fadeMs = Math.max(1L, fadeTicks * 50L);
+        }
     }
 
     public static void render(GuiGraphics graphics, DeltaTracker delta)
@@ -43,11 +67,11 @@ public final class ScreenFlash
     private static void draw(GuiGraphics graphics, float z)
     {
         final long now = Util.getMillis();
-        if (now >= fullUntil + FADE_MS)
+        if (now >= fullUntil + fadeMs)
         {
             return;
         }
-        final float alpha = now <= fullUntil ? 1F : 1F - (now - fullUntil) / (float) FADE_MS;
+        final float alpha = now <= fullUntil ? 1F : 1F - (now - fullUntil) / (float) fadeMs;
         final int color = ((int) (alpha * 255) << 24) | 0xFFFFFF;
         graphics.pose().pushPose();
         graphics.pose().translate(0F, 0F, z);

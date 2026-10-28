@@ -34,6 +34,7 @@ public interface IActionStatus extends IBuildableObject, ITypeTaggable {
      * @return true if error
      * @deprecated replaced with {@link #getTypeTags()} and {@link ActionStatusTypes#ERROR}
      */
+    @Deprecated
     default boolean isError() {
         return this.getTypeTags().contains(ActionStatusTypes.ERROR);
     }
@@ -52,6 +53,7 @@ public interface IActionStatus extends IBuildableObject, ITypeTaggable {
      * @return true to block triggering of action
      * @deprecated replaced with {@link #getTypeTags()} and {@link ActionStatusTypes#BLOCKING}
      */
+    @Deprecated
     default boolean isBlocking() {
         return this.getTypeTags().contains(ActionStatusTypes.BLOCKING);
     }

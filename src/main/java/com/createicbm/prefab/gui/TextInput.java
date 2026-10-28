@@ -189,10 +189,6 @@ public class TextInput<Output> extends GuiTextFieldBase implements IToolTip, IGu
         return errorFeedback;
     }
 
-    public void setError(Component error) {
-        this.errorFeedback = error;
-    }
-
     public boolean isErrored() {
         return errorFeedback != null;
     }

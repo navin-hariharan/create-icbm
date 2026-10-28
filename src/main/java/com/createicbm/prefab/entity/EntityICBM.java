@@ -14,7 +14,6 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
 /**
@@ -129,27 +128,6 @@ public abstract class EntityICBM extends Entity implements IWorldPosition
     protected void destroy()
     {
         this.discard();
-    }
-
-    /**
-     * Sets the position based on the bounding box
-     */
-    protected void alignToBounds()
-    {
-        final AABB box = this.getBoundingBox();
-        this.setPosRaw((box.minX + box.maxX) / 2.0D, box.minY - (double) this.getBbHeight(), (box.minZ + box.maxZ) / 2.0D);
-    }
-
-    /**
-     * Gets the predicted position
-     *
-     * @param t - number of ticks to predicted
-     * @return predicted position of the project
-     */
-    public Vec3 getPredictedPosition(int t)
-    {
-        final Vec3 motion = getDeltaMovement();
-        return new Vec3(getX() + motion.x * t, getY() + motion.y * t, getZ() + motion.z * t);
     }
 
     @Override

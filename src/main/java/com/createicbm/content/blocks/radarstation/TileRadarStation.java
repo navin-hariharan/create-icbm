@@ -26,8 +26,6 @@ import com.createicbm.lib.saving.NbtSaveHandler;
 import com.createicbm.lib.tile.TickAction;
 import com.createicbm.lib.tile.TickDoOnce;
 import com.createicbm.prefab.gui.IPlayerUsing;
-import com.createicbm.prefab.inventory.InventorySlot;
-import com.createicbm.prefab.inventory.InventoryWithSlots;
 import com.createicbm.prefab.tile.IGuiTile;
 import com.createicbm.prefab.tile.TileKineticMachine;
 import lombok.Getter;
@@ -47,8 +45,6 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.network.chat.Component;
-import net.minecraft.world.level.Level;
-import net.neoforged.neoforge.capabilities.Capabilities;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
@@ -149,6 +145,9 @@ public class TileRadarStation extends TileKineticMachine implements IMachineInfo
                 {
                     this.doScan(); //TODO consider rewriting to not cache targets
                 }
+
+                // Drop missiles that died since the last scan so SAMs are not fired at them
+                this.incomingThreats.removeIf(m -> m.getMissileEntity() == null || !m.getMissileEntity().isAlive());
 
                 //Spam launch packets to nearby silos
                 if (!radio.getChannel().equals(RadioRegistry.EMPTY_HZ) && !this.incomingThreats.isEmpty())
@@ -256,9 +255,9 @@ public class TileRadarStation extends TileKineticMachine implements IMachineInfo
 
     private int distance(Entity entity) {
         final BlockPos pos = getBlockPos();
-        final int deltaX = (int)Math.floor(Math.abs(pos.getX() + 0.5) - entity.getX());
-        final int deltaY = (int)Math.floor(Math.abs(pos.getY() + 0.5) - entity.getY());
-        final int deltaZ = (int)Math.floor(Math.abs(pos.getZ() + 0.5) - entity.getZ());
+        final int deltaX = (int)Math.floor(Math.abs(pos.getX() + 0.5 - entity.getX()));
+        final int deltaY = (int)Math.floor(Math.abs(pos.getY() + 0.5 - entity.getY()));
+        final int deltaZ = (int)Math.floor(Math.abs(pos.getZ() + 0.5 - entity.getZ()));
 
         return deltaX + deltaY + deltaZ;
     }

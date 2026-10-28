@@ -68,6 +68,19 @@ public class CommonProxy
 
     }
 
+    /**
+     * @return how far (blocks) players can see things in this level: the server view distance, on a client the
+     * player's own render distance. Missile sounds and visibility are scaled to it.
+     */
+    public double getViewDistanceBlocks(Level level)
+    {
+        if (level instanceof net.minecraft.server.level.ServerLevel serverLevel)
+        {
+            return serverLevel.getServer().getPlayerList().getViewDistance() * 16.0;
+        }
+        return 256;
+    }
+
     /** Client only, keeps the missile's looping engine sound going */
     public void onMissileEngineTick(EntityMissile<?> missile)
     {

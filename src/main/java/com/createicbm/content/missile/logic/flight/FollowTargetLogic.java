@@ -5,7 +5,6 @@ import com.createicbm.api.missiles.IMissile;
 import com.createicbm.config.missile.ConfigMissile;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.util.Mth;
 
 import javax.annotation.Nonnull;
 
@@ -52,6 +51,11 @@ public class FollowTargetLogic extends DeadFlightLogic
             double motionZ = missile.getTargetData().getZ() - entity.getZ();
 
             float velocity = (float) Math.sqrt(motionX * motionX + motionY * motionY + motionZ * motionZ);
+            // Right on the target there is no direction to follow, dividing by zero made the motion NaN
+            if (!(velocity > 1.0E-6F))
+            {
+                return;
+            }
             motionX /= velocity;
             motionY /= velocity;
             motionZ /= velocity;

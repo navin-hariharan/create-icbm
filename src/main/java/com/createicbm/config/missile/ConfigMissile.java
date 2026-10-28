@@ -19,9 +19,9 @@ public class ConfigMissile
     public static float DIRECT_FLIGHT_SPEED = 2;
 
     @Config.Name("simulation_flight_speed")
-    @Config.Comment("Speed (meters per tick) of missiles in simulation")
+    @Config.Comment("Speed (meters per second) of missiles while simulated, outside loaded chunks")
     @Config.RangeDouble(min = 0.0001)
-    public static float SIMULATION_FLIGHT_SPEED = 10;
+    public static float SIMULATION_FLIGHT_SPEED = 20;
 
     @Config.Name("simulation_exit_height")
     @Config.Comment("Height (y level) to start simulating a missile when it travels above the map")
@@ -56,6 +56,15 @@ public class ConfigMissile
     @Config.Name("direct_fire_chunk_loading")
     @Config.Comment("Missiles flying in a straight line (handheld and cruise launchers), and missiles the missile tracker could not take, keep the chunks just ahead of them loaded, so they don't freeze and vanish at the edge of the simulation distance")
     public static boolean DIRECT_FIRE_CHUNK_LOADING = true;
+
+    @Config.Name("keep_visible_in_flight")
+    @Config.Comment("A missile stays a real, visible entity while a player is within the server view distance of it, instead of vanishing into the missile tracker as soon as the chunks ahead stop ticking. The chunks ahead are kept loaded for it (see max_missile_chunk_tickets). Far from every player it is simulated as before.")
+    public static boolean KEEP_VISIBLE_IN_FLIGHT = true;
+
+    @Config.Name("max_missile_chunk_tickets")
+    @Config.Comment("Most chunks all missiles of one dimension hold loaded ahead of them together (see direct_fire_chunk_loading).\nOn a server with a big salvo in the air this keeps the chunk loading and world generation bounded, a missile always keeps its own chunk and the next one.")
+    @Config.RangeInt(min = 2, max = 100000)
+    public static int MAX_MISSILE_CHUNK_TICKETS = 512;
 
     @Config.Name("health_tier_1")
     @Config.Comment("Amount of damage a missile can take from any source before death")

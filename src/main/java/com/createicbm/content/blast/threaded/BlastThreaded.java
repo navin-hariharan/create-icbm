@@ -97,15 +97,22 @@ public abstract class BlastThreaded extends Blast
      */
     protected void applyEdits(List<BlockPos> batch)
     {
+        // Blocks in chunks that are not loaded (any more) are left alone, reading them would load or generate the chunk
         if (!ConfigBlast.PROTECTION_EVENTS)
         {
-            batch.forEach(this::destroyBlock);
+            for (BlockPos pos : batch)
+            {
+                if (world.hasChunkAt(pos))
+                {
+                    destroyBlock(pos);
+                }
+            }
             return;
         }
         final List<BlockPos> changing = new ArrayList<>(batch.size());
         for (BlockPos pos : batch)
         {
-            if (willEditBlock(pos, world.getBlockState(pos)))
+            if (world.hasChunkAt(pos) && willEditBlock(pos, world.getBlockState(pos)))
             {
                 changing.add(pos);
             }

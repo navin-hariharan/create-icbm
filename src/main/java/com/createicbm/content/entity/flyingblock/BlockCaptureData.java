@@ -1,7 +1,6 @@
 package com.createicbm.content.entity.flyingblock;
 
 import com.createicbm.lib.saving.NbtSaveHandler;
-import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import net.minecraft.world.level.block.state.BlockState;

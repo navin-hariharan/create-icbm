@@ -11,6 +11,7 @@ import net.neoforged.bus.api.Event;
  *
  * @deprecated will be replaced by {@link com.createicbm.api.actions.IAction} event
  */
+@Deprecated
 public abstract class MissileEvent extends Event
 {
     public final IMissile missile;

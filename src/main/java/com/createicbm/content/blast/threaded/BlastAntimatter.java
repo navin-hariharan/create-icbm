@@ -6,33 +6,105 @@ import com.createicbm.config.ConfigDebug;
 import com.createicbm.config.blast.ConfigBlast;
 import com.createicbm.config.blast.types.ConfigAntimatter;
 import com.createicbm.content.blast.BlastHelpers;
-import com.createicbm.content.blast.BlastProtection;
 import com.createicbm.content.blast.redmatter.EntityRedmatter;
+import com.createicbm.lib.network.packet.PacketMushroomCloud;
+import com.createicbm.lib.network.packet.PacketScreenFlash;
 import com.createicbm.lib.transform.BlockEditHandler;
+import com.createicbm.lib.transform.DistanceCountingSort;
 import net.minecraft.world.level.block.FallingBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import com.createicbm.content.blast.helpers.BlastBlockHelpers;
 import java.util.concurrent.ThreadLocalRandom;
 
 import java.util.List;
-import java.util.Set;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 public class BlastAntimatter extends BlastThreaded
 {
+    /** Ticks the mushroom cloud takes to rise */
+    private static final int CLOUD_TICKS = 20 * 18;
+
+    /** Players this close hear the detonation at full volume, the others in view distance a distant boom */
+    private static final double NEAR_SOUND_RADIUS = 100;
+
     private final BlockState replaceState = Blocks.AIR.defaultBlockState();
+
+    @Override
+    protected double getNearSoundRadius()
+    {
+        return NEAR_SOUND_RADIUS;
+    }
+
+    /** The detonation is timed to the flash and cloud, it builds up to the shockwave a second in */
+    @Override
+    protected ICBMSounds getNearSound()
+    {
+        return ICBMSounds.ANTIMATTER_BLAST;
+    }
+
+    @Override
+    protected void playExplodeSound()
+    {
+        // Played by BlastSounds together with the flash, to everybody in range and with the delay of distance
+    }
 
     @Override
     public boolean setupBlast()
     {
         super.setupBlast();
-        ICBMSounds.ANTIMATTER.play(world, this.location.x(), this.location.y(), this.location.z(), 7F, (float) (this.world().random.nextFloat() * 0.1 + 0.9F), true);
-        return this.doDamageEntities(this.getBlastRadius() * 2, ConfigBlast.antimatter.damage); //TODO config for radius
+        final boolean continueBlast = this.doDamageEntities(this.getBlastRadius() * 2, ConfigBlast.antimatter.damage); //TODO config for radius
+        if (continueBlast)
+        {
+            announce();
+        }
+        return continueBlast;
+    }
+
+    /**
+     * The flash and the mushroom cloud, only small packets are sent, every client draws its own cloud
+     */
+    private void announce()
+    {
+        if (!(world instanceof ServerLevel level))
+        {
+            return;
+        }
+        final ConfigAntimatter config = ConfigBlast.antimatter;
+        final double x = this.location.x();
+        final double y = this.location.y();
+        final double z = this.location.z();
+        final double radius = this.getBlastRadius();
+
+        // Blinding flash for everybody within the blast and the extra range around it, shorter the further away
+        if (config.flashExtraRange > 0)
+        {
+            final double range = radius + config.flashExtraRange;
+            final double rangeSq = range * range;
+            for (ServerPlayer player : level.players())
+            {
+                final double distanceSq = player.distanceToSqr(x, y, z);
+                if (distanceSq <= rangeSq)
+                {
+                    final double closeness = 1.0 - Math.sqrt(distanceSq) / range;
+                    final int fullTicks = Math.max(8, (int) (config.flashTicks * (0.25 + 0.75 * closeness)));
+                    final int fadeTicks = 30 + (int) (60 * closeness);
+                    PacketScreenFlash.send(player, fullTicks, fadeTicks);
+                }
+            }
+            level.sendParticles(ParticleTypes.FLASH, x, y, z, 3, 1.5, 1.5, 1.5, 0);
+        }
+
+        if (config.mushroomCloud)
+        {
+            PacketMushroomCloud.send(level, x, y, z, (float) radius, CLOUD_TICKS, Math.max(config.mushroomCloudRange, radius + config.flashExtraRange));
+        }
     }
 
     @Override
@@ -76,8 +148,8 @@ public class BlastAntimatter extends BlastThreaded
         {
             long time = System.currentTimeMillis();
 
-            //Sort distance
-            edits.sort(buildSorter());
+            //Sort distance, the middle first so the crater opens up from the center
+            sortFromCenter(edits);
 
             time = System.currentTimeMillis() - time;
             if(ConfigDebug.DEBUG_EXPLOSIVES) {
@@ -101,6 +173,38 @@ public class BlastAntimatter extends BlastThreaded
         }
     }
 
+    /**
+     * Orders the positions from the middle of the blast outwards. Squared distances only come in a few thousand
+     * values, so they are counted into buckets instead of compared 700 000 times over.
+     */
+    private void sortFromCenter(List<BlockPos> edits)
+    {
+        final int count = edits.size();
+        final BlockPos[] positions = edits.toArray(new BlockPos[0]);
+        final int centerX = this.xi();
+        final int centerY = this.yi();
+        final int centerZ = this.zi();
+        final int[] keys = new int[count];
+        for (int i = 0; i < count; i++)
+        {
+            final long dx = positions[i].getX() - centerX;
+            final long dy = positions[i].getY() - centerY;
+            final long dz = positions[i].getZ() - centerZ;
+            final long distanceSq = dx * dx + dy * dy + dz * dz;
+            keys[i] = distanceSq > DistanceCountingSort.MAX_KEY ? -1 : (int) distanceSq;
+        }
+        final int[] order = DistanceCountingSort.order(keys);
+        if (order == null)
+        {
+            edits.sort(buildSorter());
+            return;
+        }
+        for (int i = 0; i < count; i++)
+        {
+            edits.set(i, positions[order[i]]);
+        }
+    }
+
     private void scheduledTask(List<BlockPos> removeFirst, List<BlockPos> edits) {
 
         //Worker is done reading
@@ -108,27 +212,24 @@ public class BlastAntimatter extends BlastThreaded
 
         long time = System.currentTimeMillis();
 
-        //Remove any blocks that could cause issues when queued, minus the ones claim and protection mods guard
-        final Set<BlockPos> denied = BlastProtection.denied(world, asVanillaExplosion(), removeFirst.stream()
-                .filter(pos -> !world.getBlockState(pos).isAir())
-                .collect(Collectors.toList()));
-        for (BlockPos blockPos : removeFirst)
+        // Water and falling blocks go first so they cannot flow or drop into the crater while it opens. Spread over
+        // a quarter of the time, in one tick this was every water block of an ocean at once. Each batch is checked
+        // against claims when applied.
+        final int paceTicks = ConfigBlast.antimatter.editTicks;
+        if (!removeFirst.isEmpty())
         {
-            if (!denied.contains(blockPos))
-            {
-                world.setBlock(blockPos, replaceState, 2);
-            }
+            BlockEditHandler.queueBatches(world, removeFirst, this::applyEdits, null, paceTicks / 4);
         }
 
         time = System.currentTimeMillis() - time;
         if(ConfigDebug.DEBUG_EXPLOSIVES) {
-            CreateICBM.logger().info("Antimatter: remove#first blocks ran in " + time + "ms,  edits:" + removeFirst.size());
+            CreateICBM.logger().info("Antimatter: queueing first edits ran in " + time + "ms,  edits:" + removeFirst.size());
         }
 
         time = System.currentTimeMillis();
 
-        //Queue edits, even the ones from the previous, each batch is checked against claims when applied
-        BlockEditHandler.queueBatches(world, edits, this::applyEdits, null);
+        //Queue the rest, even the ones from the previous, spread over time so the crater opens up smoothly
+        BlockEditHandler.queueBatches(world, edits, this::applyEdits, null, paceTicks);
 
         time = System.currentTimeMillis() - time;
         if(ConfigDebug.DEBUG_EXPLOSIVES) {

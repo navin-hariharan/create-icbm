@@ -126,7 +126,7 @@ public class MissileTrackerWorld extends SavedData
      */
     public void onWorldTick(final Level world)
     {
-        if (ticks++ >= 20)  //Run every 20 ticks = 1 second
+        if (++ticks >= 20)  //Run every 20 ticks = 1 second
         {
             ticks = 0;
             // Only the missile lists are saved, nothing to mark dirty when both are empty
@@ -199,8 +199,32 @@ public class MissileTrackerWorld extends SavedData
                         continue;
                     }
 
-                    //Load missile into world
-                    spawnMissileOnDestination(world, mtd);
+                    //Load missile into world, one that can't be built (bad save data, a mod removed) must not crash the
+                    //world tick every second and stay in the save forever
+                    boolean spawned;
+                    try
+                    {
+                        spawned = spawnMissileOnDestination(world, mtd);
+                    }
+                    catch (RuntimeException e)
+                    {
+                        CreateICBM.logger().error("MissileTracker[{}]: failed to spawn the missile arriving at {}, it is lost",
+                            world.dimension().location(), mtd.targetPos, e);
+                        spawnIterator.remove();
+                        continue;
+                    }
+                    if (!spawned)
+                    {
+                        // The world refused the missile, try again a few times before giving up on it
+                        if (mtd.spawnRefusals < MAX_SPAWN_RETRIES)
+                        {
+                            mtd.spawnRefusals++;
+                            mtd.preLoadChunkTimer = preLoadChunkTimer;
+                            continue;
+                        }
+                        CreateICBM.logger().warn("MissileTracker[{}]: the world refused the missile arriving at {}, it is lost",
+                            world.dimension().location(), mtd.targetPos);
+                    }
 
                     //Remove
                     spawnIterator.remove();
@@ -215,7 +239,10 @@ public class MissileTrackerWorld extends SavedData
         }
     }
 
-    private void spawnMissileOnDestination(final Level world, MissileTrackerData mtd)
+    /**
+     * @return true if the world accepted the missile
+     */
+    private boolean spawnMissileOnDestination(final Level world, MissileTrackerData mtd)
     {
         //Create entity of the kind that left, a delivery missile used to come back as an explosive missile
         final EntityMissile<?> missile;
@@ -243,10 +270,16 @@ public class MissileTrackerWorld extends SavedData
         missile.getMissileCapability().launch();
 
         //Spawn entity
-        missile.world().addFreshEntity(missile);
+        if (!missile.world().addFreshEntity(missile))
+        {
+            // Nothing flew, take the radar contact and launch sound back
+            missile.getMissileCapability().cancelLaunch();
+            return false;
+        }
 
         if(ConfigDebug.DEBUG_MISSILE_TRACKER)
             CreateICBM.logger().info("MissileTracker[" + missile.level().dimension().location() + "]: Missile spawned by missile tracker: " + missile);
+        return true;
     }
 
     private static int targetChunkX(MissileTrackerData mtd)

@@ -173,7 +173,7 @@ public class EventTrackerType {
         }
 
         public Builder listen(ResourceLocation name, Supplier<Boolean> conditional, IEventTrackerListener listener) {
-            this.listeners.add(new ListenerEntry(name, listener));
+            this.listeners.add(new ListenerEntry(name, listener, conditional));
             return this;
         }
 

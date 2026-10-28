@@ -6,7 +6,9 @@ import com.createicbm.lib.network.IPacket;
 import com.createicbm.lib.network.TargetPoint;
 import com.createicbm.lib.network.lambda.entity.PacketLambdaEntity;
 import com.createicbm.lib.network.lambda.tile.PacketLambdaTile;
+import com.createicbm.lib.network.packet.PacketEnderAbduction;
 import com.createicbm.lib.network.packet.PacketEntityPos;
+import com.createicbm.lib.network.packet.PacketMushroomCloud;
 import com.createicbm.lib.network.packet.PacketPlayerItem;
 import com.createicbm.lib.network.packet.PacketSpawnAirParticle;
 import com.createicbm.lib.network.packet.PacketSpawnBlockExplosion;
@@ -73,6 +75,8 @@ public class PacketManager
         addPacket(PacketEntityPos.class, PacketEntityPos::new);
         addPacket(PacketTrackedSound.class, PacketTrackedSound::new);
         addPacket(PacketScreenFlash.class, PacketScreenFlash::new);
+        addPacket(PacketEnderAbduction.class, PacketEnderAbduction::new);
+        addPacket(PacketMushroomCloud.class, PacketMushroomCloud::new);
     }
 
     public final String channel;
@@ -277,16 +281,6 @@ public class PacketManager
         {
             PacketDistributor.sendToPlayersInDimension(serverLevel, new ICBMPayload(packet));
         }
-    }
-
-    /**
-     * sends to all clients connected to the server
-     *
-     * @param packet the packet to send.
-     */
-    public void sendToAll(IPacket packet)
-    {
-        PacketDistributor.sendToAllPlayers(new ICBMPayload(packet));
     }
 
     public void sendToAllAround(IPacket message, TargetPoint point)

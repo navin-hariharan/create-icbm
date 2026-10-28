@@ -16,6 +16,7 @@ import java.util.function.Consumer;
  *
  * @deprecated will be replaced by a capacitity providing {@link IPotentialAction}
  */
+@Deprecated
 public interface IExplosive
 {
 

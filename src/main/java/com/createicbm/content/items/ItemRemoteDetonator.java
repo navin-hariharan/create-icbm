@@ -21,7 +21,7 @@ import net.neoforged.neoforge.common.NeoForge;
 import org.apache.commons.lang3.RandomStringUtils;
 
 /**
- * Remotely triggers launchers, EMP Towers and wired explosive crates on its radio channel. Right-click an explosive
+ * Remotely triggers launchers and wired explosive crates on its radio channel. Right-click an explosive
  * crate to wire it to the channel, or another radio block to copy its channel.
  *
  *

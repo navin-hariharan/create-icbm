@@ -1,7 +1,6 @@
 {
   "replace": false,
   "values": [
-    "create_icbm:emptower",
     "create_icbm:launcherbase",
     "create_icbm:launcherscreen",
     "create_icbm:launcherframe",

@@ -43,11 +43,6 @@ public class BasicTargetData implements IMissileTarget, IMissileTargetDelayed, I
         this.position = new Vec3(pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5);
     }
 
-    public BasicTargetData withFiringDelay(int ticks) {
-        this.firingDelay = ticks;
-        return this;
-    }
-
     @Override
     public int getFiringDelay() {
         return firingDelay;
@@ -61,9 +56,9 @@ public class BasicTargetData implements IMissileTarget, IMissileTargetDelayed, I
     @Override
     public boolean isValid() {
         return position != null
-                && Double.isNaN(getX()) && Double.isFinite(getX())
-                && Double.isNaN(getY()) && Double.isFinite(getY())
-                && Double.isNaN(getZ()) && Double.isFinite(getZ());
+                && Double.isFinite(getX())
+                && Double.isFinite(getY())
+                && Double.isFinite(getZ());
     }
 
     @Override

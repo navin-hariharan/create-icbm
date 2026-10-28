@@ -12,6 +12,7 @@ import net.minecraft.core.Direction;
  *
  * @deprecated will be removed
  */
+@Deprecated
 public interface IRotatable extends IRotation
 {
 	/** Sets the facing direction, is not supported by all machines */

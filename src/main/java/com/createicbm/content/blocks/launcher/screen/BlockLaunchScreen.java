@@ -6,7 +6,6 @@ import com.createicbm.api.caps.IGPSData;
 import com.createicbm.content.blocks.launcher.network.ILauncherComponent;
 import com.createicbm.content.blocks.launcher.network.LauncherNetwork;
 import com.createicbm.content.reg.BlockReg;
-import com.createicbm.lib.InventoryUtility;
 import com.createicbm.lib.capability.gps.GPSDataHelpers;
 import com.createicbm.prefab.tile.BlockICBM;
 import net.minecraft.core.BlockPos;

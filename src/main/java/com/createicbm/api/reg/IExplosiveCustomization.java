@@ -10,6 +10,7 @@ import java.util.function.Consumer;
  *
  * @deprecated replaced by {@link com.createicbm.api.actions.data.IActionFieldProvider}
  */
+@Deprecated
 public interface IExplosiveCustomization extends IBuildableObject {
 
     /**

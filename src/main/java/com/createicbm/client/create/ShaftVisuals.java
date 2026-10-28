@@ -29,7 +29,6 @@ public final class ShaftVisuals
         shaftHalf(BlockReg.TILE_LAUNCHER_BASE.get(), be -> be.getBlockState().getValue(BlockLauncherBase.ROTATION_PROP).getOpposite());
         shaftHalf(BlockReg.TILE_CRUISE_LAUNCHER.get(), be -> Direction.DOWN);
         shaftHalf(BlockReg.TILE_RADAR_STATION.get(), be -> Direction.DOWN);
-        shaftHalf(BlockReg.TILE_EMP_TOWER.get(), be -> Direction.DOWN);
     }
 
     /** A half shaft from the block centre out through the given face, turning with the block entity */

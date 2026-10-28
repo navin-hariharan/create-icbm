@@ -1,8 +1,8 @@
 package com.createicbm.lib.projectile;
 
+import com.createicbm.CreateICBM;
 import com.createicbm.ICBMConstants;
 import com.createicbm.api.actions.cause.IActionSource;
-import com.createicbm.api.data.D3Consumer;
 import com.createicbm.api.missiles.IMissileAiming;
 import com.createicbm.api.missiles.projectile.IProjectileThrowable;
 import com.createicbm.content.blast.ICBMDamageTypes;
@@ -418,6 +418,12 @@ public abstract class EntityProjectile<PROJECTILE extends EntityProjectile<PROJE
         final double deltaZ = hit.z - this.getZ();
 
         final float mag = (float) Math.sqrt(deltaX * deltaX + deltaY * deltaY + deltaZ * deltaZ);
+        // Already on the spot (a ray that starts on a block face), no direction to back off along. Dividing by zero
+        // made the position NaN and the projectile vanish.
+        if (!(mag > 1.0E-6F)) {
+            setPos(hit.x, hit.y, hit.z);
+            return;
+        }
         final double vecX = (deltaX / (double) mag) * offset;
         final double vecY = (deltaY / (double) mag) * offset;
         final double vecZ = (deltaZ / (double) mag) * offset;
@@ -663,13 +669,6 @@ public abstract class EntityProjectile<PROJECTILE extends EntityProjectile<PROJE
         this.ticksInGround = 0;
     }
 
-    protected static void vectorFromAngles(float yaw, float pitch, D3Consumer callback) {
-        callback.apply(
-            -Mth.sin(yaw * 0.017453292F) * Mth.cos(pitch * 0.017453292F),
-            -Mth.sin(pitch * 0.017453292F),
-            Mth.cos(yaw * 0.017453292F) * Mth.cos(pitch * 0.017453292F));
-    }
-
     @Override
     public void lerpTo(double x, double y, double z, float yaw, float pitch, int posRotationIncrements) {
         this.setPos(x, y, z);
@@ -681,14 +680,13 @@ public abstract class EntityProjectile<PROJECTILE extends EntityProjectile<PROJE
         return MovementEmission.NONE;
     }
 
-    public boolean canBeDestroyed(Object attacker, DamageSource damageSource) {
-        return hasHealth;
-    }
-
     @Override
     public boolean shouldRenderAtSqrDistance(double distanceSq) {
         final double renderDistance = getAverageEdgeLength() * getViewScale() * getRenderDistance();
-        return distanceSq < renderDistance * renderDistance;
+        // Seen as far as the player's render distance, whatever the entity distance slider says
+        final double seen = level().isClientSide() ? CreateICBM.proxy.getViewDistanceBlocks(level()) : 0;
+        final double limit = Math.max(renderDistance, seen);
+        return distanceSq < limit * limit;
     }
 
     protected double getRenderDistance() {

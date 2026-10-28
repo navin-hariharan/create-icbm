@@ -58,44 +58,6 @@ public class Rectangle extends Shape2D
         return y >= this.min.y() && y <= this.max.y() && x >= this.min.x() && x <= this.max.x();
     }
 
-    public boolean isWithin_rotated(IPos2D p)
-    {
-        //Rect corners
-        final Point cornerA = this.cornerA();
-        final Point cornerB = this.cornerB();
-        final Point cornerC = this.cornerC();
-        final Point cornerD = this.cornerD();
-
-        //Area of the triangles made from the corners and p
-        double areaAB = new Triangle(cornerA, cornerB, p).getArea();
-        double areaBC = new Triangle(cornerB, cornerC, p).getArea();
-        double areaCD = new Triangle(cornerC, cornerD, p).getArea();
-        double areaDA = new Triangle(cornerD, cornerA, p).getArea();
-
-        //If the area of the combined points is less and equals to area
-        return (areaAB + areaBC + areaCD + areaDA) <= getArea();
-    }
-
-    public Point cornerA()
-    {
-        return min;
-    }
-
-    public Point cornerB()
-    {
-        return new Point(min.x(), max.y());
-    }
-
-    public Point cornerC()
-    {
-        return max;
-    }
-
-    public Point cornerD()
-    {
-        return new Point(max.x(), min.y());
-    }
-
     /**
      * Returns whether the given region intersects with this one.
      */

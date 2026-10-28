@@ -43,15 +43,6 @@ public abstract class PotentialActionImp<SELF extends PotentialActionImp<SELF>> 
     /** True when {@link #preCheck} was loaded from save and has not been given the field provider yet */
     private boolean preCheckNeedsInit = false;
 
-    public SELF withCondition(ICondition check) {
-        this.preCheck = check;
-        this.preCheckNeedsInit = false;
-        if(check != null) {
-            check.init(fieldProvider);
-        }
-        return (SELF) this;
-    }
-
     public SELF withProvider(IActionFieldProvider provider) {
         this.fieldProvider = provider;
         if(preCheck != null) {

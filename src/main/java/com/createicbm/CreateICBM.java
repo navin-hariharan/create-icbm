@@ -13,12 +13,9 @@ import com.createicbm.command.ICBMCommands;
 import com.createicbm.config.*;
 import com.createicbm.config.blast.ConfigBlast;
 import com.createicbm.config.blocks.ConfigBlocks;
-import com.createicbm.config.machines.ConfigEmpTower;
 import com.createicbm.config.machines.ConfigLauncher;
 import com.createicbm.config.machines.ConfigRadar;
 import com.createicbm.config.missile.ConfigMissile;
-import com.createicbm.content.actions.emp.EmpHandler;
-import com.createicbm.content.blocks.emptower.TileEMPTower;
 import com.createicbm.content.blocks.launcher.base.TileLauncherBase;
 import com.createicbm.content.blocks.launcher.cruise.TileCruiseLauncher;
 import com.createicbm.content.blocks.launcher.screen.TileLauncherScreen;
@@ -40,8 +37,6 @@ import com.createicbm.content.reg.*;
 import com.createicbm.lib.actions.ActionSystem;
 import com.createicbm.lib.buildable.BuildableObjectRegistry;
 import com.createicbm.lib.config.ConfigLoader;
-import com.createicbm.lib.energy.system.EnergySystem;
-import com.createicbm.lib.energy.system.EnergySystemFE;
 import com.createicbm.lib.explosive.reg.*;
 import com.createicbm.lib.network.netty.PacketManager;
 import com.createicbm.lib.radar.RadarRegistry;
@@ -51,11 +46,7 @@ import com.createicbm.lib.tracker.EventTracker;
 import com.createicbm.lib.world.ProjectileBlockInteraction;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.effect.MobEffect;
-import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.item.Items;
-import net.minecraft.world.level.ItemLike;
 import net.minecraft.world.level.block.DispenserBlock;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
@@ -75,7 +66,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.File;
-import java.util.function.Supplier;
 
 /**
  * @author Dark(DarkGuardsman, Robin).
@@ -128,7 +118,6 @@ public class CreateICBM
         ICBMCreativeTab.register(modBus);
 
         // Packet codexes, ids come from registration order so they must all be registered here, in a fixed order
-        TileEMPTower.register();
         TileRadarStation.register();
         TileLauncherBase.register();
         TileLauncherScreen.register();
@@ -152,7 +141,6 @@ public class CreateICBM
         NeoForge.EVENT_BUS.addListener(CreateICBM::serverStarting);
         NeoForge.EVENT_BUS.addListener(CreateICBM::serverStopping);
 
-        EnergySystem.register(new EnergySystemFE());
         proxy.preInit(modBus);
     }
 
@@ -184,7 +172,6 @@ public class CreateICBM
         ConfigLoader.register(container, ConfigBlueMap.class);
         ConfigLoader.register(container, ConfigThread.class);
         ConfigLoader.register(container, ConfigMissile.class);
-        ConfigLoader.register(container, ConfigEmpTower.class);
         ConfigLoader.register(container, ConfigLauncher.class);
         ConfigLoader.register(container, ConfigRadar.class);
         ConfigLoader.register(container, ConfigClient.class);
@@ -221,7 +208,6 @@ public class CreateICBM
         ProjectileBlockInteraction.register();
         RadioactiveHandler.setup();
         ProtectiveArmorHandler.setup();
-        EmpHandler.setup();
 
         event.enqueueWork(() -> {
             // Dispenser handlers, the vanilla map isn't thread safe

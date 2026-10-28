@@ -1,6 +1,5 @@
 package com.createicbm.client.create;
 
-import com.simibubi.create.AllItems;
 import com.simibubi.create.content.kinetics.deployer.DeployerBlockEntity;
 import com.simibubi.create.foundation.ponder.CreateSceneBuilder;
 import com.createicbm.api.refs.ICBMExplosives;
@@ -244,75 +243,6 @@ public final class ICBMPonderScenes
             .pointAt(util.vector().blockSurface(util.grid().at(1, 2, 2), Direction.WEST))
             .placeNearTarget();
         scene.idle(90);
-        scene.markAsFinished();
-    }
-
-    public static void empTower(SceneBuilder builder, SceneBuildingUtil util)
-    {
-        final CreateSceneBuilder scene = new CreateSceneBuilder(builder);
-        scene.title("emp_tower", "Firing Electromagnetic Pulses from an EMP Tower");
-        scene.configureBasePlate(0, 0, 5);
-        scene.showBasePlate();
-        scene.idle(10);
-
-        final BlockPos tower = util.grid().at(2, 2, 2);
-        final Selection kinetics = util.select().fromTo(2, 1, 2, 2, 1, 4).add(util.select().position(tower));
-
-        scene.world().showSection(util.select().position(2, 1, 2), Direction.DOWN);
-        scene.idle(5);
-        scene.world().showSection(util.select().position(tower), Direction.DOWN);
-        scene.idle(10);
-
-        scene.overlay().showText(60)
-            .attachKeyFrame()
-            .text("EMP Towers turn Rotational Force into an electromagnetic pulse")
-            .pointAt(util.vector().topOf(tower))
-            .placeNearTarget();
-        scene.idle(70);
-
-        scene.world().showSection(util.select().fromTo(2, 1, 3, 2, 1, 4), Direction.NORTH);
-        scene.idle(10);
-        scene.world().setKineticSpeed(kinetics, 64);
-        scene.effects().rotationSpeedIndicator(util.grid().at(2, 1, 4));
-        scene.idle(10);
-
-        scene.overlay().showText(70)
-            .attachKeyFrame()
-            .colored(PonderPalette.GREEN)
-            .text("A shaft from below charges the coil. Faster shafts charge it quicker")
-            .pointAt(util.vector().blockSurface(tower, Direction.WEST))
-            .placeNearTarget();
-        scene.idle(80);
-
-        scene.world().showSection(util.select().position(2, 3, 2), Direction.DOWN);
-        scene.idle(5);
-        scene.world().showSection(util.select().position(2, 4, 2), Direction.DOWN);
-        scene.idle(10);
-
-        scene.overlay().showText(70)
-            .attachKeyFrame()
-            .text("Stack Coil Extenders on top to grow the largest blast radius it can fire")
-            .pointAt(util.vector().blockSurface(util.grid().at(2, 4, 2), Direction.WEST))
-            .placeNearTarget();
-        scene.idle(80);
-
-        final Vec3 front = util.vector().blockSurface(tower, Direction.NORTH);
-        scene.overlay().showControls(front, Pointing.DOWN, 50).rightClick();
-        scene.idle(10);
-        scene.overlay().showText(80)
-            .text("Pick a radius and fire it from the menu or by radio. The pulse drains stored power and knocks missiles out of the sky")
-            .pointAt(front)
-            .placeNearTarget();
-        scene.idle(90);
-
-        scene.overlay().showControls(util.vector().topOf(util.grid().at(2, 4, 2)), Pointing.DOWN, 40)
-            .withItem(AllItems.GOGGLES.asStack());
-        scene.idle(10);
-        scene.overlay().showText(70)
-            .text("Engineer's Goggles show the coil charge and the cooldown after each shot")
-            .pointAt(util.vector().topOf(util.grid().at(2, 4, 2)))
-            .placeNearTarget();
-        scene.idle(80);
         scene.markAsFinished();
     }
 

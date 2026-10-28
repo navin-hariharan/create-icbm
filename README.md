@@ -6,12 +6,12 @@
   <img src="https://img.shields.io/badge/Minecraft-1.21.1-62B47A?style=for-the-badge" alt="Minecraft 1.21.1">
   <img src="https://img.shields.io/badge/NeoForge-21.1.219%2B-E2711D?style=for-the-badge" alt="NeoForge 21.1.219+">
   <img src="https://img.shields.io/badge/Create-6.0.10%2B-C9A45C?style=for-the-badge" alt="Create 6.0.10+">
-  <img src="https://img.shields.io/badge/Release-v1.0.3-22C55E?style=for-the-badge" alt="Release v1.0.3">
+  <img src="https://img.shields.io/badge/Release-v1.0.35-22C55E?style=for-the-badge" alt="Release v1.0.35">
   <img src="https://img.shields.io/badge/License-CC_BY--NC_4.0-3B82F6?style=for-the-badge" alt="CC BY-NC 4.0 licence">
 </p>
 
 **Create: ICBM** is an addon for [Create](https://github.com/Creators-of-Create/Create) that brings missiles,
-explosives, radar and EMP towers into your factory. Launch pads are wound up by shafts, missiles are put together on
+explosives, radar and launch networks into your factory. Launch pads are wound up by shafts, missiles are put together on
 Mechanical Crafters and Deployers, explosives are mixed in basins over Blaze Burners, and every block looks like it came
 out of Create itself.
 
@@ -34,8 +34,6 @@ It is a new addon, inspired by the classic **ICBM** mod (see [Credits](#credits)
   - [Launch Controller](#launch-controller)
   - [Cruise Turret](#cruise-turret)
   - [Radar Station](#radar-station)
-  - [EMP Tower](#emp-tower)
-  - [EMP Coil Extender](#emp-coil-extender)
 - [Missiles](#missiles)
   - [Missile Casing](#missile-casing)
   - [Missile Module](#missile-module)
@@ -64,10 +62,20 @@ It is a new addon, inspired by the classic **ICBM** mod (see [Credits](#credits)
 - [Air defence](#air-defence)
 - [Storage and automation](#storage-and-automation)
 - [BlueMap](#bluemap)
+- [Effects, sounds and visibility](#effects-sounds-and-visibility)
+- [Server performance](#server-performance)
+- [Compatibility](#compatibility)
 - [Crafting recipes](#crafting-recipes)
+  - [Machines and launch network](#machines-and-launch-network)
+  - [Missile parts](#missile-parts)
+  - [Explosives](#explosives-1)
+  - [Explosive missiles and bomb carts](#explosive-missiles-and-bomb-carts)
+  - [Tools](#tools-1)
+  - [Materials](#materials)
 - [Ponder and JEI](#ponder-and-jei)
 - [Configuration](#configuration)
 - [Commands](#commands)
+- [Changelog](#changelog)
 - [Building from source](#building-from-source)
 - [Credits](#credits)
 - [Licence](#licence)
@@ -76,20 +84,27 @@ It is a new addon, inspired by the classic **ICBM** mod (see [Credits](#credits)
 
 ## Features
 
-- **Rotation-powered machines.** Launch Pads, Cruise Turrets, Radar Stations and EMP Towers take a shaft and draw
+- **Rotation-powered machines.** Launch Pads, Cruise Turrets and Radar Stations take a shaft and draw
   stress like any Create machine. No batteries, no energy cables.
-- **27 explosives in 4 tiers**, from a beefed-up TNT to antimatter and a red matter black hole. Each one can be placed
+- **26 explosives in 4 tiers**, from a beefed-up TNT to antimatter and a red matter black hole. Each one can be placed
   as a crate, fired as a missile or rolled in as a bomb cart.
+- **Blasts you can see and hear from far away:** nuclear and antimatter raise a mushroom cloud, antimatter blinds
+  everyone around it with a flash, and every big blast is heard with the delay of distance by everyone within the
+  server's view distance.
+- **The Ender missile abducts you.** Players pulled into its vortex are taken by a giant Enderman in a short cutscene
+  and dragged through a purple warp tunnel to a spot far away. Onlookers see dense ender particles around the blast.
 - **Tricks as well as bangs:** a blinding Flashbang, a Recon pulse that outlines enemies through walls, Phantom Enemies
   that only pretend to attack, and a cloud of Darkness.
-- **Long-range missiles** that fly a ballistic arc up to 10,000 blocks and keep flying through unloaded chunks.
+- **Long-range missiles** that fly a ballistic arc up to 10,000 blocks and keep flying through unloaded chunks. Any
+  player within view distance sees a missile fly smoothly all the way down to the ground before it goes off.
 - **A real launch network:** chain pads, gantries and connectors to one Launch Controller and fire whole salvos.
 - **Air defence:** a spinning Radar Station spots incoming missiles and tells Cruise Turrets loaded with
-  Surface to Air Missiles to shoot them down, while EMP Towers knock out anything that gets close.
+  Surface to Air Missiles to shoot them down.
 - **Delivery Missiles** that drop a stack of items straight into a chest on the other side of the map, or leave it
   in a **Mail** parcel with the sender's name on it.
 - **Made with Create:** every recipe uses only Create and vanilla items, on Create's machines or at a plain crafting
-  table. Ponder scenes, goggle overlays, "Hold [Shift] for Summary" tooltips and JEI support included.
+  table. Ponder scenes, goggle overlays, "Hold [Shift] for Summary" tooltips and JEI support included. Everything here
+  is mechanical: there is no electricity.
 - **Plays well with storage mods:** hoppers, funnels, chutes and Tom's Simple Storage can stock your launchers.
 - **Live on BlueMap:** with [BlueMap](https://bluemap.bluecolored.de/) installed, flying missiles move across its web
   map. Click one to see who launched it, and every impact leaves a mushroom cloud on the map for a minute.
@@ -97,8 +112,10 @@ It is a new addon, inspired by the classic **ICBM** mod (see [Credits](#credits)
   fly, launchers work from a moving deck and blasts tear blocks off nearby ships.
 - **Big modpack ready:** missiles and blasts keep flying when tick optimizers such as Immersive Optimization or
   ServerCore's activation range slow down entities far from players.
-- **Server friendly:** big blasts are spread over several ticks with a time budget, so a salvo doesn't freeze the
-  server.
+- **Built for servers:** big blasts are spread over several ticks with a time budget that shrinks by itself while the
+  server is lagging, blast maths runs on a worker thread, missile chunk loading is capped per dimension, missiles send
+  half as many position updates (the client flies them smoothly in between), and clouds, flashes and cutscenes are
+  drawn by each client from one small packet. See [Server performance](#server-performance).
 
 <p align="center">
   <img src="doc/images/machines.png" alt="The machines of Create: ICBM" width="100%">
@@ -115,10 +132,13 @@ It is a new addon, inspired by the classic **ICBM** mod (see [Credits](#credits)
 | [Tom's Simple Storage](https://modrinth.com/mod/toms-storage) | optional, for storage automation |
 | [BlueMap](https://modrinth.com/plugin/bluemap) | optional, 5.x, shows missiles on its web map |
 | Sable (Create Aeronautics) | optional, airships can be hit, damaged and fired from |
-| Immersive Optimization, ServerCore | optional, missiles keep flying far from players |
+| Mekanism | optional, missiles fly through Teleporter portals |
+| Immersive Optimization, ServerCore | optional, missiles keep flying far from players. If they still stall, add `create_icbm` to the optimizer's entity blacklist |
+
+See [Compatibility](#compatibility) for what each optional mod adds.
 
 Drop the `create-icbm` jar into your `mods` folder next to Create. The mod is needed on both the server and every
-client.
+client. This is version **1.0.35**.
 
 ## Your first launch
 
@@ -151,8 +171,6 @@ client.
 | [Launch Controller](#launch-controller) | none | Target, radio channel and the *Launch* button for a whole network. |
 | [Cruise Turret](#cruise-turret) | 6 SU/RPM, shaft below | A turret that aims a missile and fires it straight at the target. |
 | [Radar Station](#radar-station) | 4 SU/RPM, shaft below, 16 RPM or more | Tracks incoming missiles up to 500 blocks away. |
-| [EMP Tower](#emp-tower) | 16 SU/RPM, shaft below | Fires an electromagnetic pulse that drains machines and downs missiles. |
-| [EMP Coil Extender](#emp-coil-extender) | none | Stacks on an EMP Tower for a bigger pulse. |
 
 A machine runs while its shaft turns at or above its minimum speed and the network isn't overstressed. Engineer's
 Goggles show each machine's charge and status, and every machine has a Ponder scene: hold **W** over it in your
@@ -183,10 +201,9 @@ opposite side, so a pad on the ground takes its shaft from below.
 - **Firing:** the pad has no button of its own. It fires when a Launch Controller on its network fires.
 - **Riding:** right-click the loaded missile to sit on it and ride it to the target.
 
-**Flight.** The missile warms up on the pad for 2 seconds, climbs to its lock height and flies a ballistic arc at 10
-blocks a second. The arc peaks as high as the target is far, up to 1,000 blocks. Targets 500 blocks or more away
-make the missile climb straight up out of sight. It then crosses the map quickly, through unloaded chunks too, and
-drops back in above the target. A pad reaches **10,000 blocks** in each direction and needs targets at least 10
+**Flight.** The missile warms up on the pad for 2 seconds, climbs to its lock height and flies a ballistic arc. The arc peaks as high as the target is far, up to 1,000 blocks. Targets 500 blocks or more away
+make the missile climb straight up out of sight. It then crosses the map out of sight, through unloaded chunks too (simulated at 20 blocks a
+second by default, so 1,000 blocks take about 50 seconds), and drops back in above the target. A pad reaches **10,000 blocks** in each direction and needs targets at least 10
 blocks away.
 
 **Accuracy.** A missile lands within about 2 blocks of the target, up to 12 at the full 10,000 blocks, plus 1 block
@@ -288,48 +305,13 @@ don't set it off.
 - **Redstone:** while missiles are incoming it powers every side, one signal level per missile (up to 15). On by
   default. Use the switch on its screen, or right-click it with Redstone Dust, to turn it on or off.
 - **Radio:** every 2 seconds while a missile is incoming, it sends the closest one on its channel. Cruise Turrets on
-  that channel shoot at it, EMP Towers fire if it is inside their radius, and Launch Controllers fire at it.
+  that channel shoot at it and Launch Controllers fire at it.
 - The radar can't be read by tools, so type its channel into the other machines.
 
 <p align="center">
   <img src="doc/images/recipes/radar-station.png" alt="Radar Station recipe" width="80%">
 </p>
 
-### EMP Tower
-
-<p align="center">
-  <img src="doc/images/machines/emp-tower.png" alt="EMP Tower" width="260">
-</p>
-
-A coil that turns rotation into an electromagnetic pulse.
-
-- **Power:** 16 SU per RPM from a shaft below. Charging takes longer the bigger the pulse: a radius of 60 charges in
-  about 14 seconds at 64 RPM, the full 150 in about 88 seconds. Faster shafts charge it quicker. After firing it cools
-  down for 10 seconds.
-- **Screen** (right-click): the pulse **radius** (default 60, up to 150 plus 20 for each Coil Extender), the radio
-  channel, a charge bar and a *Fire* button.
-- **Firing:** press *Fire*, power it with redstone, use a Remote Detonator or Laser Designator on its channel, or set
-  it to a Radar Station's channel to fire automatically when an incoming missile is inside its radius.
-- **The pulse** reaches the radius in every direction. It drains energy from machines, items and inventories, puts out
-  lit explosives, turns creepers into charged creepers and hits every missile in range: half of them are destroyed
-  outright, most of the rest lose their engine and fall, and a few set off their warhead.
-
-<p align="center">
-  <img src="doc/images/recipes/emp-tower.png" alt="EMP Tower recipe" width="80%">
-</p>
-
-### EMP Coil Extender
-
-<p align="center">
-  <img src="doc/images/machines/emp-coil-extender.png" alt="EMP Coil Extender" width="260">
-</p>
-
-Stack Coil Extenders directly on top of an EMP Tower. Each one adds 20 blocks to the tower's maximum radius. They
-need no shaft of their own, and right-clicking one opens the tower's screen.
-
-<p align="center">
-  <img src="doc/images/recipes/emp-tower-extender.png" alt="EMP Coil Extender recipe" width="80%">
-</p>
 
 ## Missiles
 
@@ -341,7 +323,7 @@ need no shaft of their own, and right-clicking one opens the tower's screen.
 |---|---|
 | [Missile Casing](#missile-casing) | The empty rocket body every missile starts from. |
 | [Missile Module](#missile-module) | A casing with a motor. It flies, and it is what you arm. |
-| [Explosive Missiles](#explosive-missiles) | A Missile Module armed with one of the 27 explosives. |
+| [Explosive Missiles](#explosive-missiles) | A Missile Module armed with one of the 26 explosives. |
 | [Surface to Air Missile](#surface-to-air-missile) | Hunts down other missiles in the air. |
 | [Delivery Missile](#delivery-missile) | Carries a stack of items to a chest or a [Mail](#mail) parcel. |
 
@@ -388,7 +370,7 @@ Every explosive makes its own missile. Higher tiers are tougher to shoot down:
 |---|---|---|
 | 1 | 50 | [Conventional Missile](#condensed), [Shrapnel Missile](#shrapnel), [Incendiary Missile](#incendiary), [Debilitation Missile](#debilitation), [Chemical Missile](#chemical), [Anvil Missile](#anvil), [Repulsive Missile](#repulsive), [Attractive Missile](#attractive), [Colorful Missile](#colorful), [Smoke Marking Missile](#smoke-marking), [Flashbang Missile](#flashbang), [Recon Missile](#recon) |
 | 2 | 80 | [Fragmentation Missile](#fragmentation), [Contagious Missile](#contagious), [Sonic Missile](#sonic), [Breaching Missile](#breaching), [Thermobaric Missile](#thermobaric), [Phantom Enemy Missile](#phantom-enemy), [Darkness Missile](#darkness) |
-| 3 | 100 | [Nuclear Missile](#nuclear), [EMP Missile](#emp), [Exothermic Missile](#exothermic), [Endothermic Missile](#endothermic), [Anti-Gravitational Missile](#anti-gravitational), [Ender Missile](#ender) |
+| 3 | 100 | [Nuclear Missile](#nuclear), [Exothermic Missile](#exothermic), [Endothermic Missile](#endothermic), [Anti-Gravitational Missile](#anti-gravitational), [Ender Missile](#ender) |
 | 4 | 200 | [Antimatter Missile](#antimatter), [Red Matter Missile](#red-matter) |
 
 Each explosive's own section below shows its missile and recipe.
@@ -431,7 +413,7 @@ A missile that carries one stack of items instead of a warhead. It does no damag
   Anything a chest slot can hold fits, shulker boxes included, but not another loaded Delivery Missile.
 - **On impact** it puts the stack into the container it hits: a chest, barrel, Create vault or any other block with
   an inventory. Whatever doesn't fit, or everything if it hit no container, is left in a [Mail](#mail) parcel.
-- If it is shot down, hit by an EMP or runs out of time, the cargo still lands in a parcel below it.
+- If it is shot down or runs out of time, the cargo still lands in a parcel below it.
 - The sender is the player who fired it: whoever pressed *Launch*, used the radio tool or held the rocket launcher.
 
 <p align="center">
@@ -459,17 +441,15 @@ label shows the name of the player who launched the missile, and looking at it s
 
 - **Health:** tier 1 missiles have 50 health, tier 2 80, tier 3 100 and tier 4 200. Surface to Air and Delivery
   Missiles have 80.
-- **Shooting them down:** missiles can be hit with weapons, arrows and other projectiles, SAMs and EMP pulses. A
+- **Shooting them down:** missiles can be hit with weapons, arrows and other projectiles and SAMs. A
   missile destroyed by an explosion or fire sets off its warhead where it is; anything else just destroys it.
-- **EMP:** a pulse destroys half the missiles it reaches, stops the engine of most of the others so they fall, and
-  sets off the warhead of a few.
 - **Hitting things:** a missile that flies into a mob or player hurts it, more the faster it flies.
 - Missiles stay in the air for up to 2 hours before they give up. Right-click one in flight to climb aboard.
 
 ## Explosives
 
 <p align="center">
-  <img src="doc/images/explosives.png" alt="All 27 explosive crates" width="100%">
+  <img src="doc/images/explosives.png" alt="All 26 explosive crates" width="100%">
 </p>
 
 Every explosive comes three ways: as a **crate** you place and light, as a **missile** warhead and as a **bomb cart**. Each one below shows all three, what it does, and its recipes.
@@ -482,7 +462,7 @@ Every explosive comes three ways: as a **crate** you place and light, as a **mis
 - a [Remote Detonator](#remote-detonator) it is wired to (right-click the crate with the detonator to wire it);
 - placing it next to fire or lava.
 
-Once lit, the crate becomes a lit block that falls and can be pushed, and goes off when its fuse runs out: 5 seconds for most explosives. An EMP puts a lit crate out. Mining a crate is safe and gives it back.
+Once lit, the crate becomes a lit block that falls and can be pushed, and goes off when its fuse runs out: 5 seconds for most explosives. Mining a crate is safe and gives it back.
 
 Tier 1 explosives mix in a plain Basin, tier 2 over a heated Blaze Burner, tiers 3 and 4 over a superheated one. Each explosive is made from a lower one, so you work your way up from Condensed Explosives (see [Crafting recipes](#crafting-recipes)).
 
@@ -508,7 +488,6 @@ Tier 1 explosives mix in a plain Basin, tier 2 over a heated Blaze Burner, tiers
 | [Phantom Enemy](#phantom-enemy) | 2 | 4 phantoms per player within 24 blocks |
 | [Darkness](#darkness) | 2 | Darkness within 24 blocks, 3 min |
 | [Nuclear](#nuclear) | 3 | Terrain up to 35 blocks, lethal within 50, fallout to 80 |
-| [EMP](#emp) | 3 | Pulse 50 blocks in every direction |
 | [Exothermic](#exothermic) | 3 | Nether land within 30 blocks |
 | [Endothermic](#endothermic) | 3 | Frozen land within 30 blocks |
 | [Anti-Gravitational](#anti-gravitational) | 3 | Lifts everything within 30 blocks for 2 min |
@@ -918,6 +897,8 @@ Mixed in a Basin over a superheated Blaze Burner. Missile health 100.
 
 The biggest blast short of antimatter. It levels terrain up to about 35 blocks away, leaves no drops and kills anything exposed within 50 blocks. Then fallout spreads up to 80 blocks, through walls: patches of stone and dirt turn into [Radioactive Stone and Dirt](#radioactive-dirt-and-stone), and leaves and plants wither away. Pigs and villagers it reaches turn into zombified piglins and zombie villagers.
 
+A mushroom cloud rises over the crater, the same one as the antimatter blast but a bit smaller, and everyone within 50 blocks hears the detonation at full volume. Players further away, up to the server's view distance, hear it as a distant boom that arrives with the delay of distance. The cloud's size and range are in the `blast.nuclear` config (`mushroomCloud`, `mushroomCloudScale`, `mushroomCloudRange`).
+
 <details>
 <summary><b>Recipes</b>: Nuclear Explosives, Nuclear Missile, Nuclear Minecart</summary>
 
@@ -925,26 +906,6 @@ The biggest blast short of antimatter. It levels terrain up to about 35 blocks a
   <img src="doc/images/recipes/nuclear-explosives.png" alt="Nuclear Explosives recipe" width="80%"><br>
   <img src="doc/images/recipes/missiles/nuclear.png" alt="Nuclear Missile recipe" width="80%"><br>
   <img src="doc/images/recipes/bomb-carts/nuclear.png" alt="Nuclear Minecart recipe" width="80%">
-</p>
-</details>
-
-#### EMP
-
-<p align="center">
-  <img src="doc/images/explosives/emp.png" alt="EMP" width="80%">
-</p>
-
-*Pulse 50 blocks in every direction · Crate fuse: 5 s · Cart fuse: 5 s*
-
-An electromagnetic pulse that reaches 50 blocks in every direction. It drains stored energy from machines, items and inventories, puts out lit explosive crates, charges creepers and knocks missiles out of the sky, like the [EMP Tower](#emp-tower). It breaks nothing and hurts nobody.
-
-<details>
-<summary><b>Recipes</b>: EMP Explosives, EMP Missile, EMP Minecart</summary>
-
-<p align="center">
-  <img src="doc/images/recipes/emp-explosives.png" alt="EMP Explosives recipe" width="80%"><br>
-  <img src="doc/images/recipes/missiles/emp.png" alt="EMP Missile recipe" width="80%"><br>
-  <img src="doc/images/recipes/bomb-carts/emp.png" alt="EMP Minecart recipe" width="80%">
 </p>
 </details>
 
@@ -1016,7 +977,7 @@ For 2 minutes it lifts the blocks within 30 blocks into the sky one by one, from
 
 *Vortex 20 blocks, 8 s · Crate fuse: 5 s · Cart fuse: 5 s*
 
-Opens an ender vortex for 8 seconds that drags everything within 20 blocks towards its centre. Whatever reaches the middle is teleported to one random spot up to 150 blocks away. Eight Endermen turn up as it closes.
+Opens an ender vortex for 8 seconds that drags everything within 20 blocks towards its centre. Whatever reaches the middle is teleported to one random spot up to 150 blocks away. A player is not simply teleported: a giant Enderman looms over them and screams, the world tears open into a purple warp tunnel and the player is dragged to a far away spot, where the giant stands over them for a moment before it vanishes. The player cannot move during the cutscene (`blast.ender` in the config turns it off or changes the timing and distance). Eight Endermen turn up as it closes.
 
 <details>
 <summary><b>Recipes</b>: Ender Explosives, Ender Missile, Ender Minecart</summary>
@@ -1041,6 +1002,8 @@ Mixed in a Basin over a superheated Blaze Burner. Missile health 200.
 *Erases 55 blocks, lethal within 110 · Crate fuse: 15 s · Cart fuse: 15 s*
 
 Erases everything within 55 blocks, bedrock included, with no drops, and kills everything within 110 blocks. Other crates inside are wiped out rather than set off. It has a 15 second fuse, so run. If red matter is anywhere nearby, the antimatter is spent wiping it out instead and nothing else is harmed.
+
+The blast is announced by a blinding white flash for every player within the blast and 100 blocks beyond it (shorter the further away), and a mushroom cloud rises over the crater, visible from far away. The crater opens up from the centre outwards over a few seconds instead of in one go. Flash range and length, the cloud and the pace are in the `blast.antimatter` config, the cloud's particle budget in the client config. The detonation sound is timed to the flash and the cloud: everyone within 100 blocks gets the full, loud blast, with the shockwave rolling in about a second after the flash, and players beyond that up to the view distance hear a distant boom.
 
 <details>
 <summary><b>Recipes</b>: Antimatter Explosives, Antimatter Missile, Antimatter Minecart</summary>
@@ -1102,12 +1065,12 @@ makes the vanilla TNT Minecart.
 | Tool | In short |
 |---|---|
 | [Laser Range Finder](#laser-range-finder) | Reads the coordinates of a block and hands them to a launcher. |
-| [Remote Detonator](#remote-detonator) | Fires launchers, EMP Towers and wired explosive crates on its radio channel, at any distance. |
+| [Remote Detonator](#remote-detonator) | Fires launchers and wired explosive crates on its radio channel, at any distance. |
 | [Laser Designator](#laser-designator) | Marks a block and calls a strike on it. |
 | [Rocket Launcher: Direct](#rocket-launcher-direct) | Fires a missile in a straight line from your shoulder. |
 | [Rocket Launcher: Ballistic](#rocket-launcher-ballistic) | Lobs a missile in a high arc onto where you aim. |
 
-**Radio channels.** Launch Controllers, Cruise Turrets and EMP Towers each have a radio channel. Right-click one of them
+**Radio channels.** Launch Controllers and Cruise Turrets each have a radio channel. Right-click one of them
 with a Remote Detonator or Laser Designator to tune the tool to the same channel. Explosive crates work the other way
 round: right-click a crate with a Remote Detonator to give the crate the detonator's channel. Radio reaches the whole
 dimension.
@@ -1132,7 +1095,7 @@ dimension.
   <img src="doc/images/tools/remote-detonator.png" alt="Remote Detonator" width="260">
 </p>
 
-- **Right-click** a Launch Controller, Cruise Turret or EMP Tower to tune the detonator to its channel.
+- **Right-click** a Launch Controller or Cruise Turret to tune the detonator to its channel.
 - **Right-click an explosive crate** to wire it to the detonator's channel. A detonator with no channel yet picks a
   random one. Wire as many crates as you like; a crate stays wired until it goes off or is mined.
 - **Right-click** anywhere else to send the fire signal. Every controller, turret and tower on that channel fires at
@@ -1150,7 +1113,7 @@ dimension.
   <img src="doc/images/tools/laser-designator.png" alt="Laser Designator" width="260">
 </p>
 
-- **Right-click** a Launch Controller, Cruise Turret or EMP Tower to tune the designator to its channel.
+- **Right-click** a Launch Controller or Cruise Turret to tune the designator to its channel.
 - **Right-click** a block up to 200 blocks away to paint it: every launcher on the channel takes it as the new target
   and fires. Hold the button to repeat about once a second.
 
@@ -1243,8 +1206,7 @@ threshold, the rating is the chance that each dose is blocked: 0.75 blocks three
    radar's channel into them. Feed them from a hopper or funnel so they reload by themselves.
 3. When a missile carrying a warhead flies towards the radar, it sends an alert every 2 seconds. The turrets swing
    round and fire, and each SAM locks onto the missile.
-4. Add an **EMP Tower** on the same channel as the last line of defence: it fires when the incoming missile is inside
-   its radius. The radar's redstone output can sound sirens or close blast doors at the same time.
+4. The radar's redstone output can sound sirens or close blast doors at the same time.
 
 A Launch Controller on the radar's channel fires its pads at the incoming missile's position, so keep your silos on a
 different channel unless that's what you want.
@@ -1298,40 +1260,293 @@ The settings live in `create_icbm-mods-bluemap.toml`:
 | `update_ticks` | 100 | How often missile markers move, in ticks (20 ticks is 1 second). BlueMap publishes them every 10 seconds anyway. |
 | `impact_marker_seconds` | 60 | How long the mushroom cloud stays on the map, and the parcel of a delivery that went into a chest. `0` turns them off. Parcels of unopened Mail stay until it is opened. |
 
+## Effects, sounds and visibility
+
+Everything below is drawn and played by the **client** from small packets the server sends, so none of it costs the
+server anything per frame.
+
+### Mushroom clouds
+
+[Nuclear](#nuclear) and [Antimatter](#antimatter) blasts raise a mushroom cloud: a fireball, a rising stem and a
+billowing cap that opens up while it climbs and keeps leaking smoke for a few seconds afterwards. The antimatter cloud
+is full size, the nuclear one is 70 % of it (`blast.nuclear.mushroomCloudScale`, 0.7 by default).
+
+- **Who sees it:** every player in the same dimension within `mushroom_cloud_range` blocks of the blast (512 by default
+  for both; antimatter never less than its blast radius plus its flash range). The server sends one small packet with the
+  position, the size and the duration, and each client builds the cloud itself.
+- **What it costs a player:** at most `client.mushroom_cloud_particles` particles per tick for one cloud (90 by
+  default). The budget shrinks with the game's *Particles* setting, and with distance from 128 blocks out down to a
+  quarter at 600 blocks, and at most three clouds are drawn at once. Set it to `0` to switch the cloud off on your client.
+- **Switching it off for everyone:** `blast.nuclear.mushroomCloud = false` or `blast.antimatter.mushroom_cloud = false`.
+  Nuclear then falls back to its old smoke ring.
+
+### Antimatter flash
+
+Everyone inside the blast and up to `blast.antimatter.flash_extra_range` blocks beyond it (100 by default) is blinded by
+a white flash: fully white for up to `flash_ticks` ticks (60) at the centre, shorter the further away, then it fades
+out. The crater opens from the centre outwards over `edit_ticks` ticks (120) instead of in one lump. `flash_extra_range =
+0` turns the flash off. The [Flashbang](#flashbang) uses the same screen flash, only smaller.
+
+### Ender abduction cutscene
+
+When an [Ender](#ender) vortex pulls a **player** into its middle, they are not just teleported:
+
+1. **Stare** (`stare_ticks`, 45): a giant Enderman appears in front of the player, screams and steps closer. The camera
+   and controls are taken over. Meanwhile the server picks a destination 60 to 150 blocks away and loads its chunk in
+   the background with a short chunk ticket, so there is no stall.
+2. **Warp** (`min_ticks_in_warp`, 45, longer if the destination is still loading): the screen turns into a purple
+   tunnel of streaks and the player is lifted off the ground.
+3. **Arrival** (`arrival_ticks`, 60): the player lands, a second giant stands over them for a moment, then it vanishes in
+   a puff and control comes back. The player cannot be taken again for `cooldown_ticks` (200).
+
+Other players see dense ender particles around the blast, and a player who logs out, dies or changes dimension ends
+their own cutscene on the spot. A watchdog on the client gives control back if the end of the cutscene never arrives.
+Mobs and items are always teleported instantly. `blast.ender.abduct_players = false` skips the cutscene entirely.
+
+### Explosion sounds
+
+A vanilla sound can only be heard a few dozen blocks away, so blasts send each player **their own sound packet**,
+placed a few blocks from them in the direction of the blast, with the delay that distance would give (sound is
+treated as 20 blocks per tick, at most 2 seconds late). Only players within the server's view distance get one.
+
+| Blast | Players within | Hear | Players further out, up to the view distance |
+|---|---|---|---|
+| Nuclear | 50 blocks | the full nuclear detonation | a distant explosion, quieter the further away |
+| Antimatter | 100 blocks | the full antimatter blast, timed to the flash and the cloud | a distant explosion, quieter the further away |
+| Any other explosion with a radius of 12 blocks or more | none | | a distant explosion, quieter the further away |
+
+Gas clouds, vortexes and other effect blasts (Debilitation, Chemical, Contagious, Ender, Flashbang, Recon...) are not
+explosions and send no distant sound. Smaller explosions only use their normal sound.
+
+### Missiles you can see
+
+- A missile is a **real entity** for every player within the server's view distance of it, tracked up to 500 blocks,
+  and is drawn in flight right down to the ground. Missiles never pop out of existence just because the chunks
+  ahead stopped ticking: while a player is in view, the missile keeps its chunks loaded (`keep_visible_in_flight`).
+- Far from every player a missile is **simulated** instead, with no entity at all (see
+  [Server performance](#server-performance)), and re-enters the world above its target.
+- The client smooths the flight itself. The server sends a position every 2 ticks and the client dead-reckons the
+  frames in between, and snaps back only if the two disagree a lot, so missiles glide instead of stepping.
+- The missile's engine is heard from as far as the client's render distance, and the engine and launch smoke can be
+  turned off in the client config.
+
+## Server performance
+
+Create: ICBM is meant for big modpack servers, where a salvo of missiles must not cost the server its tick rate.
+Everything here works out of the box; the settings are there to tune it.
+
+| Area | What it does | Setting (default) |
+|---|---|---|
+| **Paced block edits** | Big blasts (nuclear, antimatter, thermobaric...) are worked out first and then applied a slice per tick. All dimensions together share one time budget, so ten blasts do not take ten times as long per tick. | `block_edit_ms_per_tick` (20), `blast_ms_per_tick` (15), `max_blast_edit_blocks_per_tick` (20000) |
+| **Adaptive budget** | The budgets shrink by themselves while the server is slow: when the smoothed tick time stays above 45 ms they drop 3 % a tick, down to 10 % of normal, and they grow back 2 % a tick once it is under 35 ms. A blast always finishes in the end. | `adaptive_budget` (`true`) |
+| **Worker threads** | Blast shapes are calculated off the main thread from a snapshot of the chunks. Results are handed back to the server thread, which only applies them. Edits that fall in chunks which have meanwhile unloaded are skipped instead of force-loading them. | `thread_count` (1, up to 8) |
+| **Missile chunk loading** | A missile only holds the chunks right ahead of it, with short tickets that run out on their own, like a thrown ender pearl. All missiles of one dimension together may hold at most 512 tickets, and a missile always keeps its own chunk and the next one. | `direct_fire_chunk_loading` (`true`), `max_missile_chunk_tickets` (512) |
+| **Simulated flight** | A long-range missile that leaves the loaded area stops being an entity. A tracker counts it down once per second at `simulation_flight_speed` and spawns it again above the target. Costs a few numbers per missile. | `simulation_flight_speed` (20 blocks/s), `arc_distance_limit` (500) |
+| **Network** | Missiles send a position every 2 ticks and the client smooths the rest. Mushroom clouds, flashes and cutscenes are one small packet each. Debris effects are capped. Sound packets only go to players within view distance. | `block_effects_per_blast` (64), `block_effects_per_tick` (1024) |
+| **Radar** | A radar only scans four times a second, over a square, and drops contacts that have died. | `scan_rate` (5 ticks) |
+| **Claims and protection** | Every blast asks claim mods (FTB Chunks, Open Parties and Claims...) before editing a block. | `protection_events` (`true`) |
+| **Clean shutdown** | Queues, tickets, pending sounds and cutscenes are dropped when a level unloads or the server stops, so nothing leaks between worlds. | none |
+
+Things worth knowing on a busy server:
+
+- **A salvo does not freeze the server.** If a tick is already slow, the blast work waits for the next tick.
+- **Nothing force-loads chunks for effects.** Fragments, gas clouds and blasts treat unloaded chunks as solid or skip
+  them.
+- **Bad input cannot hang the server.** Targets that are `NaN` or infinite are rejected by the launchers, and the
+  `/icbm` commands refuse `NaN` and infinite numbers.
+- **When something goes wrong**, `/icbm lag [radius]` clears every running blast and Create: ICBM entity around you, and
+  `/icbm remove all` clears missiles and blasts in the whole dimension.
+- **Smaller cost for clients too:** `client.mushroom_cloud_particles` and the vanilla *Particles* setting keep the
+  clouds cheap.
+
+## Compatibility
+
+Create: ICBM only needs **Create** (and the libraries Create brings). Everything else is optional and is only touched
+when it is installed, so a missing or changed mod can never stop the game from starting.
+
+| Mod | What works | How it is reached |
+|---|---|---|
+| **Create** 6.0.10+ (required) | Stress and rotation, Mechanical Crafter / Mixer / Deployer / Millstone recipes, Blaze Burners, goggles, Ponder, tooltips, Kinetic Appliances tag | Directly |
+| **JEI** 19+ | Every explosive, missile, bomb cart and loaded Delivery Missile is its own entry, with info pages for the Missile Module, Delivery Missile and radioactive blocks | JEI's plugin system, off with `disable` in `create_icbm-mods-jei.toml` |
+| **BlueMap** 5.x | Missiles in flight, impact mushroom clouds and Mail parcels on a **Missiles** marker layer | BlueMap's public API, off with `enabled` in `create_icbm-mods-bluemap.toml`. It never touches tiles, textures or settings |
+| **Sable** (Create Aeronautics) | Missiles hit ships where they fly, launchers work on moving decks, blasts tear blocks off nearby ships | Sable's public API through reflection, every call does nothing if it fails |
+| **Mekanism** | Missiles fly through a Teleporter portal and come out of the other one | Registry names and reflection, switched off with a warning if Mekanism's API changes |
+| **ServerCore** | Missiles, blasts, bomb carts and flying blocks are added to its activation-range exclusions when the server starts, so they do not freeze far from players | Reflection, a failure only logs a warning |
+| **Immersive Optimization** and other tick throttlers | Server-side missiles and blasts are flagged to keep ticking. If one still stalls, add the `create_icbm` namespace to the optimizer's blacklist | `noCulling` flag, plus the missile's own chunk tickets |
+| **Tom's Simple Storage** | An Inventory Hopper in front of a Launch Controller restocks every empty pad in the network. Gantries and controllers are hidden from the Inventory Connector so missiles are not counted twice | Block tags in the `toms_storage` namespace, plain item handlers |
+| **Claim and protection mods** (FTB Chunks, Open Parties and Claims...) | Claimed land is spared by blasts | The explosion event those mods already listen to, `protection_events` |
+| **Armour mods** (gas masks, hazmat suits...) | Count as protection against gas and radiation once listed | `protective_armor.item_ratings` |
+| **Hoppers, funnels, chutes, Create vaults** and other item handlers | Load Launch Pads, Cruise Turrets and Launch Controllers, and receive the cargo of a Delivery Missile | NeoForge item handler capability |
+
+Both the server and every client need the mod. Optional mods only need to be installed on the side where they work
+(BlueMap, ServerCore and Immersive Optimization on the server, JEI on the client).
+
 ## Crafting recipes
 
-Every recipe uses only Create and vanilla items. Almost everything can be made two ways, on Create's machines
-(Mechanical Crafting, Mixing, Deploying, Milling) or at a plain crafting table, and both give the same item. Each
-item's recipe card sits in its own section above. JEI shows them all, in Create's own recipe categories.
+Every recipe uses only Create and vanilla items. Almost everything can be made **two ways**, on Create's machines
+(Mechanical Crafting, Mixing, Deploying, Milling) or at a plain crafting table, and both give the same item. JEI shows
+them all, in Create's own recipe categories, and each item's recipe card also sits in its own section above.
 
-**Explosives** are mixed in a Basin from a lower explosive, so you work your way up from Condensed Explosives. Tier 1
-mixes in a plain basin, tier 2 over a heated Blaze Burner and tiers 3 and 4 over a superheated one (a Blaze Burner fed
-a Blaze Cake). The crafting table versions lay similar ingredients out in a 3 by 3 grid, and the hotter tiers often
-call for Blaze Powder or a Blaze Cake.
+A `·` in a grid is an empty slot. Every grid is read left to right, top to bottom, and a recipe that is mirrored
+still works. The number after → is the **yield**: how many items one craft or one mix gives.
 
 <p align="center">
   <img src="doc/images/recipes/explosives-overview.png" alt="How the explosives are made from each other" width="100%">
 </p>
 
-**Missiles and bomb carts** are armed on a Depot or belt under a Deployer holding the explosive crate, or by putting a
-Missile Module (or Minecart) and a crate together at a crafting table.
+### How the Create machines are used
 
-| Recipes for | Where |
-|---|---|
-| Machines | [Launch Pad](#launch-pad), [Launch Gantry](#launch-gantry), [Launch Connector](#launch-connector), [Launch Controller](#launch-controller), [Cruise Turret](#cruise-turret), [Radar Station](#radar-station), [EMP Tower](#emp-tower), [EMP Coil Extender](#emp-coil-extender) |
-| Missiles | [Missile Casing](#missile-casing), [Missile Module](#missile-module), [Explosive Missiles](#explosive-missiles), [Surface to Air Missile](#surface-to-air-missile), [Delivery Missile](#delivery-missile) |
-| Explosives, explosive missiles and bomb carts | each explosive under [Tier 1](#tier-1), [Tier 2](#tier-2), [Tier 3](#tier-3) and [Tier 4](#tier-4) |
-| Tools | [Laser Range Finder](#laser-range-finder), [Remote Detonator](#remote-detonator), [Laser Designator](#laser-designator), [Rocket Launcher: Direct](#rocket-launcher-direct), [Rocket Launcher: Ballistic](#rocket-launcher-ballistic) |
-| Materials | [Poison Powder](#poison-powder), [Antidote](#antidote) |
+- **Mixing** happens in a **Basin** under a **Mechanical Mixer**. The recipe needs the listed items (and fluid)
+  in the basin. *Plain* mixes need nothing else. **Heated** mixes need a lit **Blaze Burner** under the basin.
+  **Superheated** mixes need a Blaze Burner that has been fed a **Blaze Cake** (its flame turns blue).
+  Tier 1 explosives are plain, tier 2 are heated, tiers 3 and 4 are superheated.
+- **Deploying**: put the *base item* on a Depot or a belt below a **Deployer** that holds the *added item*.
+  A Deployer holding an explosive crate over a Missile Module makes an explosive missile. Each deploy uses up the
+  crate it holds.
+- **Mechanical crafting** is done in a grid of **Mechanical Crafters** laid out like the pattern (mirrors allowed).
+- **Milling** is a **Millstone** or a pair of Crushing Wheels.
+
+### Machines and launch network
+
+| Item | Method | Ingredients | Output |
+|---|---|---|---|
+| **Launch Pad** | Shaped crafting | `BEB`<br>`SAS`<br>`ICI`<br>`B` Brass Sheet, `E` Electron Tube, `S` Iron Sheet, `A` Andesite Casing, `I` Industrial Iron Block, `C` Cogwheel | 1× |
+| **Launch Pad** | Create: Mechanical Crafter | `BEB`<br>`IAI`<br>`SHS`<br>`B` Brass Sheet, `E` Electron Tube, `I` Industrial Iron Block, `A` Andesite Casing, `S` Iron Sheet, `H` Shaft | 1× |
+| **Launch Controller** | Shaped crafting | `·N·`<br>`ECL`<br>`KKK`<br>`N` Nixie Tube, `E` Electron Tube, `C` Brass Casing, `L` Analog Lever, `K` Copper Sheet | 1× |
+| **Launch Controller** | Create: Mechanical Crafter | `·G·`<br>`ECL`<br>`·S·`<br>`G` Glass, `E` Electron Tube, `C` Brass Casing, `L` Analog Lever, `S` Copper Sheet | 1× |
+| **Launch Gantry** | Shaped crafting | `GBG`<br>`GBG`<br>`G` Metal Girder, `B` Brass Sheet | 1× |
+| **Launch Connector** | Shaped crafting | `AWA`<br>`WHW`<br>`AWA`<br>`A` Andesite Alloy, `W` Copper Sheet, `H` Hopper | 4× |
+| **Radar Station** | Shaped crafting | `GBG`<br>`ESE`<br>`KCK`<br>`G` Golden Sheet, `B` Brass Sheet, `E` Electron Tube, `S` Launch Controller, `K` Copper Casing, `C` Cogwheel | 1× |
+| **Radar Station** | Create: Mechanical Crafter | `BGB`<br>`PSP`<br>`KHK`<br>`B` Brass Sheet, `G` Golden Sheet, `P` Precision Mechanism, `S` Launch Controller, `K` Copper Casing, `H` Shaft | 1× |
+| **Cruise Turret** | Shaped crafting | `BTB`<br>`SLP`<br>`KCK`<br>`B` Brass Sheet, `T` Turntable, `S` Launch Controller, `L` Launch Pad, `P` Precision Mechanism, `K` Copper Sheet, `C` Brass Casing | 1× |
+| **Cruise Turret** | Create: Mechanical Crafter | `CPC`<br>`SLB`<br>`ITI`<br>`C` Copper Sheet, `P` Precision Mechanism, `S` Launch Controller, `L` Launch Pad, `B` Brass Casing, `I` Industrial Iron Block, `T` Turntable | 1× |
+
+### Missile parts
+
+The Missile Casing is made at a plain crafting table. Missile Modules, Surface to Air Missiles and Delivery Missiles
+can be made on Mechanical Crafters or at a crafting table. A Surface to Air Missile and a Delivery Missile need a
+finished Missile Module.
+
+| Item | Method | Ingredients | Output |
+|---|---|---|---|
+| **Missile Casing** | Shaped crafting | `·B·`<br>`C·C`<br>`C·C`<br>`B` Brass Sheet, `C` Copper Sheet | 1× |
+| **Missile Module** | Shaped crafting | `·E·`<br>`ACA`<br>`·B·`<br>`E` Electron Tube, `A` Andesite Alloy, `C` Missile Casing, `B` Blaze Powder | 1× |
+| **Missile Module** | Create: Mechanical Crafter | `E`<br>`C`<br>`A`<br>`B`<br>`E` Electron Tube, `A` Andesite Alloy, `C` Missile Casing, `B` Blaze Powder | 1× |
+| **Surface to Air Missile** | Shaped crafting | `·T·`<br>`SES`<br>`·M·`<br>`T` Electron Tube, `S` Iron Sheet, `E` Condensed Explosives, `M` Missile Module | 1× |
+| **Surface to Air Missile** | Create: Mechanical Crafter | `T`<br>`E`<br>`M`<br>`T` Electron Tube, `E` Condensed Explosives, `M` Missile Module | 1× |
+| **Delivery Missile** | Shaped crafting | `·C·`<br>`ABA`<br>`·M·`<br>`C` Wooden Chest, `A` Andesite Alloy, `B` Brass Sheet, `M` Missile Module | 1× |
+| **Delivery Missile** | Create: Mechanical Crafter | `C`<br>`A`<br>`M`<br>`C` Wooden Chest, `A` Andesite Alloy, `M` Missile Module | 1× |
+
+### Explosives
+
+All 26 explosives, tier by tier in the order below. Each one is made from a lower explosive, so you work your way up
+from Condensed Explosives. The table shows both recipes for every explosive.
+
+| Tier | Explosive | Create: Mechanical Mixer | Crafting table (shaped) |
+|---|---|---|---|
+| 1 | **Condensed Explosives** | Mixer<br>5× TNT, 4× Redstone Dust<br>→ **3× Condensed Explosives** | `TST`<br>`RAR`<br>`TST`<br>`T` TNT, `S` Iron Sheet, `R` Redstone Dust, `A` Andesite Alloy<br>→ **3×** |
+| 1 | **Shrapnel Explosives** | Mixer<br>Condensed Explosives, 8× Arrow<br>→ **Shrapnel Explosives** | `AAA`<br>`SCS`<br>`AAA`<br>`A` Arrow, `S` Iron Sheet, `C` Condensed Explosives<br>→ **1×** |
+| 1 | **Incendiary Explosives** | Mixer<br>Shrapnel Explosives, 4× Cinder Flour, Lava (250 mB)<br>→ **Incendiary Explosives** | `·K·`<br>`FSF`<br>`FLF`<br>`K` Fire Charge, `F` Cinder Flour, `S` Shrapnel Explosives, `L` Lava Bucket<br>→ **1×** |
+| 1 | **Debilitation Explosives** | Mixer<br>Shrapnel Explosives, 3× Cinder Flour, Water (500 mB)<br>→ **3× Debilitation Explosives** | `FEF`<br>`·S·`<br>`FWF`<br>`F` Cinder Flour, `E` Fermented Spider Eye, `S` Shrapnel Explosives, `W` Water Bucket<br>→ **3×** |
+| 1 | **Chemical Explosives** | Mixer<br>Debilitation Explosives, 8× Poison Powder<br>→ **Chemical Explosives** | `PPP`<br>`PDP`<br>`CCC`<br>`P` Poison Powder, `D` Debilitation Explosives, `C` Copper Sheet<br>→ **1×** |
+| 1 | **Anvil Explosives** | Mixer<br>Repulsive Explosives, 8× Anvil<br>→ **10× Anvil Explosives** | `NNN`<br>`SRS`<br>`N` Anvil, `S` Iron Sheet, `R` Repulsive Explosives<br>→ **4×** |
+| 1 | **Repulsive Explosives** | Mixer<br>2× Condensed Explosives, Piston<br>→ **Repulsive Explosives** | `·P·`<br>`CAC`<br>`P` Piston, `C` Condensed Explosives, `A` Andesite Alloy<br>→ **1×** |
+| 1 | **Attractive Explosives** | Mixer<br>2× Condensed Explosives, Sticky Piston<br>→ **Attractive Explosives** | `·P·`<br>`CAC`<br>`P` Sticky Piston, `C` Condensed Explosives, `A` Andesite Alloy<br>→ **1×** |
+| 1 | **Colorful Explosives** | Mixer<br>Repulsive Explosives, 2× Red Dye, 2× Yellow Dye, 2× Green Dye, 2× Blue Dye<br>→ **Colorful Explosives** | `RYG`<br>`BXO`<br>`PML`<br>`R` Red Dye, `Y` Yellow Dye, `G` Green Dye, `B` Blue Dye, `X` Repulsive Explosives, `O` Orange Dye, `P` Purple Dye, `M` Magenta Dye, `L` Lime Dye<br>→ **1×** |
+| 1 | **Smoke Marking Explosives** | Mixer<br>Repulsive Explosives, 8× Charcoal<br>→ **16× Smoke Marking Explosives** | `CCC`<br>`FRF`<br>`CCC`<br>`C` Charcoal, `F` Cinder Flour, `R` Repulsive Explosives<br>→ **12×** |
+| 1 | **Flashbang Explosives** | Mixer<br>Condensed Explosives, 4× Glowstone Dust, 2× Gunpowder<br>→ **8× Flashbang Explosives** | `GPG`<br>`PXP`<br>`GPG`<br>`G` Glowstone Dust, `P` Gunpowder, `X` Condensed Explosives<br>→ **6×** |
+| 1 | **Recon Explosives** | Mixer<br>Smoke Marking Explosives, Spyglass, Electron Tube, 4× Redstone Dust<br>→ **6× Recon Explosives** | `·S·`<br>`RXR`<br>`·E·`<br>`S` Spyglass, `R` Redstone Dust, `E` Electron Tube, `X` Smoke Marking Explosives<br>→ **4×** |
+| 2 | **Fragmentation Explosives** | Mixer + Blaze Burner (heated)<br>4× Shrapnel Explosives, Incendiary Explosives<br>→ **Fragmentation Explosives** | `SBS`<br>`GIG`<br>`S·S`<br>`S` Shrapnel Explosives, `B` Blaze Powder, `G` Gunpowder, `I` Incendiary Explosives<br>→ **1×** |
+| 2 | **Contagious Explosives** | Mixer + Blaze Burner (heated)<br>4× Chemical Explosives, Rotten Flesh<br>→ **2× Contagious Explosives** | `CRC`<br>`RBR`<br>`CRC`<br>`C` Chemical Explosives, `R` Rotten Flesh, `B` Blaze Powder<br>→ **2×** |
+| 2 | **Sonic Explosives** | Mixer + Blaze Burner (heated)<br>Repulsive Explosives, 4× Note Block, 4× Iron Ingot<br>→ **Sonic Explosives** | `NWN`<br>`SRS`<br>`NBN`<br>`N` Note Block, `W` Steam Whistle, `S` Iron Sheet, `R` Repulsive Explosives, `B` Blaze Powder<br>→ **1×** |
+| 2 | **Breaching Explosives** | Mixer + Blaze Burner (heated)<br>Condensed Explosives, 6× Gunpowder<br>→ **2× Breaching Explosives** | `KKK`<br>`GCG`<br>`GBG`<br>`K` Copper Sheet, `G` Gunpowder, `C` Condensed Explosives, `B` Blaze Powder<br>→ **2×** |
+| 2 | **Thermobaric Explosives** | Mixer + Blaze Burner (heated)<br>4× Chemical Explosives, 4× Incendiary Explosives, Repulsive Explosives<br>→ **Thermobaric Explosives** | `CIC`<br>`IRI`<br>`CBC`<br>`C` Chemical Explosives, `I` Incendiary Explosives, `R` Repulsive Explosives, `B` Blaze Powder<br>→ **1×** |
+| 2 | **Phantom Enemy Explosives** | Mixer + Blaze Burner (heated)<br>Smoke Marking Explosives, 2× Phantom Membrane, Rotten Flesh, Spider Eye, Gunpowder<br>→ **2× Phantom Enemy Explosives** | `MRM`<br>`SXG`<br>`MBM`<br>`M` Phantom Membrane, `R` Rotten Flesh, `S` Spider Eye, `G` Gunpowder, `B` Blaze Powder, `X` Smoke Marking Explosives<br>→ **1×** |
+| 2 | **Darkness Explosives** | Mixer + Blaze Burner (heated)<br>Debilitation Explosives, 4× Ink Sac, 2× Coal, 2× Soul Sand<br>→ **2× Darkness Explosives** | `ISI`<br>`CXC`<br>`IBI`<br>`I` Ink Sac, `S` Soul Sand, `C` Coal, `B` Blaze Powder, `X` Debilitation Explosives<br>→ **1×** |
+| 3 | **Nuclear Explosives** | Mixer + Superheated Blaze Burner<br>4× Thermobaric Explosives, 5× Wither Skeleton Skull<br>→ **Nuclear Explosives** | `TWT`<br>`WCW`<br>`TWT`<br>`T` Thermobaric Explosives, `W` Wither Skeleton Skull, `C` Blaze Cake<br>→ **1×** |
+| 3 | **Exothermic Explosives** | Mixer + Superheated Blaze Burner<br>8× Incendiary Explosives, Glass<br>→ **Exothermic Explosives** | `MCM`<br>`ITI`<br>`MLM`<br>`M` Magma Block, `C` Blaze Cake, `I` Incendiary Explosives, `T` Thermobaric Explosives, `L` Lava Bucket<br>→ **1×** |
+| 3 | **Endothermic Explosives** | Mixer + Superheated Blaze Burner<br>Attractive Explosives, 4× Ice, 4× Snow Block<br>→ **Endothermic Explosives** | `ISI`<br>`STS`<br>`ISI`<br>`I` Packed Ice, `S` Snow Block, `T` Thermobaric Explosives<br>→ **1×** |
+| 3 | **Anti-Gravitational Explosives** | Mixer + Superheated Blaze Burner<br>Shrapnel Explosives, 8× Eye of Ender<br>→ **Anti-Gravitational Explosives** | `FPF`<br>`ESE`<br>`FPF`<br>`F` Phantom Membrane, `P` Propeller, `E` Eye of Ender, `S` Sonic Explosives<br>→ **1×** |
+| 3 | **Ender Explosives** | Mixer + Superheated Blaze Burner<br>Attractive Explosives, 4× Eye of Ender, 4× End Stone<br>→ **Ender Explosives** | `NPN`<br>`EBE`<br>`NPN`<br>`N` End Stone, `P` Ender Pearl, `E` Eye of Ender, `B` Breaching Explosives<br>→ **1×** |
+| 4 | **Antimatter Explosives** | Mixer + Superheated Blaze Burner<br>Nuclear Explosives, 8× Nether Star<br>→ **Antimatter Explosives** | `SPS`<br>`SNS`<br>`SCS`<br>`S` Nether Star, `P` Precision Mechanism, `N` Nuclear Explosives, `C` Blaze Cake<br>→ **1×** |
+| 4 | **Red Matter Explosives** | Mixer + Superheated Blaze Burner<br>Antimatter Explosives, 8× Nether Star<br>→ **Red Matter Explosives** | `SES`<br>`SAS`<br>`SCS`<br>`S` Nether Star, `E` Ender Explosives, `A` Antimatter Explosives, `C` Blaze Cake<br>→ **1×** |
+
+### Explosive missiles and bomb carts
+
+Every explosive crate makes its own **explosive missile** and its own **bomb cart**, and the recipe is the same for all
+26. The only difference is the item you start from:
+
+| | Missile | Bomb cart |
+|---|---|---|
+| **Start from** | a **Missile Module** | a vanilla **Minecart** |
+| **On a Create Deployer** | Missile Module on the Depot, explosive crate in the Deployer | Minecart on the Depot, explosive crate in the Deployer |
+| **At a crafting table** | Missile Module + explosive crate, in any arrangement (shapeless) | Minecart + explosive crate, in any arrangement (shapeless) |
+| **You get** | 1 explosive missile of that kind | 1 bomb cart of that kind |
+
+A plain TNT block still makes the vanilla TNT Minecart.
+
+| Tier | Explosive crate | Explosive missile | Bomb cart |
+|---|---|---|---|
+| 1 | Condensed Explosives | **Conventional Missile** | **Explosive Cart** |
+| 1 | Shrapnel Explosives | **Shrapnel Missile** | **Shrapnel Minecart** |
+| 1 | Incendiary Explosives | **Incendiary Missile** | **Incendiary Minecart** |
+| 1 | Debilitation Explosives | **Debilitation Missile** | **Debilitation Minecart** |
+| 1 | Chemical Explosives | **Chemical Missile** | **Chemical Minecart** |
+| 1 | Anvil Explosives | **Anvil Missile** | **Anvil Minecart** |
+| 1 | Repulsive Explosives | **Repulsive Missile** | **Repulsive Minecart** |
+| 1 | Attractive Explosives | **Attractive Missile** | **Attractive Minecart** |
+| 1 | Colorful Explosives | **Colorful Missile** | **Colorful Minecart** |
+| 1 | Smoke Marking Explosives | **Smoke Marking Missile** | **Smoke Marking Minecart** |
+| 1 | Flashbang Explosives | **Flashbang Missile** | **Flashbang Minecart** |
+| 1 | Recon Explosives | **Recon Missile** | **Recon Minecart** |
+| 2 | Fragmentation Explosives | **Fragmentation Missile** | **Fragmentation Minecart** |
+| 2 | Contagious Explosives | **Contagious Missile** | **Contagious Minecart** |
+| 2 | Sonic Explosives | **Sonic Missile** | **Sonic Minecart** |
+| 2 | Breaching Explosives | **Breaching Missile** | **Breaching Minecart** |
+| 2 | Thermobaric Explosives | **Thermobaric Missile** | **Thermobaric Minecart** |
+| 2 | Phantom Enemy Explosives | **Phantom Enemy Missile** | **Phantom Enemy Minecart** |
+| 2 | Darkness Explosives | **Darkness Missile** | **Darkness Minecart** |
+| 3 | Nuclear Explosives | **Nuclear Missile** | **Nuclear Minecart** |
+| 3 | Exothermic Explosives | **Exothermic Missile** | **Exothermic Minecart** |
+| 3 | Endothermic Explosives | **Endothermic Missile** | **Endothermic Minecart** |
+| 3 | Anti-Gravitational Explosives | **Anti-Gravitational Missile** | **Anti-Gravitational Minecart** |
+| 3 | Ender Explosives | **Ender Missile** | **Ender Minecart** |
+| 4 | Antimatter Explosives | **Antimatter Missile** | **Antimatter Minecart** |
+| 4 | Red Matter Explosives | **Red Matter Missile** | **Red Matter Minecart** |
+
+### Tools
+
+| Item | Method | Ingredients | Output |
+|---|---|---|---|
+| **Laser Range Finder** | Shaped crafting | `QEI`<br>`·BA`<br>`Q` Rose Quartz, `E` Electron Tube, `I` Iron Sheet, `B` Stone Button, `A` Andesite Alloy | 1× |
+| **Laser Range Finder** | Create: Mechanical Crafter | `GES`<br>`·BA`<br>`G` Glass, `E` Electron Tube, `S` Iron Sheet, `B` Stone Button, `A` Andesite Alloy | 1× |
+| **Remote Detonator** | Shaped crafting | `·L·`<br>`SES`<br>`SBS`<br>`L` Redstone Link, `S` Iron Sheet, `E` Electron Tube, `B` Wooden Button | 1× |
+| **Remote Detonator** | Create: Mechanical Crafter | `STS`<br>`SPS`<br>`SBS`<br>`S` Iron Sheet, `T` Transmitter, `P` Precision Mechanism, `B` Wooden Button | 1× |
+| **Laser Designator** | Shaped crafting | `RQ`<br>`EH`<br>`R` Laser Range Finder, `Q` Polished Rose Quartz, `E` Electron Tube, `H` Remote Detonator | 1× |
+| **Laser Designator** | Create: Mechanical Crafter | `RQ·`<br>`·P·`<br>`··H`<br>`R` Laser Range Finder, `Q` Polished Rose Quartz, `P` Precision Mechanism, `H` Remote Detonator | 1× |
+| **Rocket Launcher: Direct** | Shaped crafting | `BBB`<br>`CRE`<br>`·A·`<br>`B` Brass Sheet, `C` Cogwheel, `R` Laser Range Finder, `E` Electron Tube, `A` Andesite Alloy | 1× |
+| **Rocket Launcher: Direct** | Create: Mechanical Crafter | `BBB`<br>`RET`<br>`A·A`<br>`B` Brass Sheet, `R` Laser Range Finder, `E` Electron Tube, `T` Cogwheel, `A` Andesite Alloy | 1× |
+| **Rocket Launcher: Ballistic** | Shapeless crafting | Rocket Launcher: Direct, Launch Controller | 1× |
+| **Rocket Launcher: Ballistic** | Create: Deployer | Rocket Launcher: Direct + Launch Controller | 1× |
+
+### Materials
+
+| Item | Method | Ingredients | Output |
+|---|---|---|---|
+| **Poison Powder** | Create: Millstone | Spider Eye | 2× Poison Powder, Poison Powder (50% chance) |
+| **Poison Powder** | Create: Millstone | Poisonous Potato | Poison Powder, Poison Powder (25% chance) |
+| **Poison Powder** | Shapeless crafting | Spider Eye, Poisonous Potato | 3× |
+| **Antidote** | Create: Mixer | 3× Melon Seeds / Pumpkin Seeds / Wheat Seeds, Milk (250 mB) | 6× Antidote |
+| **Antidote** | Shapeless crafting | Milk Bucket, 3× Melon Seeds / Pumpkin Seeds / Wheat Seeds | 6× |
 
 ## Ponder and JEI
 
 - **Ponder scenes** (hold **W** over the item): Launch Pad, Launch Gantry, Launch Connector and Launch Controller share
-  a launch scene, and the Cruise Turret, Radar Station, EMP Tower (and Coil Extender) each have their own. Explosive
+  a launch scene, and the Cruise Turret and Radar Station each have their own. Explosive
   crates, missiles and bomb carts have an arming scene. The powered machines also appear under Create's *Kinetic
   Appliances* tag.
-- **Engineer's Goggles** show each machine's charge and status: the pad's charge and missile, the turret's aim, the
-  radar's status and the EMP Tower's charge and radius.
+- **Engineer's Goggles** show each machine's charge and status: the pad's charge and missile, the turret's aim and the
+  radar's status.
 - **Tooltips:** hold **Shift** over any item for a Create-style summary. Machines also list their stress impact.
 - **JEI** keeps every explosive, missile, bomb cart and loaded Delivery Missile as its own entry, and has info pages for
   the Missile Module, Delivery Missile and radioactive blocks. Turn the integration off with `disable` in
@@ -1388,30 +1603,19 @@ common configs, so on a server the server's files apply.
 </details>
 
 <details>
-<summary><b>create_icbm-emp_tower.toml</b>: EMP Tower</summary>
-
-| Option | Default | What it changes |
-|---|---|---|
-| `base_max_range` | 150 | Largest pulse radius without extenders. |
-| `extender_range_bonus` | 20 | Radius added by each Coil Extender. |
-| `firing_cost_area` | 100 | Charge needed per square block of radius. |
-| `charge_per_rpm` | 20 | Charge gained per tick for each RPM. |
-| `stress_impact` | 16 | Stress impact in SU per RPM. |
-| `firing_cooling_ticks` | 200 | Cooldown after firing, in ticks. |
-
-</details>
-
-<details>
 <summary><b>create_icbm-missile.toml</b>: missile flight</summary>
 
 | Option | Default | What it changes |
 |---|---|---|
 | `speed_direct_fire` | 2 | Speed of turret and handheld missiles, in blocks per tick. |
 | `cruise_fuel`, `handheld_fuel` | 200, 200 | Ticks of thrust for turret and handheld missiles. |
-| `direct_fire_chunk_loading` | `true` | Turret and handheld missiles keep the chunks just ahead of them loaded (short tickets that time out on their own, like a thrown ender pearl), so a long shot doesn't freeze at the edge of the simulation distance. |
+| `direct_fire_chunk_loading` | `true` | Turret and handheld missiles keep the chunks just ahead of them loaded (short tickets that time out on their own, like a thrown ender pearl), so a long shot doesn't freeze at the edge of the simulation distance. Tickets are renewed from the level tick, so a missile that already sits in a slow-loading chunk keeps its path loaded. |
 | `arc_distance_limit` | 500 | Targets this far or further send the missile straight up and across the map out of sight. |
 | `simulation_exit_height`, `simulation_enter_height` | 500, 450 | Heights where long-range missiles leave and re-enter the world. |
-| `simulation_flight_speed`, `simulation_enter_speed` | 10, 1 | Speed while out of sight, and while dropping back onto the target. |
+| `simulation_flight_speed` | 20 | Blocks per **second** a missile flies while it is simulated out of sight. 1,000 blocks take 50 seconds. |
+| `simulation_enter_speed` | 1 | Blocks per tick it drops at when it re-enters the world above its target. |
+| `keep_visible_in_flight` | `true` | A missile stays a real, visible entity while a player is within the server's view distance of it, and keeps its chunks ahead loaded. |
+| `max_missile_chunk_tickets` | 512 | Most chunks all missiles of one dimension hold loaded ahead of them together. |
 | `health_tier_1` to `health_tier_4` | 50, 80, 100, 200 | Missile health by explosive tier. |
 | `impact_damage_scale`, `impact_damage_limit` | 20, -1 | Damage a missile does when it flies into a mob, and its cap (`-1` no cap, `0` off). |
 | `SAM_MISSILE.target_range` | 30 | How far a SAM looks for targets. |
@@ -1427,6 +1631,8 @@ common configs, so on a server the server's files apply.
 | Option | Default | What it changes |
 |---|---|---|
 | `blast_ms_per_tick`, `block_edit_ms_per_tick` | 15, 20 | Milliseconds per tick that big blasts may use. Lower is smoother for the server, higher finishes blasts sooner. |
+| `adaptive_budget` | `true` | Shrinks both budgets by itself while the server is lagging and gives them back when it recovers. |
+| `max_blast_edit_blocks_per_tick` | 20000 | Hard cap on blocks one paced blast (antimatter) removes per tick. |
 | `protection_events` | `true` | Every blast asks claim and protection mods (FTB Chunks, Open Parties and Claims...) before it edits blocks, so claimed land is spared. |
 | `block_effects_per_blast`, `block_effects_per_tick` | 64, 1024 | Limits on block particles and sounds. |
 | `blast_do_block_updates` | `false` | Send block updates for every block a blast changes. |
@@ -1437,9 +1643,15 @@ common configs, so on a server the server's files apply.
 | `debilitation.size`, `chemical.size`, `contagious.size` | 20 | Gas cloud radius. Each also has a `duration` (600 ticks). |
 | `sonic.scale`, `thermobaric.scale`, `nuclear.scale` | 15, 30, 50 | Blast reach. |
 | `nuclear.rotScale`, `nuclear.mutationScale` | 80, 80 | Fallout and mutation reach. |
-| `emp.scale` | 50 | EMP explosive reach. The `emp` section also turns each EMP effect on or off, including `emp.missiles`. |
 | `exothermic.scale`, `endothermic.scale`, `antigravitational.scale` | 30 | Reach of these blasts. |
 | `antimatter.size`, `antimatter.break_unbreakable` | 55, `true` | Antimatter radius, and whether it erases bedrock. |
+| `antimatter.flash_extra_range`, `antimatter.flash_ticks` | 100, 60 | Blocks beyond the blast where the flash still reaches (0 = no flash), and ticks it stays fully white at the centre. |
+| `antimatter.mushroom_cloud`, `antimatter.mushroom_cloud_range`, `antimatter.edit_ticks` | `true`, 512, 120 | The cloud, how far away it is seen, and the ticks the crater takes to open (0 = as fast as the budget allows). |
+| `nuclear.mushroomCloud`, `nuclear.mushroomCloudScale`, `nuclear.mushroomCloudRange` | `true`, 0.7, 512 | The nuclear cloud, its size compared to antimatter (1.0) and how far away it is seen. |
+| `ender.abduct_players` | `true` | Players are taken by the giant Enderman in a cutscene instead of being teleported instantly. |
+| `ender.stare_ticks`, `ender.min_ticks_in_warp`, `ender.arrival_ticks` | 45, 45, 60 | Length of the three parts of the cutscene. |
+| `ender.min_distance`, `ender.max_distance` | 60, 150 | How far the player can be taken, in blocks. |
+| `ender.giant_scale`, `ender.cooldown_ticks` | 3.0, 200 | Size of the giant Enderman, and ticks before the same player can be taken again. |
 | `redmatter.redmatter_max_size` | 70 | Largest size a red matter black hole grows to. |
 | `flashbang.size`, `flashbang.duration` | 16, 20 | Flash reach and length in ticks. |
 | `recon.size`, `recon.duration` | 32, 3600 | Recon reach and glow time in ticks. |
@@ -1457,10 +1669,11 @@ common configs, so on a server the server's files apply.
 | | `radioactive.decay_effect_range`, `decay_effect_damage` | 5, 2 | Reach and damage of radioactive blocks. |
 | `create_icbm-flying_blocks.toml` | `enable` | `true` | Blasts throw flying blocks. |
 | | `block_ban_allow.list` | `["minecraft:fire"]` | Blocks that never fly. |
-| `create_icbm-thread.toml` | `thread_count` | 1 | Threads used to work out big blasts. |
+| `create_icbm-thread.toml` | `thread_count` | 1 (1 to 8) | Threads used to work out big blasts. |
 | `create_icbm-mods-jei.toml` | `disable` | `false` | Turn the JEI integration off. |
 | `create_icbm-mods-bluemap.toml` | see [BlueMap](#bluemap) | | |
 | `create_icbm-client.toml` | `missile_engine_smoke`, `missile_launch_smoke` | `true` | Missile smoke effects. |
+| | `mushroom_cloud_particles` | 90 | Most particles per tick one mushroom cloud may spawn on this client. 0 turns the cloud off. |
 
 </details>
 
@@ -1476,6 +1689,56 @@ All under `/icbm`, for operators (permission level 2).
 | `/icbm blast list` | Lists the explosive ids. |
 | `/icbm blast trigger <explosive> <size>` | Sets off a blast where you stand, for testing. Add `<dimension> <x> <y> <z>` before the size to pick the spot. |
 | `/icbm blast spread <count> <distance> <explosive> <dimension> <x> <y> <z> <size>` | Sets off a grid of blasts, for stress testing. |
+
+## Changelog
+
+### 1.0.35
+
+**New**
+
+- **Ender missile abduction cutscene** with a giant Enderman, a purple warp tunnel and its own scream, and dense ender
+  particles for everyone watching.
+- **Antimatter** flash, mushroom cloud and a crater that opens up smoothly, with a louder detonation that is timed to
+  both.
+- **Nuclear mushroom cloud**, the same cloud at 70 % size.
+- **Distant explosion sound** for everyone within the view distance, with the delay of distance. Full-volume nuclear
+  sound within 50 blocks and antimatter within 100.
+- **Missiles stay visible** in flight for every player within view distance and fly all the way to the ground before they
+  go off. Smooth client-side flight with half the position updates.
+- **Server work:** adaptive blast budget, paced antimatter crater, a cap on missile chunk tickets, worker thread count up
+  to 8, debris effect limits, per-dimension clean-up.
+- **Compatibility:** ServerCore and Immersive Optimization, Sable, Mekanism and BlueMap re-checked and hardened.
+
+**Removed**
+
+- **Everything EMP:** the EMP explosive, missile and bomb cart, the EMP Tower and Coil Extender, their recipes, goggles,
+  Ponder entries, textures and settings. Create is mechanical, so there is no electricity in this mod any more. Worlds
+  that still contain those blocks or items lose them when loaded.
+- Unused code: three dead classes, 68 unused methods, 81 unused imports, the unused Forge Energy plug-in and the
+  unused energy data component, and two EMP goggle texts.
+
+**Fixed**
+
+- Missiles that froze in mid-air or vanished when they got some distance from the player.
+- Missiles in unloaded chunks were simulated at twice the configured speed. The default `simulation_flight_speed`
+  is now 20 blocks a second and a tick counts once, which keeps the flight time you were used to.
+- Radar: the nearest threat was not the one a Surface to Air Missile was sent after, and turrets kept firing at
+  missiles that had already died.
+- Cruise Turret: a missile was lost when power ran out at the moment of firing.
+- Targets that were `NaN` or infinite could be saved in a launcher, and could be typed into commands.
+- Several blasts threw entities or blocks with `NaN` velocity when they stood exactly in the centre (condensed,
+  repulsive, attractive, sonic, anti-gravitational, red matter, ...).
+- Fragments, gas clouds and threaded blasts could load or generate chunks they were not supposed to touch.
+- A missile exactly on its target and a missile starting on a block face could end up with a `NaN` position and vanish.
+- A delayed ballistic launch lost its airburst height and target type.
+- A radio that was saved before it had a channel stayed deaf for ever.
+- Launch inaccuracy for far targets overflowed a number above 46,340 blocks of range.
+- Wrong vector maths: cross product, minimum and normalise of 3D positions, an angle's sine, the shortest way round an
+  angle, cropping a region to the world and negative chunk coordinates.
+- The anvil fragments flickered between shapes, the ender camera could stare at the spot a player had just left, and a
+  long screen flash could survive a log-out.
+- Config safety: ranges for the launcher and radar range, `NaN` input to the blast commands, and mistakes in the flying
+  block list are now logged instead of silently skipped.
 
 ## Building from source
 

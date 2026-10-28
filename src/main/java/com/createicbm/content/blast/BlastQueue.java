@@ -3,6 +3,7 @@ package com.createicbm.content.blast;
 import com.createicbm.CreateICBM;
 import com.createicbm.ICBMConstants;
 import com.createicbm.config.blast.ConfigBlast;
+import com.createicbm.lib.transform.BlockEditHandler;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.Level;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -56,7 +57,7 @@ public final class BlastQueue
             return true; // keep the order, nothing skips ahead of explosions already waiting
         }
         refreshBudget(level);
-        return budgetUsedNanos >= ConfigBlast.BLAST_MS_PER_TICK * 1_000_000L;
+        return budgetUsedNanos >= BlockEditHandler.budgetNanos(ConfigBlast.BLAST_MS_PER_TICK);
     }
 
     /**
@@ -123,7 +124,7 @@ public final class BlastQueue
 
         refreshBudget(level);
         boolean first = true;
-        while (!queue.isEmpty() && (first || budgetUsedNanos < ConfigBlast.BLAST_MS_PER_TICK * 1_000_000L))
+        while (!queue.isEmpty() && (first || budgetUsedNanos < BlockEditHandler.budgetNanos(ConfigBlast.BLAST_MS_PER_TICK)))
         {
             first = false;
             final Runnable explosion = queue.poll();

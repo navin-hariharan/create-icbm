@@ -9,7 +9,6 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.util.Mth;
 import net.neoforged.neoforge.common.util.INBTSerializable;
 
 import javax.annotation.Nonnull;

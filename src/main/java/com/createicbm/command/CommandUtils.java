@@ -104,26 +104,40 @@ public class CommandUtils
 
     public static float parseFloat(String input) throws CommandSyntaxException
     {
+        final float value;
         try
         {
-            return Float.parseFloat(input);
+            value = Float.parseFloat(input);
         }
         catch (NumberFormatException e)
         {
             throw CommandSyntaxException.BUILT_IN_EXCEPTIONS.readerInvalidFloat().create(input);
         }
+        // NaN and Infinity parse fine but would give blasts and positions no usable size
+        if (!Float.isFinite(value))
+        {
+            throw CommandSyntaxException.BUILT_IN_EXCEPTIONS.readerInvalidFloat().create(input);
+        }
+        return value;
     }
 
     public static double parseDouble(String input) throws CommandSyntaxException
     {
+        final double value;
         try
         {
-            return Double.parseDouble(input);
+            value = Double.parseDouble(input);
         }
         catch (NumberFormatException e)
         {
             throw CommandSyntaxException.BUILT_IN_EXCEPTIONS.readerInvalidDouble().create(input);
         }
+        // NaN and Infinity parse fine but would give blasts and positions no usable size
+        if (!Double.isFinite(value))
+        {
+            throw CommandSyntaxException.BUILT_IN_EXCEPTIONS.readerInvalidDouble().create(input);
+        }
+        return value;
     }
 
     /**

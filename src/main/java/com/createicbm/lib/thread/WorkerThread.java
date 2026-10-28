@@ -144,11 +144,6 @@ public class WorkerThread extends Thread
         }
     }
 
-    protected IThreadWork getCurrentTask()
-    {
-        return activateTask;
-    }
-
     public void addWork(IThreadWork work)
     {
         queue.add(work);

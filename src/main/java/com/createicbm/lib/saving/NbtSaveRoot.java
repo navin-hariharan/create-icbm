@@ -4,7 +4,6 @@ import com.createicbm.api.reg.obj.IBuildableObject;
 import com.createicbm.api.reg.obj.IBuilderRegistry;
 import com.createicbm.lib.saving.nodes.*;
 import com.createicbm.lib.transform.rotation.EulerAngle;
-import com.createicbm.lib.transform.vector.Pos;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.nbt.Tag;
@@ -46,11 +45,6 @@ public class NbtSaveRoot<SaveObject> implements INbtSaveNode<SaveObject, Compoun
         this.name = name;
         this.handler = handler;
         this.parent = parent;
-    }
-
-    public NbtSaveRoot<SaveObject> disableSave() {
-        shouldSave = false;
-        return this;
     }
 
     @Override
@@ -193,12 +187,6 @@ public class NbtSaveRoot<SaveObject> implements INbtSaveNode<SaveObject, Compoun
     }
 
     @Deprecated
-    public NbtSaveRoot<SaveObject> nodePos(final String name, Function<SaveObject, Pos> save, BiConsumer<SaveObject, Pos> load)
-    {
-        return node(new SaveNodePos<SaveObject>(name, save, load));
-    }
-
-    @Deprecated
     public NbtSaveRoot<SaveObject> nodeEulerAngle(final String name, Function<SaveObject, EulerAngle> save, BiConsumer<SaveObject, EulerAngle> load)
     {
         return node(new NbtSaveNode<SaveObject, CompoundTag>(name,
@@ -240,12 +228,6 @@ public class NbtSaveRoot<SaveObject> implements INbtSaveNode<SaveObject, Compoun
                                                                                                   final Supplier<IBuilderRegistry<BuildableObject>> reg, Function<SaveObject, BuildableObject> getter, BiConsumer<SaveObject, BuildableObject> setter)
     {
         return node(new SaveBuildableObject<SaveObject, BuildableObject>(name, reg, getter, setter));
-    }
-
-    public <BuildableObject extends IBuildableObject> NbtSaveRoot<SaveObject> nodeBuildableObjectList(final String name,
-                                                                                                  final Supplier<IBuilderRegistry<BuildableObject>> reg, Function<SaveObject, Collection<BuildableObject>> getter)
-    {
-        return node(new SaveBuildableObjectList<SaveObject, BuildableObject>(name, reg, getter));
     }
 
     public <SerializableObject extends INBTSerializable<CompoundTag>> NbtSaveRoot<SaveObject> nodeINBTSerializable(final String name,

@@ -1,9 +1,6 @@
 package com.createicbm.lib.energy.storage;
 
 import com.createicbm.config.ConfigMain;
-import com.createicbm.lib.energy.system.EnergySystem;
-import com.createicbm.lib.energy.system.IEnergySystem;
-import net.minecraft.world.item.ItemStack;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.IntTag;
 import net.neoforged.neoforge.common.util.INBTSerializable;
@@ -36,26 +33,6 @@ public class EnergyBuffer implements IEnergyStorage, INBTSerializable<IntTag>
 
     public EnergyBuffer withOnChange(EnergyChangeCallback onEnergyChanged) {
         this.onEnergyChanged = onEnergyChanged;
-        return this;
-    }
-
-    public EnergyBuffer withCanExtract(Supplier<Boolean> canExtract) {
-        this.canExtract = canExtract;
-        return this;
-    }
-
-    public EnergyBuffer withCanReceive(Supplier<Boolean> canReceive) {
-        this.canReceive = canReceive;
-        return this;
-    }
-
-    public EnergyBuffer withExtractLimit(Supplier<Integer> extractLimit) {
-        this.extractLimit = extractLimit;
-        return this;
-    }
-
-    public EnergyBuffer withReceiveLimit(Supplier<Integer> receiveLimit) {
-        this.receiveLimit = receiveLimit;
         return this;
     }
 
@@ -131,23 +108,6 @@ public class EnergyBuffer implements IEnergyStorage, INBTSerializable<IntTag>
             extractEnergyInternal(amount, false);
         }
         return true;
-    }
-
-    public ItemStack dischargeItem(ItemStack itemStack) {
-        final IEnergySystem system = EnergySystem.getSystem(itemStack, null);
-        if(system != null && canReceive()) {
-            final int energyLeftToStore = getMaxEnergyStored() - getEnergyStored();
-            if(energyLeftToStore > 0) {
-                final int accept = receiveEnergy(energyLeftToStore, true);
-                if(accept > 0) {
-                    final int removed = system.removeEnergy(itemStack, null, accept, false);
-                    if(removed > 0) {
-                        receiveEnergy(removed, false);
-                    }
-                }
-            }
-        }
-        return itemStack;
     }
 
     @Override

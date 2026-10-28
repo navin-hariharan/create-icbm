@@ -80,11 +80,6 @@ public abstract class Pos2D<R extends Pos2D> extends Pos2DBean
         return newPos(x() * Math.cos(angle) - y() * Math.sin(angle), x() * Math.sin(angle) + y() * Math.cos(angle));
     }
 
-    public double dotProduct(IPos2D other)
-    {
-        return x() * other.x() + y() * other.y();
-    }
-
     public double magnitudeSquared()
     {
         return x() * x() + y() * y();

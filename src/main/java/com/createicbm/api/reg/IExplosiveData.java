@@ -13,6 +13,7 @@ import javax.annotation.Nonnull;
  *
  * @deprecated will be replaced by {@link IActionData}
  */
+@Deprecated
 public interface IExplosiveData extends Comparable<IExplosiveData>, IActionData
 {
     /**

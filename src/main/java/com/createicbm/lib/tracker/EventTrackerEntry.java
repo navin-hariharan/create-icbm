@@ -17,10 +17,13 @@ public class EventTrackerEntry {
         return get(key, null);
     }
     public <DATA> DATA get(ResourceLocation key, DATA placeholder) {
-        return (DATA) Optional.ofNullable(type.getField(key).get(this)).orElse(placeholder);
+        final EventTrackerField<Object> field = type.getField(key);
+        // A key this type has no column for gives the placeholder instead of a NullPointerException
+        return field == null ? placeholder : (DATA) Optional.ofNullable(field.get(this)).orElse(placeholder);
     }
 
     public String getString(ResourceLocation key, String placeholder) {
-        return Optional.ofNullable(type.getField(key).get(this)).map(Object::toString).orElse(placeholder);
+        final EventTrackerField<Object> field = type.getField(key);
+        return field == null ? placeholder : Optional.ofNullable(field.get(this)).map(Object::toString).orElse(placeholder);
     }
 }

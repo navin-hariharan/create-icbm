@@ -14,6 +14,7 @@ import net.minecraft.client.ParticleStatus;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.core.BlockPos;
+import net.minecraft.util.Mth;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.Entity;
@@ -122,6 +123,16 @@ public class ClientProxy extends CommonProxy
     }
 
     @Override
+    public double getViewDistanceBlocks(Level level)
+    {
+        if (level != null && level.isClientSide())
+        {
+            return Minecraft.getInstance().options.getEffectiveRenderDistance() * 16.0;
+        }
+        return super.getViewDistanceBlocks(level);
+    }
+
+    @Override
     public void onMissileEngineTick(EntityMissile<?> missile)
     {
         MissileEngineSound.onEngineTick(missile);
@@ -132,30 +143,33 @@ public class ClientProxy extends CommonProxy
     {
         if (entity.level().isClientSide() && ConfigClient.MISSILE_ENGINE_SMOKE)
         {
-            Pos position = new Pos(entity);
-            // The distance of the smoke relative
-            // to the missile.
-            double distance = -1.2f;
-            // The delta Y of the smoke.
-            double y = Math.sin(Math.toRadians(entity.getXRot())) * distance;
-            // The horizontal distance of the
-            // smoke.
-            double dH = Math.cos(Math.toRadians(entity.getXRot())) * distance;
-            // The delta X and Z.
-            double x = Math.sin(Math.toRadians(entity.getYRot())) * dH;
-            double z = Math.cos(Math.toRadians(entity.getYRot())) * dH;
-            position = position.add(x, y, z);
+            // The distance of the smoke relative to the missile
+            final double distance = -1.2;
+            final double pitchRad = Math.toRadians(entity.getXRot());
+            final double yawRad = Math.toRadians(entity.getYRot());
+            final double offsetY = Math.sin(pitchRad) * distance;
+            final double offsetH = Math.cos(pitchRad) * distance;
+            final double offsetX = Math.sin(yawRad) * offsetH;
+            final double offsetZ = Math.cos(yawRad) * offsetH;
 
             final Vec3 motion = entity.getDeltaMovement();
             final int count = smokeCount(10);
+            final float red = flightLogic.engineSmokeRed(entity);
+            final float green = flightLogic.engineSmokeGreen(entity);
+            final float blue = flightLogic.engineSmokeBlue(entity);
+            final int life = (int) Math.max(1d, 6d * (1 / (1 + entity.getY() / 100)));
+
+            // A fast missile flies several blocks per tick, putting every puff at its current spot made a trail of
+            // dots. The puffs are spread over the way it flew this tick (old position to new) instead.
             for (int i = 0; i < count; i++)
             {
+                final double t = (i + 1) / (double) count;
                 spawnAirParticle(entity.level(),
-                    position.x(), position.y(), position.z(),
+                    Mth.lerp(t, entity.xo, entity.getX()) + offsetX,
+                    Mth.lerp(t, entity.yo, entity.getY()) + offsetY,
+                    Mth.lerp(t, entity.zo, entity.getZ()) + offsetZ,
                     -motion.x * 0.5, -motion.y * 0.5, -motion.z * 0.5,
-                    flightLogic.engineSmokeRed(entity), flightLogic.engineSmokeGreen(entity), flightLogic.engineSmokeBlue(entity),
-                    (int) Math.max(1d, 6d * (1 / (1 + entity.getY() / 100))), 100);
-                position.multiply(1 - 0.025 * Math.random(), 1 - 0.025 * Math.random(), 1 - 0.025 * Math.random());
+                    red, green, blue, life, 100);
             }
         }
     }

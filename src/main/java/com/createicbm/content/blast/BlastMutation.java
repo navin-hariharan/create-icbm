@@ -50,4 +50,11 @@ public class BlastMutation extends Blast
     protected void playExplodeSound()
     {
     }
+
+    /** Not an explosion, so no distant boom for people who can see it */
+    @Override
+    protected boolean playsDistantSound()
+    {
+        return false;
+    }
 }

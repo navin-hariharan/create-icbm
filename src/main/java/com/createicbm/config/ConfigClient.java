@@ -17,4 +17,9 @@ public class ConfigClient
     @Config.Name("missile_launch_smoke")
     @Config.Comment("Enables smoke effect for launched missiles")
     public static boolean MISSILE_LAUNCH_SMOKE = true;
+
+    @Config.Name("mushroom_cloud_particles")
+    @Config.Comment("Most particles per tick one mushroom cloud (antimatter blast) may spawn. Lower it if the cloud costs you frames, 0 turns the cloud off.\nThe particle setting of the game lowers it further.")
+    @Config.RangeInt(min = 0, max = 2000)
+    public static int MUSHROOM_CLOUD_PARTICLES = 90;
 }

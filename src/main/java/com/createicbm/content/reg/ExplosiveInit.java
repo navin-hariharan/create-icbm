@@ -9,7 +9,6 @@ import com.createicbm.api.refs.ICBMEntities;
 import com.createicbm.api.refs.ICBMExplosives;
 import com.createicbm.api.reg.IExplosiveData;
 import com.createicbm.config.blast.ConfigBlast;
-import com.createicbm.content.actions.emp.ActionDataEmpArea;
 import com.createicbm.content.actions.entity.ActionSpawnEntity;
 import com.createicbm.content.blast.effect.BlastDarkness;
 import com.createicbm.content.blast.effect.BlastFlashbang;
@@ -178,9 +177,6 @@ public class ExplosiveInit
         CreateICBMAPI.EX_BLOCK_REGISTRY.setFuseSupplier(ICBMExplosives.NUCLEAR.getRegistryKey(), (world, x, y, z) -> ConfigBlast.FUSE_TIMES.EXPLOSIVES.NUCLEAR);
         CreateICBMAPI.EX_MINECART_REGISTRY.setFuseSupplier(ICBMExplosives.NUCLEAR.getRegistryKey(), (entity) -> ConfigBlast.FUSE_TIMES.BOMB_CARTS.NUCLEAR);
 
-        ICBMExplosives.EMP = newEx(16, "emp", EnumTier.THREE, (w, x, y, z, s) -> ActionDataEmpArea.INSTANCE.create(w, x, y, z, s, null));
-        CreateICBMAPI.EX_BLOCK_REGISTRY.setFuseSupplier(ICBMExplosives.EMP.getRegistryKey(), (world, x, y, z) -> ConfigBlast.FUSE_TIMES.EXPLOSIVES.EMP);
-        CreateICBMAPI.EX_MINECART_REGISTRY.setFuseSupplier(ICBMExplosives.EMP.getRegistryKey(), (entity) -> ConfigBlast.FUSE_TIMES.BOMB_CARTS.EMP);
 
         ICBMExplosives.EXOTHERMIC = newEx(17, "exothermic", EnumTier.THREE, (w, x, y, z, s) -> new BlastExothermic().setBlastSize(ConfigBlast.exothermic.scale).setBlastWorld(w).setBlastPosition(x, y, z));
         CreateICBMAPI.EX_BLOCK_REGISTRY.setFuseTickListener(ICBMExplosives.EXOTHERMIC.getRegistryKey(),

@@ -47,4 +47,11 @@ public abstract class BlastAreaEffect extends Blast
 
     /** Server only, runs once */
     protected abstract void applyEffect();
+
+    /** Not an explosion, so no distant boom for people who can see it */
+    @Override
+    protected boolean playsDistantSound()
+    {
+        return false;
+    }
 }

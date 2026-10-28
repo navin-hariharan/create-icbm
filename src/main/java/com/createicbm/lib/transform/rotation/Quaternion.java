@@ -93,19 +93,6 @@ public class Quaternion implements ITransform
         return this;
     }
 
-    public Quaternion rightMultiply(Quaternion quaternion)
-    {
-        double d = w * quaternion.w - x * quaternion.x - y * quaternion.y - z * quaternion.z;
-        double d1 = w * quaternion.x + x * quaternion.w + y * quaternion.z - z * quaternion.y;
-        double d2 = w * quaternion.y - x * quaternion.z + y * quaternion.w + z * quaternion.x;
-        double d3 = w * quaternion.z + x * quaternion.y - y * quaternion.x + z * quaternion.w;
-        w = d;
-        x = d1;
-        y = d2;
-        z = d3;
-        return this;
-    }
-
     public double magnitude()
     {
         return Math.sqrt(x * x + y * y + z * z + w * w);

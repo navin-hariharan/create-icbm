@@ -6,7 +6,6 @@ import com.createicbm.api.actions.cause.IActionCause;
 import com.createicbm.api.actions.conditions.ICondition;
 import com.createicbm.api.actions.listener.IActionListenerHandler;
 import com.createicbm.api.actions.status.IActionStatus;
-import com.createicbm.api.caps.IEMPReceiver;
 import com.createicbm.api.caps.IExplosive;
 import com.createicbm.api.caps.IGPSData;
 import com.createicbm.api.caps.IMissileHolder;
@@ -71,12 +70,6 @@ public final class CreateICBMAPI
         return ResourceLocation.fromNamespaceAndPath(ID, name);
     }
 
-    /** EMP handling for entities */
-    public static final EntityCapability<IEMPReceiver, Void> EMP_ENTITY_CAPABILITY = EntityCapability.createVoid(cap("emp"), IEMPReceiver.class);
-    /** EMP handling for block entities */
-    public static final BlockCapability<IEMPReceiver, @Nullable Direction> EMP_BLOCK_CAPABILITY = BlockCapability.createSided(cap("emp"), IEMPReceiver.class);
-    /** EMP handling for item stacks */
-    public static final ItemCapability<IEMPReceiver, Void> EMP_ITEM_CAPABILITY = ItemCapability.createVoid(cap("emp"), IEMPReceiver.class);
 
     /** Only applies to entities */
     public static final EntityCapability<IMissile, Void> MISSILE_CAPABILITY = EntityCapability.createVoid(cap("missile"), IMissile.class);

@@ -30,7 +30,7 @@ public class ListenerEntry implements IEventTrackerListener {
             listener.accept(entry);
         }
         catch (Exception e) {
-            CreateICBM.logger().error(String.format("Listener(%s): error while handling entry(%s)", name, entry.getType()));
+            CreateICBM.logger().error(String.format("Listener(%s): error while handling entry(%s)", name, entry.getType()), e);
         }
     }
 

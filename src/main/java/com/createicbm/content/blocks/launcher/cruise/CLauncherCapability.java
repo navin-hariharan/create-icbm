@@ -110,14 +110,14 @@ public class CLauncherCapability extends LauncherBaseCapability {
                     final Entity entity = missile.getMissileEntity();
                     entity.setPos(missileSource.getPosition().x, missileSource.getPosition().y, missileSource.getPosition().z);
 
+                    // Check power again, with firing delay things could change (before the missile is consumed)
+                    if (!host.energyStorage.consumePower(host.getFiringCost(), true)) {
+                        return LauncherStatus.ERROR_POWER;
+                    }
+
                     // Should always work but in rare cases capability might have failed
                     if (!host.missileHolder.consumeMissile()) {
                         return LauncherStatus.ERROR_INVALID_STACK;
-                    }
-
-                    // Check power again, with firing delay things could change
-                    if (!host.energyStorage.consumePower(host.getFiringCost(), true)) {
-                        return LauncherStatus.ERROR_POWER;
                     }
                     host.energyStorage.consumePower(host.getFiringCost(), false);
 
@@ -128,6 +128,8 @@ public class CLauncherCapability extends LauncherBaseCapability {
                     missile.launch();
 
                     if (!host.getLevel().addFreshEntity(entity)) {
+                        // Nothing flew, take the radar contact and launch sound back
+                        missile.cancelLaunch();
                         return LauncherStatus.ERROR_SPAWN;
                     }
                     return new LaunchedWithMissile().setMissile(missile);

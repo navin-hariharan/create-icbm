@@ -300,17 +300,6 @@ public class EulerAngle implements Cloneable, ITransform, IByteBufWriter, IByteB
     }
 
     /**
-     * Gets the different between the two angles
-     *
-     * @param other - angle to compare
-     * @return new EulerAngle containing the differences between the two angles
-     */
-    public EulerAngle absoluteDifference(EulerAngle other)
-    {
-        return new EulerAngle(Math.abs(yaw - other.yaw), Math.abs(pitch - other.pitch), Math.abs(roll - other.roll));
-    }
-
-    /**
      * Checks if the angle is within a margin of the other angle
      *
      * @param other - angle to check against
@@ -404,7 +393,9 @@ public class EulerAngle implements Cloneable, ITransform, IByteBufWriter, IByteB
     }
 
     private static double delta(final double a, final double b) {
-        return Math.abs(((a + 360) % 360) - ((b + 360) % 360)); //TODO check performance
+        // Shortest way around, 359 and 1 are 2 degrees apart
+        final double diff = Math.abs((((a % 360) + 360) % 360) - (((b % 360) + 360) % 360));
+        return Math.min(diff, 360 - diff);
     }
 
     @Override
@@ -435,7 +426,7 @@ public class EulerAngle implements Cloneable, ITransform, IByteBufWriter, IByteB
 
     public double z()
     {
-        return Math.sin(-Math.cos(yaw_radian()) * Math.cos(pitch_radian()));
+        return -Math.cos(yaw_radian()) * Math.cos(pitch_radian());
     }
 
     /**
@@ -735,11 +726,6 @@ public class EulerAngle implements Cloneable, ITransform, IByteBufWriter, IByteB
     public double pitch_radian()
     {
         return Math.toRadians(pitch);
-    }
-
-    public double roll_radian()
-    {
-        return Math.toRadians(roll);
     }
 
     /**

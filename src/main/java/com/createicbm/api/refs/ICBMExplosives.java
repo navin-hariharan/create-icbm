@@ -37,7 +37,6 @@ public final class ICBMExplosives
 
     //=================== Tier 3
     public static IExplosiveData NUCLEAR;
-    public static IExplosiveData EMP;
     public static IExplosiveData EXOTHERMIC;
     public static IExplosiveData ENDOTHERMIC;
     public static IExplosiveData ANTI_GRAVITATIONAL;

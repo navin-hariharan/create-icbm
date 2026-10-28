@@ -8,6 +8,11 @@ import net.minecraft.client.particle.SmokeParticle;
  */
 public class ParticleAirICBM extends SmokeParticle
 {
+    /** Full brightness whatever the light is, for fire */
+    private boolean glow;
+    /** Fades out over the last part of its life */
+    private boolean fade;
+
     public ParticleAirICBM(ClientLevel worldIn, double x, double y, double z, double vx, double vy, double vz, float scale)
     {
         super(worldIn, x, y, z, vx, vy, vz, scale, SmokeSprites.INSTANCE);
@@ -17,6 +22,24 @@ public class ParticleAirICBM extends SmokeParticle
     {
         this.lifetime = age;
         return this;
+    }
+
+    public ParticleAirICBM setGlow(boolean glow)
+    {
+        this.glow = glow;
+        return this;
+    }
+
+    public ParticleAirICBM setFade(boolean fade)
+    {
+        this.fade = fade;
+        return this;
+    }
+
+    @Override
+    protected int getLightColor(float partialTick)
+    {
+        return glow ? 0xF000F0 : super.getLightColor(partialTick);
     }
 
     public ParticleAirICBM setColor(float r, float g, float b, boolean addColorVariant)
@@ -48,6 +71,11 @@ public class ParticleAirICBM extends SmokeParticle
             return;
         }
 
+        if (fade)
+        {
+            final int fadeTicks = Math.max(1, this.lifetime / 2);
+            this.alpha = Math.min(1F, (this.lifetime - this.age) / (float) fadeTicks);
+        }
         this.setSpriteFromAge(SmokeSprites.INSTANCE);
         this.move(this.xd, this.yd, this.zd);
 

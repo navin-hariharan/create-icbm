@@ -4,11 +4,9 @@ import com.createicbm.jlib.data.vector.IPos3D;
 import com.createicbm.api.data.IWorldPosition;
 import com.createicbm.lib.NBTConstants;
 import io.netty.buffer.ByteBuf;
-import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.level.block.entity.BlockEntity;
-import net.minecraft.core.Direction;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.core.BlockPos;
@@ -78,16 +76,6 @@ public class Location extends AbstractLocation<Location> implements IWorldPositi
     public void playSound(SoundEvent soundIn, SoundSource category, float volume, float pitch, boolean distanceDelay)
     {
         world().playLocalSound(x(), y(), z(), soundIn, category, volume, pitch, distanceDelay);
-    }
-
-    public boolean isSideSolid(Direction side)
-    {
-        BlockState state = getBlockState();
-        if (state != null && !state.isAir())
-        {
-            return state.isFaceSturdy(world, toBlockPos(), side);
-        }
-        return false;
     }
 
     @Override

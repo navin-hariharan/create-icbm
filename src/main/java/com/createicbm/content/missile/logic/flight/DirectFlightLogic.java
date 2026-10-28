@@ -6,7 +6,6 @@ import com.createicbm.api.missiles.parts.IMissileTarget;
 import com.createicbm.config.missile.ConfigMissile;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.util.Mth;
 import net.minecraft.world.level.Level;
 
 import javax.annotation.Nonnull;
@@ -17,7 +16,8 @@ import javax.annotation.Nonnull;
 public class DirectFlightLogic extends DeadFlightLogic
 {
     public static final ResourceLocation REG_NAME = ResourceLocation.fromNamespaceAndPath(ICBMConstants.DOMAIN, "direct");
-    private double motionX; //TODO do we need to save?
+    // Not saved: the entity saves its own motion, and this is only read once by start() when the missile launches
+    private double motionX;
     private double motionY;
     private double motionZ;
 
@@ -40,7 +40,15 @@ public class DirectFlightLogic extends DeadFlightLogic
             motionZ = targetData.getZ() - startZ;
 
             //Normalize
-            float velocity = (float) Math.sqrt(motionX * motionX + motionY * motionY + motionZ * motionZ);
+            final double velocity = Math.sqrt(motionX * motionX + motionY * motionY + motionZ * motionZ);
+            if (velocity < 1.0E-6)
+            {
+                // Target on top of the launcher, dividing by zero made the motion NaN and the missile vanish
+                motionX = 0;
+                motionY = ConfigMissile.DIRECT_FLIGHT_SPEED;
+                motionZ = 0;
+                return;
+            }
             motionX /= velocity;
             motionY /= velocity;
             motionZ /= velocity;

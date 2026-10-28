@@ -37,6 +37,7 @@ public interface IMissileFlightLogic extends IBuildableObject
      *  @deprecated will be switching to using {@link com.createicbm.api.actions.data.IActionFieldProvider} for accessing
      *  and editing entity&missile. As this will allow for simulating flight logic in the future
      */
+    @Deprecated
     default void start(Entity entity, IMissile missile) {
 
     }
@@ -47,6 +48,7 @@ public interface IMissileFlightLogic extends IBuildableObject
      * @deprecated will be switching to using {@link com.createicbm.api.actions.data.IActionFieldProvider} for accessing
      * and editing entity&missile. As this will allow for simulating flight logic in the future
      */
+    @Deprecated
     default void onEntityTick(Entity entity, IMissile missile, int ticksInAir)
     {
     }

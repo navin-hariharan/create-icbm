@@ -1,7 +1,6 @@
 package com.createicbm.content.blast;
 
 import com.createicbm.config.blast.ConfigBlast;
-import com.createicbm.content.potion.CustomPotionEffect;
 import net.minecraft.world.level.block.LiquidBlock;
 import net.minecraft.world.level.block.SnowLayerBlock;
 import net.minecraft.world.level.block.state.BlockState;
@@ -17,7 +16,6 @@ import net.minecraft.world.level.GameRules;
 import net.minecraft.server.level.ServerLevel;
 import com.createicbm.content.blast.helpers.BlastBlockHelpers;
 
-import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 

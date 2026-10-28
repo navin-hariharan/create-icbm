@@ -3,6 +3,7 @@ package com.createicbm.content.missile.tracker;
 import com.createicbm.CreateICBM;
 import com.createicbm.ICBMConstants;
 import com.createicbm.api.events.MissileEvent;
+import com.createicbm.config.missile.ConfigMissile;
 import com.createicbm.content.missile.entity.EntityMissile;
 import com.createicbm.content.missile.entity.delivery.EntityDeliveryMissile;
 import com.createicbm.content.missile.entity.explosive.EntityExplosiveMissile;
@@ -23,6 +24,7 @@ import net.neoforged.neoforge.common.world.chunk.TicketController;
 import net.neoforged.neoforge.event.level.LevelEvent;
 import net.neoforged.neoforge.event.tick.LevelTickEvent;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 
 /**
@@ -40,8 +42,9 @@ public class MissileTrackerHandler
     public static final TicketController CHUNK_TICKETS = new TicketController(
         ResourceLocation.fromNamespaceAndPath(ICBMConstants.DOMAIN, "missile_tracker"),
         (level, ticketHelper) -> {
-            ticketHelper.getEntityTickets().keySet().forEach(ticketHelper::removeAllTickets);
-            ticketHelper.getBlockTickets().keySet().forEach(ticketHelper::removeAllTickets);
+            // Over copies, removing tickets while walking the helper's own map can throw a ConcurrentModificationException
+            new ArrayList<>(ticketHelper.getEntityTickets().keySet()).forEach(ticketHelper::removeAllTickets);
+            new ArrayList<>(ticketHelper.getBlockTickets().keySet()).forEach(ticketHelper::removeAllTickets);
         });
 
     /** Map of handlers per dimension <DimensionID, Handler> */
@@ -139,6 +142,30 @@ public class MissileTrackerHandler
         return true;
     }
 
+    /**
+     * @return true when a player is close enough to see the missile, within the server view distance. Such a missile
+     * is kept as an entity (and its path loaded) so it is seen flying all the way to the ground.
+     */
+    public static boolean isWatched(Entity entity)
+    {
+        if (!ConfigMissile.KEEP_VISIBLE_IN_FLIGHT || !(entity.level() instanceof ServerLevel level))
+        {
+            return false;
+        }
+        final double range = level.getServer().getPlayerList().getViewDistance() * 16.0;
+        final double rangeSq = range * range;
+        for (Player player : level.players())
+        {
+            final double dx = player.getX() - entity.getX();
+            final double dz = player.getZ() - entity.getZ();
+            if (dx * dx + dz * dz <= rangeSq)
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
     private static boolean noPlayer(EntityMissile missile) {
         // TODO check for riding chains
         return missile.getPassengers().stream().noneMatch(e -> e instanceof Player);
@@ -202,14 +229,9 @@ public class MissileTrackerHandler
         }
     }
 
+    /** Once per level tick, listening on both Pre and Post made the simulation run at twice the intended rate */
     @SubscribeEvent
     public static void onWorldTickPre(LevelTickEvent.Pre event)
-    {
-        onWorldTick(event.getLevel());
-    }
-
-    @SubscribeEvent
-    public static void onWorldTickPost(LevelTickEvent.Post event)
     {
         onWorldTick(event.getLevel());
     }
