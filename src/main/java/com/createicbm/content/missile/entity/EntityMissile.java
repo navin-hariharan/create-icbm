@@ -12,6 +12,7 @@ import com.createicbm.content.missile.logic.flight.BallisticFlightLogicOld;
 import com.createicbm.content.missile.logic.flight.DeadFlightLogic;
 import com.createicbm.content.missile.tracker.MissileChunkLoader;
 import com.createicbm.lib.EntityTicking;
+import com.createicbm.lib.diagnostics.ICBMDiagnostics;
 import com.createicbm.lib.RegistryHelper;
 import com.createicbm.lib.capability.chicken.CapSpaceChicken;
 import com.createicbm.lib.capability.holder.ICapabilityHolderEntity;
@@ -247,6 +248,10 @@ public abstract class EntityMissile<E extends EntityMissile<E>> extends EntityPr
             {
                 RadarRegistry.add(this);
             }
+            ICBMDiagnostics.info("MISSILE_ADDED id={} uuid={} type={} dim={} pos={} velocity={} noCulling={} tickCount={} flightLogic={} canRunFlightLogic={}",
+                getId(), getUUID(), getClass().getSimpleName(), level().dimension().location(), position(), getDeltaMovement(), noCulling,
+                tickCount, getMissileCapability().getFlightLogic() == null ? "none" : getMissileCapability().getFlightLogic().getClass().getSimpleName(),
+                getMissileCapability().canRunFlightLogic());
         }
     }
 
@@ -255,6 +260,9 @@ public abstract class EntityMissile<E extends EntityMissile<E>> extends EntityPr
     {
         if (!level().isClientSide())
         {
+            ICBMDiagnostics.info("MISSILE_REMOVED id={} uuid={} type={} reason={} dim={} pos={} tickCount={} leftForSimulation={} flightLogic={}",
+                getId(), getUUID(), getClass().getSimpleName(), reason, level().dimension().location(), position(), tickCount, leftForSimulation,
+                getMissileCapability().getFlightLogic() == null ? "none" : getMissileCapability().getFlightLogic().getClass().getSimpleName());
             RadarRegistry.remove(this);
             MissileChunkLoader.untrack(this);
             if (!leftForSimulation)
@@ -423,6 +431,10 @@ public abstract class EntityMissile<E extends EntityMissile<E>> extends EntityPr
             impactLocation.z
         );
         CreateICBM.logger().info(formattedMessage);
+        ICBMDiagnostics.info("MISSILE_IMPACT_DETAIL id={} type={} ticksInAir={} tickCount={} velocity={} noCulling={} flightLogic={} heldChunks={} dim={}",
+            getId(), getClass().getSimpleName(), ticksInAir, tickCount, getDeltaMovement(), noCulling,
+            getMissileCapability().getFlightLogic() == null ? "none" : getMissileCapability().getFlightLogic().getClass().getSimpleName(),
+            chunkLoader.heldCount(), level().dimension().location());
     }
 
     @Override

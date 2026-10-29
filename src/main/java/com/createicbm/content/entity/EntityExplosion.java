@@ -10,6 +10,7 @@ import com.createicbm.content.blast.Blast;
 import com.createicbm.content.missile.logic.source.ActionSource;
 import com.createicbm.content.missile.logic.source.cause.EntityCause;
 import com.createicbm.lib.EntityTicking;
+import com.createicbm.lib.diagnostics.ICBMDiagnostics;
 import com.createicbm.lib.NBTConstants;
 import com.createicbm.lib.actions.WorkTickingActionHandler;
 import lombok.Getter;
@@ -58,6 +59,8 @@ public class EntityExplosion extends Entity implements IEntityWithComplexSpawn
     {
         this(blast.world());
         this.setBlast(blast);
+        ICBMDiagnostics.info("BLAST_ENTITY_CREATED id={} blast={} dim={} pos={} blastRadius={} serverSide={}", getId(), blast.getClass().getSimpleName(),
+            level().dimension().location(), position(), blast.getBlastRadius(), !level().isClientSide());
         if (ConfigDebug.DEBUG_EXPLOSIVES)
         {
             CreateICBM.logger().info("EntityExplosion#new({}) Created new blast controller entity", blast);
@@ -135,8 +138,16 @@ public class EntityExplosion extends Entity implements IEntityWithComplexSpawn
             ((IBlastMovable) getBlast()).onPositionUpdate(getX(), getY() + blastYOffset, getZ());
         }
 
+        if (ICBMDiagnostics.enabled() && !level().isClientSide() && tickCount > 0 && tickCount % 20 == 0 && blast instanceof IBlastTickable tickable)
+        {
+            ICBMDiagnostics.info("BLAST_ENTITY_SAMPLE entityId={} blast={} dim={} pos={} ageTicks={} completed={} thread={} threadAlive={}",
+                getId(), blast.getClass().getSimpleName(), level().dimension().location(), position(), tickCount, tickable.isCompleted(),
+                blast instanceof Blast b && b.getThread() != null ? b.getThread().getName() : "none",
+                blast instanceof Blast b && b.getThread() != null && b.getThread().isAlive());
+        }
         if (blast instanceof IBlastTickable && ((IBlastTickable) blast).onBlastTick(tickCount))
         {
+            ICBMDiagnostics.info("BLAST_ENTITY_FINISHED entityId={} blast={} dim={} ageTicks={} pos={}", getId(), blast.getClass().getSimpleName(), level().dimension().location(), tickCount, position());
             discard();
         }
     }

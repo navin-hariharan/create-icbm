@@ -30,4 +30,8 @@ public class ConfigDebug
     @Config.Name("debug_missile_tracker")
     @Config.Comment("When enabled, additional debug output is written to the console regarding the missile tracker.")
     public static boolean DEBUG_MISSILE_TRACKER = false;
+
+    @Config.Name("debug_icbm_diagnostics")
+    @Config.Comment("When enabled, emits sampled missile/chunk ticking, blast, radioactive block, gas expansion, and particle-network diagnostics. Disable after troubleshooting.")
+    public static boolean DEBUG_ICBM_DIAGNOSTICS = false;
 }

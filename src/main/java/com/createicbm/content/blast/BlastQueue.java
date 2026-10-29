@@ -71,6 +71,13 @@ public final class BlastQueue
         QUEUES.computeIfAbsent(level, k -> new ArrayDeque<>()).add(explosion);
     }
 
+    /** Number of pending blast actions for diagnostics. */
+    public static int queuedCount(Level level)
+    {
+        final ArrayDeque<Runnable> queue = QUEUES.get(level);
+        return queue == null ? 0 : queue.size();
+    }
+
     /**
      * Runs an explosion now and counts the time it takes against the budget of the current tick
      *

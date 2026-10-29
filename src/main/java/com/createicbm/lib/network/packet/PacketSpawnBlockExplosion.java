@@ -3,6 +3,7 @@ package com.createicbm.lib.network.packet;
 import com.createicbm.CreateICBM;
 import com.createicbm.lib.network.IPacket;
 import com.createicbm.lib.network.TargetPoint;
+import com.createicbm.lib.diagnostics.ICBMDiagnostics;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.Registries;
@@ -69,14 +70,21 @@ public class PacketSpawnBlockExplosion implements IPacket<PacketSpawnBlockExplos
     @Override
     public void handleClientSide(Minecraft minecraft, Player player)
     {
+        ICBMDiagnostics.blockParticleReceived();
         if (minecraft.level != null && player.level().dimension().equals(dimId))
         {
             CreateICBM.proxy.spawnExplosionParticles(player.level(), sourceX, sourceY, sourceZ, blastScale, blockPos);
+        }
+        else
+        {
+            ICBMDiagnostics.warn("BLOCK_EXPLOSION_PARTICLE_PACKET_DROPPED clientLevelPresent={} playerDim={} packetDim={} blockPos={}",
+                minecraft.level != null, player.level().dimension().location(), dimId.location(), blockPos);
         }
     }
 
     public static void sendToAllClients(Level world, double sourceX, double sourceY, double sourceZ, double blastScale, BlockPos pos)
     {
+        ICBMDiagnostics.blockParticleSent(world);
         final ResourceKey<Level> dimid = world.dimension();
         final PacketSpawnBlockExplosion packet = new PacketSpawnBlockExplosion(dimid, sourceX, sourceY, sourceZ, blastScale, pos);
         final TargetPoint point = new TargetPoint(dimid, pos.getX(), pos.getY(), pos.getZ(), 256);

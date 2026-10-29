@@ -10,6 +10,7 @@ import com.createicbm.content.missile.logic.source.ActionSource;
 import com.createicbm.content.missile.logic.source.cause.EntityCause;
 import com.createicbm.content.reg.EntityReg;
 import com.createicbm.lib.capability.ex.CapabilityExplosiveEntity;
+import com.createicbm.lib.diagnostics.ICBMDiagnostics;
 import com.createicbm.lib.saving.NbtSaveHandler;
 import com.createicbm.lib.saving.NbtSaveNode;
 import net.minecraft.nbt.CompoundTag;
@@ -159,7 +160,19 @@ public class EntityExplosiveMissile extends EntityMissile<EntityExplosiveMissile
             return;
         }
         detonated = true;
-        explosive.doExplosion(x, y, z, new ActionSource(level(), new Vec3(getX(), getY(), getZ()), new EntityCause(this)));
+        final long diagnosticStart = System.nanoTime();
+        final String explosiveKey = explosive.getExplosiveData() == null ? "none" : explosive.getExplosiveData().getRegistryKey().toString();
+        ICBMDiagnostics.info("WARHEAD_DETONATE_BEGIN missileId={} type={} explosive={} dim={} pos=({}, {}, {}) tickCount={} ticksInAir={} thread={}",
+            getId(), getClass().getSimpleName(), explosiveKey, level().dimension().location(), x, y, z, tickCount, ticksInAir, Thread.currentThread().getName());
+        try
+        {
+            explosive.doExplosion(x, y, z, new ActionSource(level(), new Vec3(getX(), getY(), getZ()), new EntityCause(this)));
+        }
+        finally
+        {
+            ICBMDiagnostics.info("WARHEAD_DETONATE_END missileId={} explosive={} elapsedMs={} removed={} thread={}",
+                getId(), explosiveKey, (System.nanoTime() - diagnosticStart) / 1_000_000.0, isRemoved(), Thread.currentThread().getName());
+        }
         if (!level().isClientSide())
         {
             NeoForge.EVENT_BUS.post(new MissileEvent.Detonated(getMissileCapability(), this, x, y, z));

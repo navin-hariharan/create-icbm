@@ -2,6 +2,7 @@ package com.createicbm.lib.network.packet;
 
 import com.createicbm.CreateICBM;
 import com.createicbm.client.fx.MushroomCloudFx;
+import com.createicbm.lib.diagnostics.ICBMDiagnostics;
 import com.createicbm.lib.network.IPacket;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.RegistryFriendlyByteBuf;
@@ -57,6 +58,8 @@ public class PacketMushroomCloud implements IPacket<PacketMushroomCloud>
     @Override
     public void handleClientSide(Minecraft minecraft, Player player)
     {
+        ICBMDiagnostics.info("MUSHROOM_CLOUD_PACKET_RECEIVED player={} clientLevelPresent={} playerDim={} pos=({}, {}, {}) radius={} ticks={}",
+            player.getName().getString(), minecraft.level != null, player.level().dimension().location(), x, y, z, radius, ticks);
         MushroomCloudFx.start(x, y, z, radius, ticks);
     }
 
@@ -65,6 +68,12 @@ public class PacketMushroomCloud implements IPacket<PacketMushroomCloud>
      */
     public static void send(ServerLevel level, double x, double y, double z, float radius, int ticks, double range)
     {
+        final double rangeSquared = range * range;
+        final long eligiblePlayers = level.players().stream()
+            .filter(player -> player.distanceToSqr(x, y, z) <= rangeSquared)
+            .count();
+        ICBMDiagnostics.info("MUSHROOM_CLOUD_PACKET_SEND dim={} pos=({}, {}, {}) radius={} ticks={} range={} eligiblePlayers={} serverTick={}",
+            level.dimension().location(), x, y, z, radius, ticks, range, eligiblePlayers, level.getServer().getTickCount());
         CreateICBM.packetHandler.sendToAllAround(new PacketMushroomCloud(x, y, z, radius, ticks), level, x, y, z, range);
     }
 }

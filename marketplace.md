@@ -5,7 +5,7 @@
 <h3 align="center">Missiles, radar and launch networks, built the Create way.</h3>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Version-1.0.35-8B5CF6?style=for-the-badge" alt="Version 1.0.35">
+  <img src="https://img.shields.io/badge/Version-1.0.4-8B5CF6?style=for-the-badge" alt="Version 1.0.4">
   <img src="https://img.shields.io/badge/Minecraft-1.21.1-62B47A?style=for-the-badge" alt="Minecraft 1.21.1">
   <img src="https://img.shields.io/badge/NeoForge-21.1.219%2B-E2711D?style=for-the-badge" alt="NeoForge 21.1.219+">
   <img src="https://img.shields.io/badge/Create-6.0.10%2B-C9A45C?style=for-the-badge" alt="Create 6.0.10+">
@@ -137,9 +137,9 @@ Almost everything can be made two ways: on Create's machines (Mechanical Craftin
 
 Config files are `create_icbm-*.toml` in the `config` folder (main, launcher, radar, missile, blast, client, thread, jei, bluemap). Commands are under `/icbm` (operators): `help`, `remove`, `lag`, `blast list`, `blast trigger`, `blast spread`. Every option is in the [README](https://github.com/navin-hariharan/create-icbm#configuration).
 
-## 📝 Latest: 1.0.35
+## 📝 Latest: 1.0.4
 
-New ender abduction cutscene, antimatter and nuclear mushroom clouds, distance-delayed explosion sounds, missiles visible to the ground, large-server tuning. Removed all EMP content. About 45 bug fixes, including missiles simulated at double speed out of sight. Full [changelog](https://github.com/navin-hariharan/create-icbm#changelog).
+Optimizer compatibility now exempts every Create: ICBM entity, including surface-to-air missiles, blast controllers, missile seats, decoys and flying blocks. Launch pads and radar stations remain normal block entities, while designators and detonators keep their server-side item handling. Diagnostics are opt-in, and unnecessary no-op compatibility code was removed. Full [changelog](https://github.com/navin-hariharan/create-icbm#changelog).
 
 ## 🙏 Credits
 

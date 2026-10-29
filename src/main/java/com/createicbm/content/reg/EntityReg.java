@@ -32,6 +32,9 @@ import net.neoforged.neoforge.event.entity.EntityAttributeCreationEvent;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
 
+import java.util.List;
+import java.util.function.Supplier;
+
 /**
  * Entity type registry.
  * <p>
@@ -83,6 +86,14 @@ public final class EntityReg
         EntityType.Builder.<PhantomSpider>of(PhantomSpider::new, MobCategory.MISC).sized(1.4F, 0.9F).eyeHeight(0.65F).noSave(), 128, 3);
     public static final DeferredHolder<EntityType<?>, EntityType<PhantomCreeper>> PHANTOM_CREEPER = register(ICBMEntities.PHANTOM_CREEPER,
         EntityType.Builder.<PhantomCreeper>of(PhantomCreeper::new, MobCategory.MISC).sized(0.6F, 1.7F).noSave(), 128, 3);
+
+    /** Every entity owned by Create: ICBM. Shared by optional optimizer compatibility hooks. */
+    public static final List<Supplier<? extends EntityType<?>>> ALL_ENTITY_TYPES = List.<Supplier<? extends EntityType<?>>>of(
+        BLOCK_GRAVITY, BLOCK_FRAGMENT, BLOCK_EXPLOSIVE,
+        MISSILE_EXPLOSIVE, MISSILE_GENERIC, MISSILE_SAM, MISSILE_DELIVERY,
+        EXPLOSION, BEAM, BOMB_CART, MISSILE_SEAT, REDMATTER, SMOKE,
+        PHANTOM_ZOMBIE, PHANTOM_HUSK, PHANTOM_SPIDER, PHANTOM_CREEPER
+    );
 
     private EntityReg()
     {

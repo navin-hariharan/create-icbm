@@ -10,7 +10,10 @@ import com.createicbm.api.refs.ICBMExplosives;
 import com.createicbm.api.reg.IExplosiveCustomization;
 import com.createicbm.api.reg.IExplosiveData;
 import com.createicbm.content.blast.BlastQueue;
+import com.createicbm.config.blast.ConfigBlast;
 import com.createicbm.lib.RegistryHelper;
+import com.createicbm.lib.diagnostics.ICBMDiagnostics;
+import net.minecraft.server.level.ServerLevel;
 import com.createicbm.lib.actions.status.ActionResponses;
 import com.createicbm.lib.explosive.ExplosiveStacks;
 import net.minecraft.nbt.CompoundTag;
@@ -56,25 +59,92 @@ public class CapabilityExplosiveEntity implements IExplosive
 
     public IActionStatus doExplosion(double x, double y, double z, IActionSource source)
     {
-        if (this.isExploding) {
+        if (this.isExploding)
+        {
             return ActionResponses.COMPLETED;
         }
 
-        //Make sure to note we are currently exploding
+        // Make sure to note we are currently exploding
         this.isExploding = true;
 
         if (!this.entity.level().isClientSide())
         {
             final Level level = this.entity.level();
             final IExplosiveData data = this.getExplosiveData();
+            final boolean diagnostics = ICBMDiagnostics.enabled();
 
             // PERF: when many go off in the same tick (missile salvo) the rest wait for the next ticks, see BlastQueue
             if (BlastQueue.shouldQueue(level))
             {
-                BlastQueue.queue(level, () -> data.create(level, x, y, z, source, null).doAction());
+                final long queuedAtNanos = diagnostics ? System.nanoTime() : 0L;
+                final int queuedAtTick = diagnostics && level instanceof ServerLevel serverLevel ? serverLevel.getServer().getTickCount() : -1;
+                final String explosiveKey = diagnostics ? String.valueOf(data.getRegistryKey()) : "";
+                if (diagnostics)
+                {
+                    ICBMDiagnostics.info("BLAST_QUEUE_ENQUEUED explosive={} dim={} center=({}, {}, {}) tick={} depth={} budgetMsPerTick={}",
+                        explosiveKey, level.dimension().location(), x, y, z, queuedAtTick, BlastQueue.queuedCount(level) + 1,
+                        ConfigBlast.BLAST_MS_PER_TICK);
+                }
+
+                BlastQueue.queue(level, () -> {
+                    final long runStartedNanos = diagnostics ? System.nanoTime() : 0L;
+                    final double waitMs = diagnostics ? (runStartedNanos - queuedAtNanos) / 1_000_000.0 : 0.0;
+                    final int runTick = diagnostics && level instanceof ServerLevel serverLevel ? serverLevel.getServer().getTickCount() : -1;
+                    if (diagnostics)
+                    {
+                        ICBMDiagnostics.info("BLAST_QUEUE_DEQUEUED explosive={} dim={} center=({}, {}, {}) enqueuedTick={} runTick={} waitMs={} depthAfterDequeue={}",
+                            explosiveKey, level.dimension().location(), x, y, z, queuedAtTick, runTick, waitMs, BlastQueue.queuedCount(level));
+                    }
+                    try
+                    {
+                        final IActionStatus result = data.create(level, x, y, z, source, null).doAction();
+                        if (diagnostics)
+                        {
+                            ICBMDiagnostics.info("BLAST_QUEUE_EXECUTED explosive={} dim={} center=({}, {}, {}) waitMs={} runMs={} result={}",
+                                explosiveKey, level.dimension().location(), x, y, z, waitMs,
+                                (System.nanoTime() - runStartedNanos) / 1_000_000.0, result);
+                        }
+                    }
+                    catch (RuntimeException exception)
+                    {
+                        if (diagnostics)
+                        {
+                            ICBMDiagnostics.error("BLAST_QUEUE_EXECUTION_FAILED explosive=" + explosiveKey + " dim=" + level.dimension().location()
+                                + " center=(" + x + ", " + y + ", " + z + ") waitMs=" + waitMs, exception);
+                        }
+                        throw exception;
+                    }
+                });
                 return ActionResponses.COMPLETED;
             }
-            return BlastQueue.runTimed(level, () -> data.create(level, x, y, z, source, null).doAction());
+
+            final long immediateStartedNanos = diagnostics ? System.nanoTime() : 0L;
+            if (diagnostics)
+            {
+                ICBMDiagnostics.info("BLAST_EXECUTE_IMMEDIATE explosive={} dim={} center=({}, {}, {}) tick={} queueDepth={}",
+                    data.getRegistryKey(), level.dimension().location(), x, y, z,
+                    level instanceof ServerLevel serverLevel ? serverLevel.getServer().getTickCount() : -1, BlastQueue.queuedCount(level));
+            }
+            try
+            {
+                final IActionStatus result = BlastQueue.runTimed(level, () -> data.create(level, x, y, z, source, null).doAction());
+                if (diagnostics)
+                {
+                    ICBMDiagnostics.info("BLAST_EXECUTE_IMMEDIATE_DONE explosive={} dim={} center=({}, {}, {}) elapsedMs={} result={}",
+                        data.getRegistryKey(), level.dimension().location(), x, y, z,
+                        (System.nanoTime() - immediateStartedNanos) / 1_000_000.0, result);
+                }
+                return result;
+            }
+            catch (RuntimeException exception)
+            {
+                if (diagnostics)
+                {
+                    ICBMDiagnostics.error("BLAST_EXECUTE_IMMEDIATE_FAILED explosive=" + data.getRegistryKey() + " dim=" + level.dimension().location()
+                        + " center=(" + x + ", " + y + ", " + z + ")", exception);
+                }
+                throw exception;
+            }
         }
         return ActionResponses.COMPLETED;
     }

@@ -1,6 +1,7 @@
 package com.createicbm.client;
 
 import com.createicbm.client.sound.MissileEngineSound;
+import com.createicbm.lib.diagnostics.ICBMDiagnostics;
 import com.createicbm.content.missile.entity.EntityMissile;
 import com.createicbm.CommonProxy;
 import com.createicbm.api.missiles.parts.IMissileFlightLogic;
@@ -71,6 +72,7 @@ public class ClientProxy extends CommonProxy
             particleAirParticleICBM.setColor(red, green, blue, true);
             particleAirParticleICBM.setAge(ticksToLive);
             Minecraft.getInstance().particleEngine.add(particleAirParticleICBM);
+            ICBMDiagnostics.airParticleCreated(world);
         }
         else if (world != null && !world.isClientSide())
         {
@@ -120,6 +122,7 @@ public class ClientProxy extends CommonProxy
             (particleZ + sourceZ) / 2.0D,
             particleMX, particleMY, particleMZ);
         world.addParticle(ParticleTypes.SMOKE, particleX, particleY, particleZ, particleMX, particleMY, particleMZ);
+        ICBMDiagnostics.blockParticlesCreated(world, 2);
     }
 
     @Override

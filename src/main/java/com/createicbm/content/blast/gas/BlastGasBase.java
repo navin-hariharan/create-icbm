@@ -5,6 +5,7 @@ import com.createicbm.api.explosion.IBlastTickable;
 import com.createicbm.client.ICBMSounds;
 import com.createicbm.content.blast.Blast;
 import com.createicbm.content.gas.ProtectiveArmorHandler;
+import com.createicbm.lib.diagnostics.ICBMDiagnostics;
 import com.createicbm.lib.NBTConstants;
 import lombok.Setter;
 import lombok.experimental.Accessors;
@@ -36,6 +37,8 @@ public abstract class BlastGasBase extends Blast implements IBlastTickable
     private boolean playShortSoundFX;
 
     private int lastRadius = 0;
+    private long diagnosticParticlesGenerated = 0;
+    private long diagnosticUnloadedChunkEdges = 0;
 
     /** Blocks pathed */
     private final HashSet<BlockPos> affectedBlocks = new HashSet();
@@ -55,6 +58,11 @@ public abstract class BlastGasBase extends Blast implements IBlastTickable
     @Override
     public boolean doExplode(int callCount)
     {
+        if (callCount == 0)
+        {
+            ICBMDiagnostics.info("GAS_BLAST_FIRST_TICK blast={} dim={} center=({}, {}, {}) radius={} duration={} serverSide={}",
+                getClass().getSimpleName(), world().dimension().location(), x(), y(), z(), getBlastRadius(), duration, !world().isClientSide());
+        }
         //Play start audio
         if (callCount == 0 && !this.playShortSoundFX)
         {
@@ -105,7 +113,14 @@ public abstract class BlastGasBase extends Blast implements IBlastTickable
             }
 
             //End explosion when we hit life timer
-            return this.callCount > this.duration;
+            if (this.callCount > this.duration)
+            {
+                ICBMDiagnostics.info("GAS_BLAST_FINISHED blast={} dim={} center=({}, {}, {}) callCount={} duration={} finalRadius={} affectedBlocks={} particlesCreated={} unloadedChunkEdgesSeen={} impactedEntities={}",
+                    getClass().getSimpleName(), world().dimension().location(), x(), y(), z(), this.callCount, duration, lastRadius,
+                    affectedBlocks.size(), diagnosticParticlesGenerated, diagnosticUnloadedChunkEdges, impactedEntityMap.size());
+                return true;
+            }
+            return false;
         }
 
         return false;
@@ -178,6 +193,10 @@ public abstract class BlastGasBase extends Blast implements IBlastTickable
         {
             return;
         }
+        final boolean diagnostics = ICBMDiagnostics.enabled();
+        final int previousRadius = lastRadius;
+        final long particlesBefore = diagnostics ? diagnosticParticlesGenerated : 0L;
+        final long unloadedBefore = diagnostics ? diagnosticUnloadedChunkEdges : 0L;
         lastRadius = radius;
 
         //Get radius sq for distance checks
@@ -243,6 +262,13 @@ public abstract class BlastGasBase extends Blast implements IBlastTickable
 
         //Add next set to follow up queue
         edgeBlocks.addAll(nextSet);
+        if (diagnostics)
+        {
+            ICBMDiagnostics.info("GAS_RADIUS_GROWTH blast={} dim={} center=({}, {}, {}) tick={} radius={} previousRadius={} affectedBlocks={} nextFrontier={} particlesCreated={} unloadedChunkEdgesSeen={} totalParticlesCreated={} totalUnloadedChunkEdges={} duration={} serverSide={}",
+                getClass().getSimpleName(), world().dimension().location(), x(), y(), z(), timePassed, radius, previousRadius,
+                affectedBlocks.size(), edgeBlocks.size(), diagnosticParticlesGenerated - particlesBefore,
+                diagnosticUnloadedChunkEdges - unloadedBefore, diagnosticParticlesGenerated, diagnosticUnloadedChunkEdges, duration, !world().isClientSide());
+        }
     }
 
     private boolean isValidPath(final BlockPos pos, final Direction direction)
@@ -250,6 +276,10 @@ public abstract class BlastGasBase extends Blast implements IBlastTickable
         // Reading a block in an unloaded chunk would load or generate it, the gas stops at the edge of what is loaded
         if (!world.hasChunkAt(pos))
         {
+            if (ICBMDiagnostics.enabled())
+            {
+                diagnosticUnloadedChunkEdges++;
+            }
             return false;
         }
         final BlockState blockState = world.getBlockState(pos);
@@ -289,6 +319,10 @@ public abstract class BlastGasBase extends Blast implements IBlastTickable
 
     protected void spawnGasParticles(final Vec3i pos)
     {
+        if (ICBMDiagnostics.enabled())
+        {
+            diagnosticParticlesGenerated++;
+        }
         CreateICBM.proxy.spawnAirParticle(world,
                 pos.getX(),
                 pos.getY(),

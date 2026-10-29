@@ -6,7 +6,7 @@
   <img src="https://img.shields.io/badge/Minecraft-1.21.1-62B47A?style=for-the-badge" alt="Minecraft 1.21.1">
   <img src="https://img.shields.io/badge/NeoForge-21.1.219%2B-E2711D?style=for-the-badge" alt="NeoForge 21.1.219+">
   <img src="https://img.shields.io/badge/Create-6.0.10%2B-C9A45C?style=for-the-badge" alt="Create 6.0.10+">
-  <img src="https://img.shields.io/badge/Release-v1.0.35-22C55E?style=for-the-badge" alt="Release v1.0.35">
+  <img src="https://img.shields.io/badge/Release-v1.0.4-22C55E?style=for-the-badge" alt="Release v1.0.4">
   <img src="https://img.shields.io/badge/License-CC_BY--NC_4.0-3B82F6?style=for-the-badge" alt="CC BY-NC 4.0 licence">
 </p>
 
@@ -110,8 +110,8 @@ It is a new addon, inspired by the classic **ICBM** mod (see [Credits](#credits)
   map. Click one to see who launched it, and every impact leaves a mushroom cloud on the map for a minute.
 - **Airship ready:** with Sable (the physics behind Create Aeronautics) installed, missiles hit ships where they
   fly, launchers work from a moving deck and blasts tear blocks off nearby ships.
-- **Big modpack ready:** missiles and blasts keep flying when tick optimizers such as Immersive Optimization or
-  ServerCore's activation range slow down entities far from players.
+- **Big modpack ready:** missiles and blasts remain tickable with Does Potato Tick, Immersive Optimization,
+  and ServerCore activation-range optimization enabled.
 - **Built for servers:** big blasts are spread over several ticks with a time budget that shrinks by itself while the
   server is lagging, blast maths runs on a worker thread, missile chunk loading is capped per dimension, missiles send
   half as many position updates (the client flies them smoothly in between), and clouds, flashes and cutscenes are
@@ -133,12 +133,12 @@ It is a new addon, inspired by the classic **ICBM** mod (see [Credits](#credits)
 | [BlueMap](https://modrinth.com/plugin/bluemap) | optional, 5.x, shows missiles on its web map |
 | Sable (Create Aeronautics) | optional, airships can be hit, damaged and fired from |
 | Mekanism | optional, missiles fly through Teleporter portals |
-| Immersive Optimization, ServerCore | optional, missiles keep flying far from players. If they still stall, add `create_icbm` to the optimizer's entity blacklist |
+| Does Potato Tick, Immersive Optimization, ServerCore, Entity Culling | optional, Create ICBM entities are automatically excluded from their tick/activation/culling optimizations when installed |
 
 See [Compatibility](#compatibility) for what each optional mod adds.
 
 Drop the `create-icbm` jar into your `mods` folder next to Create. The mod is needed on both the server and every
-client. This is version **1.0.35**.
+client. This is version **1.0.4**.
 
 ## Your first launch
 
@@ -1341,11 +1341,16 @@ Everything here works out of the box; the settings are there to tune it.
 | **Adaptive budget** | The budgets shrink by themselves while the server is slow: when the smoothed tick time stays above 45 ms they drop 3 % a tick, down to 10 % of normal, and they grow back 2 % a tick once it is under 35 ms. A blast always finishes in the end. | `adaptive_budget` (`true`) |
 | **Worker threads** | Blast shapes are calculated off the main thread from a snapshot of the chunks. Results are handed back to the server thread, which only applies them. Edits that fall in chunks which have meanwhile unloaded are skipped instead of force-loading them. | `thread_count` (1, up to 8) |
 | **Missile chunk loading** | A missile only holds the chunks right ahead of it, with short tickets that run out on their own, like a thrown ender pearl. All missiles of one dimension together may hold at most 512 tickets, and a missile always keeps its own chunk and the next one. | `direct_fire_chunk_loading` (`true`), `max_missile_chunk_tickets` (512) |
+| **Destination preloading** | Simulated missiles begin warming the target chunk and its four cardinal neighbours before arrival with expiring region tickets, giving slow world generation time to finish. They remain queued rather than being spawned into a chunk that still does not tick entities. | `target_chunk_preload_seconds` (15) |
 | **Simulated flight** | A long-range missile that leaves the loaded area stops being an entity. A tracker counts it down once per second at `simulation_flight_speed` and spawns it again above the target. Costs a few numbers per missile. | `simulation_flight_speed` (20 blocks/s), `arc_distance_limit` (500) |
 | **Network** | Missiles send a position every 2 ticks and the client smooths the rest. Mushroom clouds, flashes and cutscenes are one small packet each. Debris effects are capped. Sound packets only go to players within view distance. | `block_effects_per_blast` (64), `block_effects_per_tick` (1024) |
 | **Radar** | A radar only scans four times a second, over a square, and drops contacts that have died. | `scan_rate` (5 ticks) |
 | **Claims and protection** | Every blast asks claim mods (FTB Chunks, Open Parties and Claims...) before editing a block. | `protection_events` (`true`) |
 | **Clean shutdown** | Queues, tickets, pending sounds and cutscenes are dropped when a level unloads or the server stops, so nothing leaks between worlds. | none |
+
+### Distant Horizons and other chunk loaders
+
+Create ICBM uses Minecraft/NeoForge server chunk tickets and the actual entity-ticking state, rather than assuming that a chunk is usable just because it is rendered or present in memory. This is compatible with other chunk loaders that feed the normal server ticket manager: an already-ticking chunk does not need a duplicate forward ticket, while a merely loaded/non-ticking chunk gets an ICBM ticking ticket when the missile needs gameplay simulation. The same check intentionally ignores Distant Horizons LODs. Distant Horizons extends terrain rendering; its LOD terrain does not tick entities, run SAM guidance, detect targets, or process impacts, so it cannot replace server-side chunk tickets or extend the server's entity-tracking distance. No Distant Horizons API dependency is required.
 
 Things worth knowing on a busy server:
 
@@ -1371,15 +1376,17 @@ when it is installed, so a missing or changed mod can never stop the game from s
 | **BlueMap** 5.x | Missiles in flight, impact mushroom clouds and Mail parcels on a **Missiles** marker layer | BlueMap's public API, off with `enabled` in `create_icbm-mods-bluemap.toml`. It never touches tiles, textures or settings |
 | **Sable** (Create Aeronautics) | Missiles hit ships where they fly, launchers work on moving decks, blasts tear blocks off nearby ships | Sable's public API through reflection, every call does nothing if it fails |
 | **Mekanism** | Missiles fly through a Teleporter portal and come out of the other one | Registry names and reflection, switched off with a warning if Mekanism's API changes |
-| **ServerCore** | Missiles, blasts, bomb carts and flying blocks are added to its activation-range exclusions when the server starts, so they do not freeze far from players | Reflection, a failure only logs a warning |
-| **Immersive Optimization** and other tick throttlers | Server-side missiles and blasts are flagged to keep ticking. If one still stalls, add the `create_icbm` namespace to the optimizer's blacklist | `noCulling` flag, plus the missile's own chunk tickets |
+| **Does Potato Tick** | All registered ICBM entities are forced onto the optimizer's per-entity always-tick path, so its distance-based tick cancellation cannot freeze missiles or explosion controllers | Optional `Tickable` interface accessed through reflection; failure logs a fallback config instruction |
+| **ServerCore** | All registered Create ICBM entity types are added to activation-range exclusions when the server starts, so missiles and effects do not freeze far from players | Optional API accessed through reflection; failure only logs a warning |
+| **Immersive Optimization** | The `create_icbm` namespace is added to its entity blacklist. If its optional global block-entity scheduler is enabled, that scheduler is disabled because this version has no per-type block-entity exclusions for launchers/radar stations | Optional config API accessed through reflection; the entity rule is only changed if it is not already blacklisted, and the config change is logged |
+| **Entity Culling** | All registered Create ICBM entities are added to render and tick-culling whitelists, and launchers/radar/block entities to the render whitelist | Optional client API accessed through reflection; updates `config/entityculling.json` only when entries are missing |
 | **Tom's Simple Storage** | An Inventory Hopper in front of a Launch Controller restocks every empty pad in the network. Gantries and controllers are hidden from the Inventory Connector so missiles are not counted twice | Block tags in the `toms_storage` namespace, plain item handlers |
 | **Claim and protection mods** (FTB Chunks, Open Parties and Claims...) | Claimed land is spared by blasts | The explosion event those mods already listen to, `protection_events` |
 | **Armour mods** (gas masks, hazmat suits...) | Count as protection against gas and radiation once listed | `protective_armor.item_ratings` |
 | **Hoppers, funnels, chutes, Create vaults** and other item handlers | Load Launch Pads, Cruise Turrets and Launch Controllers, and receive the cargo of a Delivery Missile | NeoForge item handler capability |
 
 Both the server and every client need the mod. Optional mods only need to be installed on the side where they work
-(BlueMap, ServerCore and Immersive Optimization on the server, JEI on the client).
+(BlueMap, Does Potato Tick, ServerCore and Immersive Optimization on the server, JEI and Entity Culling on the client).
 
 ## Crafting recipes
 
@@ -1692,6 +1699,14 @@ All under `/icbm`, for operators (permission level 2).
 
 ## Changelog
 
+### 1.0.4
+- Fixed optimizer interoperability for every registered Create: ICBM entity, including surface-to-air missiles, blast controllers, seats, decoys, and flying blocks.
+- Kept launch pads/radar stations as block entities and detonators/designators as server-authoritative item interactions; entity tick exclusions are applied only to actual entity types.
+- Extended the Entity Culling whitelist to all ICBM block entities as well as all ICBM entities, covering launchers and radar-station visuals.
+- Prevented Immersive Optimization's optional global block-entity scheduler from delaying ICBM launchers/radar stations when that scheduler is enabled; its entity scheduler remains enabled with the `create_icbm` namespace blacklisted.
+- Retained opt-in diagnostics and chunk-ticket controls for testing long-range missile simulation.
+
+
 ### 1.0.35
 
 **New**
@@ -1779,3 +1794,18 @@ version 1.0.2, sound effects are covered by this project's CC BY-NC 4.0 licence.
 
 The parts of the code based on ICBM-Classic remain under ICBM-Classic's MIT licence, whose notice is included in the
 LICENSE file.
+
+
+## Multiplayer optimizer compatibility hotfix
+
+Missiles set Minecraft's `Entity.noCulling` flag for optimizers that honor that opt-out. ServerCore requires a different mechanism: it caches activation-range exclusions on each entity instance. When ServerCore is installed, Create: ICBM now applies ServerCore's `exclude_ear` tag to each registered ICBM entity as it joins the server level. ServerCore's own `Entity.addTag` hook updates its cached exclusion flag immediately; this is more robust than updating only the config's excluded-type set. The config set is still updated as an additional safeguard.
+
+Does Potato Tick is a separate server entity-ticking optimizer. When it is present, `DoesPotatoTickProxy` uses its optional `Tickable` interface reflectively to set `dpt$setAlwaysTick(true)` and restore `dpt$setTickable(true)` for all registered ICBM entity types. This is necessary because the optimizer caches an entity-level always-tick decision; adding only a namespace to a config list after entity construction may not update existing instances. The integration is optional and logs a warning if the interface cannot be reached.
+
+Entity Culling is client-side rendering/tick-culling and is separately handled by `EntityCullingCompat`. It should not be confused with server-side entity ticking. Distant Horizons LOD terrain likewise does not tick server entities. Flight-path tickets explicitly request entity ticking (not just chunk loading), including the warmup and climb stages before a ballistic missile hands over to simulated flight. A level is kept ticking while physical or simulated missiles are in flight, even if no players are online. Launchpads and cruise launchers acquire a persistent ticking ticket while a queued firing package is waiting, so radio/laser-triggered aiming and launch countdowns continue when the launcher is outside every player's simulation distance.
+
+## Diagnostic Logging for ICBM Troubleshooting
+
+Optional diagnostics write focused entries tagged `[ICBM-DIAG]` to `logs/latest.log` and `logs/debug.log`. They are disabled by default to avoid production log traffic; set `debug_icbm_diagnostics = true` in `config/create_icbm-debug.toml` while reproducing an issue, then share both logs. Turn it off after troubleshooting.
+
+The traces include `SERVERCORE_ENTITY_EXEMPTED` and `DOESPOTATOTICK_ENTITY_EXEMPTED` confirmations, missile tick/chunk status, blast execution queue delay, threaded blast computation/application timing, nuclear radioactive-block swap dispatch/completion, gas-frontier growth and skipped unloaded chunks, particle/mushroom-cloud packet send/receive counts. This instrumentation helps isolate failures; it does not itself guarantee a gameplay fix. Disable `debug_icbm_diagnostics` after troubleshooting if you no longer need the extra log traffic.

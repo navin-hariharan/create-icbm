@@ -15,6 +15,7 @@ import com.createicbm.content.blast.thread.ThreadExplosion;
 import com.createicbm.content.entity.EntityExplosion;
 import com.createicbm.lib.NBTConstants;
 import com.createicbm.lib.actions.WorkTickingActionHandler;
+import com.createicbm.lib.diagnostics.ICBMDiagnostics;
 import com.createicbm.lib.actions.status.ActionResponses;
 import com.createicbm.lib.transform.vector.Location;
 import com.createicbm.mods.sable.SableProxy;
@@ -153,6 +154,11 @@ public abstract class Blast implements IBlastInit, IBlastRestore
     @Override
     public IActionStatus doAction()
     {
+        final long diagnosticStartNanos = System.nanoTime();
+        ICBMDiagnostics.info("BLAST_ACTION_BEGIN blast={} dim={} center=({}, {}, {}) radius={} source={} actionData={} thread={} clientSide={}",
+            getClass().getSimpleName(), world == null ? "unknown" : world.dimension().location(), x, y, z, getBlastRadius(),
+            exploder == null ? "none" : exploder.getClass().getSimpleName(),
+            explosiveData == null ? "none" : explosiveData.getRegistryKey(), Thread.currentThread().getName(), world != null && world.isClientSide());
         try
         {
             if (!this.world().isClientSide())
@@ -160,6 +166,7 @@ public abstract class Blast implements IBlastInit, IBlastRestore
                 //Forge event, allows for interaction and canceling the explosion
                 if (EventHooks.onExplosionStart(world, asVanillaExplosion()))
                 {
+                    ICBMDiagnostics.warn("BLAST_ACTION_CANCELLED blast={} dim={} center=({}, {}, {}) elapsedMs={} reason=ExplosionEvent.Start cancelled", getClass().getSimpleName(), world.dimension().location(), x, y, z, (System.nanoTime() - diagnosticStartNanos) / 1_000_000.0);
                     return ActionResponses.EXPLOSION_CANCELED;
                 }
 
@@ -176,8 +183,10 @@ public abstract class Blast implements IBlastInit, IBlastRestore
                     if (!this.world().addFreshEntity(new EntityExplosion(this)))
                     {
                         isAlive = false;
+                        ICBMDiagnostics.warn("BLAST_ENTITY_SPAWN_FAILED blast={} dim={} center=({}, {}, {}) elapsedMs={}", getClass().getSimpleName(), world.dimension().location(), x, y, z, (System.nanoTime() - diagnosticStartNanos) / 1_000_000.0);
                         return ActionResponses.ENTITY_SPAWN_FAILED;
                     }
+                    ICBMDiagnostics.info("BLAST_ENTITY_SPAWNED blast={} dim={} center=({}, {}, {}) elapsedMs={}", getClass().getSimpleName(), world.dimension().location(), x, y, z, (System.nanoTime() - diagnosticStartNanos) / 1_000_000.0);
                     return ActionResponses.COMPLETED;
                 }
                 else
@@ -199,6 +208,7 @@ public abstract class Blast implements IBlastInit, IBlastRestore
             {
                 clientRunBlast();
             }
+            ICBMDiagnostics.info("BLAST_ACTION_RETURN blast={} dim={} center=({}, {}, {}) elapsedMs={} alive={}", getClass().getSimpleName(), world == null ? "unknown" : world.dimension().location(), x, y, z, (System.nanoTime() - diagnosticStartNanos) / 1_000_000.0, isAlive);
             return ActionResponses.COMPLETED;
         }
         catch (Exception e)

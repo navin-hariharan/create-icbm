@@ -7,6 +7,7 @@ import com.createicbm.api.events.LauncherSetTargetEvent;
 import com.createicbm.config.ConfigMain;
 import com.createicbm.config.machines.ConfigLauncher;
 import com.createicbm.content.blocks.launcher.FiringPackage;
+import com.createicbm.content.blocks.launcher.PendingLauncherChunkLoader;
 import com.createicbm.content.blocks.launcher.cruise.gui.ContainerCruiseLauncher;
 import com.createicbm.content.blocks.launcher.network.ILauncherComponent;
 import com.createicbm.content.blocks.launcher.network.LauncherNode;
@@ -34,6 +35,7 @@ import lombok.Getter;
 import lombok.Setter;
 import com.createicbm.content.reg.BlockReg;
 import com.createicbm.lib.capability.holder.ICapabilityHolderTile;
+import com.createicbm.lib.diagnostics.ICBMDiagnostics;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.AbstractContainerMenu;
@@ -101,7 +103,7 @@ public class TileCruiseLauncher extends TileKineticMachine implements IGuiTile, 
     @Getter
     protected final CLauncherCapability launcher = new CLauncherCapability(this);
 
-    @Getter @Setter
+    @Getter
     protected FiringPackage firingPackage;
 
     private final LauncherNode launcherNode = new LauncherNode(this, true);
@@ -183,11 +185,33 @@ public class TileCruiseLauncher extends TileKineticMachine implements IGuiTile, 
     public void onLoad()
     {
         super.onLoad();
+        // Restore/reconcile the persisted ticket only after the chunk and block entity are fully loaded.
+        PendingLauncherChunkLoader.sync(this, this.firingPackage != null);
         launcherNode.connectToTiles();
         if (isServer())
         {
             RadioRegistry.add(radio);
         }
+    }
+
+    /** Sets the queued radio/aiming launch and keeps this block entity ticking until it fires. */
+    public void setFiringPackage(FiringPackage firingPackage)
+    {
+        final boolean wasPending = this.firingPackage != null;
+        this.firingPackage = firingPackage;
+        // Reconcile every time a pending package is assigned: it is cheap when the ticket already exists, and retries
+        // the operation if a prior ticket attempt failed while this launcher was remote from all players.
+        if (firingPackage != null || wasPending != (firingPackage != null))
+        {
+            PendingLauncherChunkLoader.sync(this, firingPackage != null);
+        }
+        if (firingPackage != null)
+        {
+            ICBMDiagnostics.info("LAUNCHER_PACKAGE_QUEUED type=cruise pos={} dim={} countdown={} aimed={} target={}",
+                getBlockPos(), level == null ? "unknown" : level.dimension().location(), firingPackage.getCountDown(), isAimed(),
+                firingPackage.getTargetData() == null ? "null" : firingPackage.getTargetData().getPosition());
+        }
+        setChanged();
     }
 
     @Override
@@ -234,17 +258,27 @@ public class TileCruiseLauncher extends TileKineticMachine implements IGuiTile, 
             if (this.ticks % REDSTONE_CHECK_RATE == 0) {
                 for (Direction side : Direction.values()) {
                     final int power = level.getSignal(getBlockPos().relative(side), side);
-                    if (power > 1) {
-                        firingPackage = new FiringPackage(new BasicTargetData(getTarget()), new RedstoneCause(level, getBlockPos(), getBlockState(), side), 0);
+                    if (power > 1 && firingPackage == null) {
+                        setFiringPackage(new FiringPackage(new BasicTargetData(getTarget()), new RedstoneCause(level, getBlockPos(), getBlockState(), side), 0));
+                        break;
                     }
                 }
             }
 
-            if(firingPackage != null && isAimed()) {
-                firingPackage.setCountDown(firingPackage.getCountDown() - 1);
-                if(firingPackage.getCountDown() <= 0) {
-                    firingPackage.launch(launcher);
-                    firingPackage = null;
+            final FiringPackage pending = firingPackage;
+            if (pending != null && isAimed()) {
+                pending.setCountDown(pending.getCountDown() - 1);
+                if (pending.getCountDown() <= 0) {
+                    ICBMDiagnostics.info("LAUNCHER_PACKAGE_FIRE type=cruise pos={} dim={} target={}", getBlockPos(),
+                        level.dimension().location(), pending.getTargetData() == null ? "null" : pending.getTargetData().getPosition());
+                    try {
+                        pending.launch(launcher);
+                    } catch (RuntimeException exception) {
+                        ICBMDiagnostics.error("LAUNCHER_PACKAGE_FIRE_FAILED type=cruise pos=" + getBlockPos()
+                            + " dim=" + level.dimension().location(), exception);
+                    } finally {
+                        setFiringPackage(null);
+                    }
                 }
             }
         }
@@ -404,7 +438,8 @@ public class TileCruiseLauncher extends TileKineticMachine implements IGuiTile, 
         /* */.nodeVec3d(NBTConstants.TARGET, launcher -> launcher._targetPos, (launcher, pos) -> launcher._targetPos = pos)
         /* */.nodeEulerAngle(NBTConstants.CURRENT_AIM, launcher -> launcher.currentAim, (launcher, pos) -> launcher.currentAim.set(pos))
         /* */.nodeINBTSerializable("firing_package", TileCruiseLauncher::getFiringPackage, (launcher, firingPackage) -> {
-            // Client gets this via the update tag but never ticks it, don't keep a stale copy that affects the GUI status
+            // Avoid force-loading chunks from inside NBT deserialization; onLoad() applies the ticket after the chunk
+            // is fully available.
             if (launcher.getLevel() == null || !launcher.getLevel().isClientSide()) {
                 launcher.firingPackage = firingPackage;
             }

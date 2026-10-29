@@ -1,5 +1,6 @@
 package com.createicbm.content.entity.phantom;
 
+import com.createicbm.lib.EntityTicking;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.damagesource.DamageSource;
@@ -19,6 +20,7 @@ public class PhantomHusk extends Husk implements PhantomMob
     public PhantomHusk(EntityType<? extends PhantomHusk> type, Level level)
     {
         super(type, level);
+        EntityTicking.keepTicking(this);
     }
 
     @Override

@@ -3,6 +3,7 @@ package com.createicbm.lib.network.packet;
 import com.createicbm.CreateICBM;
 import com.createicbm.lib.network.IPacket;
 import com.createicbm.lib.network.TargetPoint;
+import com.createicbm.lib.diagnostics.ICBMDiagnostics;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.RegistryFriendlyByteBuf;
@@ -97,14 +98,21 @@ public class PacketSpawnAirParticle implements IPacket<PacketSpawnAirParticle>
     @Override
     public void handleClientSide(Minecraft minecraft, Player player)
     {
+        ICBMDiagnostics.airParticleReceived();
         if (minecraft.level != null && player.level().dimension().equals(dimId))
         {
             CreateICBM.proxy.spawnAirParticle(player.level(), posX, posY, posZ, v, v1, v2, red, green, blue, scale, ticksToLive);
+        }
+        else
+        {
+            ICBMDiagnostics.warn("AIR_PARTICLE_PACKET_DROPPED clientLevelPresent={} playerDim={} packetDim={} pos=({}, {}, {})",
+                minecraft.level != null, player.level().dimension().location(), dimId.location(), posX, posY, posZ);
         }
     }
 
     public static void sendToAllClients(Level world, double x, double y, double z, double v, double v1, double v2, float red, float green, float blue, float scale, int ticksToLive)
     {
+        ICBMDiagnostics.airParticleSent(world);
         final ResourceKey<Level> dimid = world.dimension();
         final PacketSpawnAirParticle packet = new PacketSpawnAirParticle(dimid, x, y, z, v, v1, v2, red, green, blue, scale, ticksToLive);
         final TargetPoint point = new TargetPoint(dimid, x, y, z, 256);

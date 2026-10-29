@@ -26,6 +26,7 @@ import net.neoforged.neoforge.registries.DeferredBlock;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
 
+import java.util.List;
 import java.util.function.Supplier;
 
 /**
@@ -65,6 +66,12 @@ public class BlockReg
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<TileLauncherScreen>> TILE_LAUNCHER_SCREEN = tile("launcherscreen", TileLauncherScreen::new, blockLaunchScreen);
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<TileCruiseLauncher>> TILE_CRUISE_LAUNCHER = tile("cruiselauncher", TileCruiseLauncher::new, blockCruiseLauncher);
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<TileMail>> TILE_MAIL = tile("mail", TileMail::new, blockMail);
+
+    /** Every Create: ICBM block entity, shared by optional client-render compatibility hooks. */
+    public static final List<Supplier<? extends BlockEntityType<?>>> ALL_BLOCK_ENTITY_TYPES = List.of(
+        TILE_EXPLOSIVE, TILE_RADAR_STATION, TILE_LAUNCHER_FRAME, TILE_LAUNCHER_CONNECTOR,
+        TILE_LAUNCHER_BASE, TILE_LAUNCHER_SCREEN, TILE_CRUISE_LAUNCHER, TILE_MAIL
+    );
 
     @SafeVarargs
     private static <T extends net.minecraft.world.level.block.entity.BlockEntity> DeferredHolder<BlockEntityType<?>, BlockEntityType<T>> tile(String name, BlockEntityType.BlockEntitySupplier<T> factory, Supplier<? extends Block>... blocks)

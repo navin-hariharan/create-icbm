@@ -4,7 +4,9 @@ import com.createicbm.ICBMConstants;
 import com.createicbm.api.missiles.parts.IMissileFlightLogic;
 import com.createicbm.config.missile.ConfigMissile;
 import com.createicbm.content.missile.entity.EntityMissile;
+import com.createicbm.lib.diagnostics.ICBMDiagnostics;
 import com.createicbm.content.missile.logic.flight.DeadFlightLogic;
+import net.minecraft.core.BlockPos;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.level.LevelEvent;
@@ -64,11 +66,17 @@ public class MissileChunkLoader
      */
     private static final Map<Level, Set<EntityMissile<?>>> TRACKED = new ConcurrentHashMap<>();
 
+    /** Distinct owner from the simulated-flight ticket: either kind of missile can keep a playerless level ticking. */
+    private static final BlockPos ENTITY_KEEPALIVE_OWNER = new BlockPos(0, 1, 0);
+    private static final Map<Level, Boolean> ENTITY_KEEPALIVE_ACTIVE = new ConcurrentHashMap<>();
+
     /** Chunks on the path this missile is holding, kept while on the path because they only tick thanks to us */
     private final LongSet heldChunks = new LongOpenHashSet();
     private final LongSet wanted = new LongOpenHashSet();
     private int cooldown = 0;
     private long lastChunk = Long.MIN_VALUE;
+    private int diagnosticLastServerTick = Integer.MIN_VALUE;
+    private int diagnosticLastEntityTickCount = Integer.MIN_VALUE;
 
     /**
      * @return how many chunks this missile holds tickets for right now
@@ -76,6 +84,44 @@ public class MissileChunkLoader
     public int heldCount()
     {
         return heldChunks.size();
+    }
+
+    /** One sampled status line per second; this runs from the level tick, even if the missile itself is frozen. */
+    public void traceStatus(EntityMissile<?> missile, ServerLevel level, int serverTick)
+    {
+        if (!ICBMDiagnostics.enabled() || serverTick <= 0 || serverTick % 20 != 0 || diagnosticLastServerTick == serverTick)
+        {
+            return;
+        }
+        final int chunkX = Mth.floor(missile.getX()) >> 4;
+        final int chunkZ = Mth.floor(missile.getZ()) >> 4;
+        final boolean loaded = level.hasChunkAt(missile.blockPosition());
+        final boolean entityTicking = MissileTrackerHandler.canEntitiesTick(level, chunkX, chunkZ);
+        final int entityTickCount = missile.tickCount;
+        final int tickDelta = diagnosticLastEntityTickCount == Integer.MIN_VALUE ? -1 : entityTickCount - diagnosticLastEntityTickCount;
+        final String flightLogic = missile.getMissileCapability().getFlightLogic() == null ? "none" : missile.getMissileCapability().getFlightLogic().getClass().getSimpleName();
+        final String status = "MISSILE_SAMPLE serverTick=" + serverTick + " id=" + missile.getId() + " uuid=" + missile.getUUID()
+            + " type=" + missile.getClass().getSimpleName() + " dim=" + level.dimension().location()
+            + " pos=" + missile.position() + " velocity=" + missile.getDeltaMovement()
+            + " chunk=" + chunkX + "," + chunkZ + " chunkLoaded=" + loaded + " entityTicking=" + entityTicking
+            + " noCulling=" + missile.noCulling + " removed=" + missile.isRemoved() + " tickCount=" + entityTickCount
+            + " entityTickDelta=" + tickDelta + " flightLogic=" + flightLogic + " canRunFlightLogic=" + missile.getMissileCapability().canRunFlightLogic()
+            + " directFireChunkLoading=" + ConfigMissile.DIRECT_FIRE_CHUNK_LOADING + " heldChunks=" + heldCount()
+            + " shouldLoadPath=" + shouldLoad(missile);
+        if (diagnosticLastEntityTickCount != Integer.MIN_VALUE && diagnosticLastServerTick < serverTick && entityTickCount == diagnosticLastEntityTickCount)
+        {
+            ICBMDiagnostics.warn("{}; POSSIBLE_TICK_STALL: entity tickCount did not advance over {} server ticks", status, serverTick - diagnosticLastServerTick);
+        }
+        else if (!entityTicking || !loaded)
+        {
+            ICBMDiagnostics.warn("{}; chunk is not entity-ticking/loaded", status);
+        }
+        else
+        {
+            ICBMDiagnostics.info("{}", status);
+        }
+        diagnosticLastServerTick = serverTick;
+        diagnosticLastEntityTickCount = entityTickCount;
     }
 
     /**
@@ -123,12 +169,19 @@ public class MissileChunkLoader
         final LongIterator it = wanted.iterator();
         while (it.hasNext())
         {
-            level.getChunkSource().addRegionTicket(TICKET, new ChunkPos(it.nextLong()), TICKET_DISTANCE, owner);
+            // NeoForge's four-argument overload only forces the chunk to load; it does not guarantee that entities
+            // tick when no player is nearby. Path chunks must use the explicit forceTicks overload or the missile can
+            // still freeze at simulation-distance boundaries despite the chunk being loaded.
+            level.getChunkSource().addRegionTicket(TICKET, new ChunkPos(it.nextLong()), TICKET_DISTANCE, owner, true);
         }
     }
 
     private boolean needsTicket(ServerLevel level, long key)
     {
+        // Query actual server entity-ticking state, not just whether a chunk is present in memory. This is deliberately
+        // mod-agnostic: vanilla, NeoForge, and compatible chunk loaders all feed the same ticket/ticking manager.
+        // Distant Horizons LODs are render data and cannot satisfy this check, so ICBM requests a real ticking ticket
+        // whenever a missile needs collision, guidance, radar, or explosion logic in that chunk.
         return heldChunks.contains(key) || !MissileTrackerHandler.canEntitiesTick(level, ChunkPos.getX(key), ChunkPos.getZ(key));
     }
 
@@ -158,16 +211,24 @@ public class MissileChunkLoader
     @SubscribeEvent
     public static void onLevelTick(LevelTickEvent.Post event)
     {
-        final Set<EntityMissile<?>> missiles = TRACKED.get(event.getLevel());
+        final Level level = event.getLevel();
+        final Set<EntityMissile<?>> missiles = TRACKED.get(level);
         if (missiles == null)
         {
+            // Reconcile persisted tickets on the first tick after startup as well as after the last missile disappears.
+            syncEntityKeepaliveTicket(level, false);
             return;
         }
         if (missiles.isEmpty())
         {
-            TRACKED.remove(event.getLevel(), missiles);
+            TRACKED.remove(level, missiles);
+            syncEntityKeepaliveTicket(level, false);
             return;
         }
+        // Entity flight tickets alone are not enough to reset ServerLevel's empty timer. Keep a separate persistent
+        // ticking ticket while any physical missile remains, so far launches continue when every player logs off.
+        syncEntityKeepaliveTicket(level, true);
+
         // The chunks all missiles of the level hold together are capped, each takes from what is left
         int budget = ConfigMissile.MAX_MISSILE_CHUNK_TICKETS;
         for (EntityMissile<?> missile : missiles)
@@ -179,7 +240,39 @@ public class MissileChunkLoader
             }
             final MissileChunkLoader loader = missile.getChunkLoader();
             loader.update(missile, budget);
+            if (event.getLevel() instanceof ServerLevel serverLevel)
+            {
+                loader.traceStatus(missile, serverLevel, serverLevel.getServer().getTickCount());
+            }
             budget -= loader.heldCount();
+        }
+    }
+
+    private static void syncEntityKeepaliveTicket(Level level, boolean required)
+    {
+        if (!(level instanceof ServerLevel serverLevel))
+        {
+            return;
+        }
+        final Boolean previous = ENTITY_KEEPALIVE_ACTIVE.get(level);
+        if (previous != null && previous.booleanValue() == required)
+        {
+            return;
+        }
+        try
+        {
+            final boolean changed = MissileTrackerHandler.SIMULATION_KEEPALIVE_TICKETS.forceChunk(
+                serverLevel, ENTITY_KEEPALIVE_OWNER, 0, 0, required, true);
+            ENTITY_KEEPALIVE_ACTIVE.put(level, required);
+            ICBMDiagnostics.info("MISSILE_ENTITY_KEEPALIVE action={} dim={} tracked={} changed={}",
+                required ? "ADD_OR_KEEP" : "REMOVE", level.dimension().location(),
+                TRACKED.getOrDefault(level, Set.of()).size(), changed);
+        }
+        catch (RuntimeException exception)
+        {
+            // Do not cache a failed reconciliation; retry on the next level tick.
+            ICBMDiagnostics.error("MISSILE_ENTITY_KEEPALIVE_FAILED dim=" + level.dimension().location()
+                + " required=" + required, exception);
         }
     }
 
@@ -189,6 +282,8 @@ public class MissileChunkLoader
         if (event.getLevel() instanceof Level level)
         {
             TRACKED.remove(level);
+            // Keep the persistent ticket until the next server startup can reconcile it against loaded missile data.
+            ENTITY_KEEPALIVE_ACTIVE.remove(level);
         }
     }
 
@@ -198,17 +293,51 @@ public class MissileChunkLoader
      */
     public static boolean shouldLoad(EntityMissile<?> missile)
     {
-        if (!ConfigMissile.DIRECT_FIRE_CHUNK_LOADING || missile.isRemoved() || !missile.getMissileCapability().canRunFlightLogic())
+        if (!ConfigMissile.DIRECT_FIRE_CHUNK_LOADING || missile.isRemoved())
         {
             return false;
         }
-        // A missile that came to rest has no path to load
-        if (missile.getDeltaMovement().lengthSqr() < 1.0E-4)
+
+        // Always let a newly spawned missile execute its initialization tick. The launcher may be thousands of
+        // blocks from every player, and its first velocity/path is often still zero at this point.
+        if (missile.tickCount == 0)
+        {
+            return true;
+        }
+
+        if (!missile.getMissileCapability().canRunFlightLogic())
         {
             return false;
         }
+
         final IMissileFlightLogic logic = missile.getMissileCapability().getFlightLogic();
-        return logic == null || logic instanceof DeadFlightLogic
-            || logic instanceof ISimulatedFlight flight && (flight.isSimulationRefused() || MissileTrackerHandler.isWatched(missile));
+        if (logic == null)
+        {
+            // Keep the entity's current chunk ticking long enough for the capability to initialize its next logic.
+            return true;
+        }
+        final boolean moving = missile.getDeltaMovement().lengthSqr() >= 1.0E-4;
+
+        // A missile may use a wrapper chain (WarmupFlightLogic -> MoveByFacingLogic -> ArcFlightLogic). Every stage
+        // before the arc logic must have ticking chunks available or it never reaches the simulation hand-off.
+        if (!(logic instanceof ISimulatedFlight flight))
+        {
+            // Direct-firing missiles and SAMs cannot use the ballistic tracker; keep renewing their path tickets until
+            // impact/removal. A stopped missile that has explicitly transitioned to DeadFlightLogic has no path ahead.
+            return !(logic instanceof DeadFlightLogic) || moving;
+        }
+
+        // An arc missile is offered to the tracker only after reaching SIMULATION_EXIT_HEIGHT or when its next path
+        // segment would cross a non-ticking chunk. The old code only held tickets after a refused hand-off or while a
+        // player watched the missile, so a far-away missile could stall before it ever reached the hand-off point.
+        // Keep its trajectory ticking until the hand-off can actually happen. A successful hand-off removes/untracks
+        // the entity on that tick; a refused hand-off sets isSimulationRefused() and keeps path tickets for retries.
+        return MissileChunkLoaderPolicy.shouldKeepArcFlightTickets(
+            flight.isSimulationRefused(),
+            MissileTrackerHandler.isWatched(missile),
+            MissileTrackerHandler.canSimulate(missile),
+            missile.getMissileCapability().getTargetData() != null,
+            missile.getY(),
+            ConfigMissile.SIMULATION_EXIT_HEIGHT);
     }
 }

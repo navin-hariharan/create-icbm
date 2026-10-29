@@ -3,6 +3,7 @@ package com.createicbm.content.blocks.launcher.base;
 import com.mojang.serialization.MapCodec;
 import com.simibubi.create.content.kinetics.base.IRotate;
 import com.createicbm.lib.kinetic.KineticBlockHooks;
+import com.createicbm.content.blocks.launcher.PendingLauncherChunkLoader;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.LevelReader;
@@ -92,6 +93,7 @@ public class BlockLauncherBase extends BaseEntityBlock implements IRotate
     {
         if (!state.is(newState.getBlock()))
         {
+            PendingLauncherChunkLoader.removeAt(world, pos);
             final BlockEntity tile = world.getBlockEntity(pos);
             if (tile instanceof ILauncherComponent)
             {

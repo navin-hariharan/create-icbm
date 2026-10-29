@@ -1,6 +1,7 @@
 package com.createicbm.client.fx;
 
 import com.createicbm.config.ConfigClient;
+import com.createicbm.lib.diagnostics.ICBMDiagnostics;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.ParticleStatus;
 import net.minecraft.client.multiplayer.ClientLevel;
@@ -67,6 +68,8 @@ public final class MushroomCloudFx
         final ClientLevel level = Minecraft.getInstance().level;
         if (level == null || ConfigClient.MUSHROOM_CLOUD_PARTICLES <= 0)
         {
+            ICBMDiagnostics.warn("MUSHROOM_CLOUD_FX_SKIPPED clientLevelPresent={} particleBudget={} pos=({}, {}, {}) radius={} ticks={}",
+                level != null, ConfigClient.MUSHROOM_CLOUD_PARTICLES, x, y, z, radius, ticks);
             return;
         }
         if (CLOUDS.size() >= MAX_CLOUDS)
@@ -74,6 +77,8 @@ public final class MushroomCloudFx
             CLOUDS.remove(0);
         }
         CLOUDS.add(new Cloud(level, x, y, z, radius, ticks));
+        ICBMDiagnostics.info("MUSHROOM_CLOUD_FX_STARTED dimension={} pos=({}, {}, {}) radius={} ticks={} activeClouds={} particleBudget={}",
+            level.dimension().location(), x, y, z, radius, ticks, CLOUDS.size(), ConfigClient.MUSHROOM_CLOUD_PARTICLES);
     }
 
     public static void onClientTick()

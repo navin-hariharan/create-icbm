@@ -5,6 +5,7 @@ import com.createicbm.client.fx.MushroomCloudFx;
 import com.createicbm.client.fx.ScreenFlash;
 import com.createicbm.client.sound.MissileEngineSound;
 import com.createicbm.client.sound.TrackedSounds;
+import com.createicbm.client.compat.EntityCullingCompat;
 import net.neoforged.neoforge.client.event.RegisterGuiLayersEvent;
 import com.createicbm.ICBMConstants;
 import com.createicbm.content.blocks.mail.TESRMail;
@@ -88,6 +89,8 @@ public final class ClientReg
         // Ender missile cutscene
         NeoForge.EVENT_BUS.addListener(ClientTickEvent.Post.class, event -> EnderAbductionFx.onClientTick());
         NeoForge.EVENT_BUS.addListener(ClientTickEvent.Post.class, event -> MushroomCloudFx.onClientTick());
+        // Entity Culling is optional and client-side; the compatibility hook registers the ICBM entities on first tick.
+        NeoForge.EVENT_BUS.addListener(ClientTickEvent.Post.class, EntityCullingCompat::onClientTick);
         NeoForge.EVENT_BUS.addListener(ViewportEvent.ComputeCameraAngles.class, EnderAbductionFx::onCameraAngles);
         NeoForge.EVENT_BUS.addListener(ViewportEvent.ComputeFov.class, EnderAbductionFx::onFov);
         NeoForge.EVENT_BUS.addListener(MovementInputUpdateEvent.class, EnderAbductionFx::onMovementInput);

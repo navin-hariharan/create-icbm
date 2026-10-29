@@ -7,6 +7,7 @@ import com.createicbm.api.caps.IMissileHolder;
 import com.createicbm.config.ConfigMain;
 import com.createicbm.config.machines.ConfigLauncher;
 import com.createicbm.content.blocks.launcher.FiringPackage;
+import com.createicbm.content.blocks.launcher.PendingLauncherChunkLoader;
 import com.createicbm.content.blocks.launcher.base.gui.ContainerLaunchBase;
 import com.createicbm.content.blocks.launcher.network.ILauncherComponent;
 import com.createicbm.content.blocks.launcher.network.LauncherNode;
@@ -14,6 +15,7 @@ import com.createicbm.content.entity.EntityPlayerSeat;
 import com.createicbm.content.missile.entity.EntityMissile;
 import com.createicbm.content.reg.BlockReg;
 import com.createicbm.lib.capability.holder.ICapabilityHolderTile;
+import com.createicbm.lib.diagnostics.ICBMDiagnostics;
 import com.createicbm.lib.capability.launcher.CapabilityMissileHolder;
 import com.createicbm.lib.data.IMachineInfo;
 import com.createicbm.lib.energy.storage.EnergyBuffer;
@@ -109,7 +111,7 @@ public class TileLauncherBase extends TileKineticMachine implements ILauncherCom
     @Setter
     private Direction seatSide = null;
 
-    @Getter @Setter
+    @Getter
     private FiringPackage firingPackage;
 
     private final TickDoOnce descriptionPacketSender = new TickDoOnce((t) -> PACKET_DESCRIPTION.sendToAllAround(this));
@@ -255,7 +257,29 @@ public class TileLauncherBase extends TileKineticMachine implements ILauncherCom
     public void onLoad()
     {
         super.onLoad();
+        // Restore/reconcile the persisted ticket only after the chunk and block entity are fully loaded.
+        PendingLauncherChunkLoader.sync(this, this.firingPackage != null);
         launcherNode.connectToTiles();
+    }
+
+    /** Sets the queued launch and keeps this block entity ticking while a launch is pending. */
+    public void setFiringPackage(FiringPackage firingPackage)
+    {
+        final boolean wasPending = this.firingPackage != null;
+        this.firingPackage = firingPackage;
+        // Reconcile every time a pending package is assigned: it is cheap when the ticket already exists, and retries
+        // the operation if a prior ticket attempt failed while this launcher was remote from all players.
+        if (firingPackage != null || wasPending != (firingPackage != null))
+        {
+            PendingLauncherChunkLoader.sync(this, firingPackage != null);
+        }
+        if (firingPackage != null)
+        {
+            ICBMDiagnostics.info("LAUNCHER_PACKAGE_QUEUED type=launchpad pos={} dim={} countdown={} target={}",
+                getBlockPos(), level == null ? "unknown" : level.dimension().location(), firingPackage.getCountDown(),
+                firingPackage.getTargetData() == null ? "null" : firingPackage.getTargetData().getPosition());
+        }
+        setChanged();
     }
 
     @Override
@@ -271,11 +295,32 @@ public class TileLauncherBase extends TileKineticMachine implements ILauncherCom
         return launcherNode;
     }
 
-    private void handleFirePackage() {
-        firingPackage.setCountDown(firingPackage.getCountDown() - 1);
-        if(firingPackage.getCountDown() <= 0) {
-            firingPackage.launch(missileLauncher);
-            firingPackage = null;
+    private void handleFirePackage()
+    {
+        final FiringPackage pending = firingPackage;
+        if (pending == null)
+        {
+            return;
+        }
+        pending.setCountDown(pending.getCountDown() - 1);
+        if (pending.getCountDown() <= 0)
+        {
+            ICBMDiagnostics.info("LAUNCHER_PACKAGE_FIRE type=launchpad pos={} dim={} target={}", getBlockPos(),
+                level == null ? "unknown" : level.dimension().location(),
+                pending.getTargetData() == null ? "null" : pending.getTargetData().getPosition());
+            try
+            {
+                pending.launch(missileLauncher);
+            }
+            catch (RuntimeException exception)
+            {
+                ICBMDiagnostics.error("LAUNCHER_PACKAGE_FIRE_FAILED type=launchpad pos=" + getBlockPos()
+                    + " dim=" + (level == null ? "unknown" : level.dimension().location()), exception);
+            }
+            finally
+            {
+                setFiringPackage(null);
+            }
         }
     }
 
@@ -412,9 +457,10 @@ public class TileLauncherBase extends TileKineticMachine implements ILauncherCom
         /* */.nodeInteger("energy", tile -> tile.energyStorage.getEnergyStored(), (tile, i) -> tile.energyStorage.setEnergyStored(i))
         /* */.nodeINBTSerializable("inventory", launcher -> launcher.inventory)
         /* */.nodeINBTSerializable("firing_package", TileLauncherBase::getFiringPackage, (launcher, firingPackage) -> {
-            // Client gets this via the update tag but never ticks it, don't keep a stale copy
+            // Do not acquire force-load tickets during NBT deserialization: NeoForge warns that doing world/chunk
+            // interactions before the loading chunk reaches FULL can deadlock. onLoad() reconciles the ticket later.
             if (launcher.getLevel() == null || !launcher.getLevel().isClientSide()) {
-                launcher.setFiringPackage(firingPackage);
+                launcher.firingPackage = firingPackage;
             }
         }, () -> new FiringPackage(null, null))
         /* */.nodeINBTSerializable("launcher", launcher -> launcher.missileLauncher)

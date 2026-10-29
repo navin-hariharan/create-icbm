@@ -2,6 +2,7 @@ package com.createicbm.content.blocks.launcher.cruise;
 
 import com.mojang.serialization.MapCodec;
 import com.createicbm.api.CreateICBMHelpers;
+import com.createicbm.content.blocks.launcher.PendingLauncherChunkLoader;
 import com.createicbm.api.caps.IGPSData;
 import com.createicbm.content.blocks.launcher.network.ILauncherComponent;
 import com.createicbm.content.reg.BlockReg;
@@ -94,6 +95,7 @@ public class BlockCruiseLauncher extends BlockKineticICBM
     {
         if (!state.is(newState.getBlock()))
         {
+            PendingLauncherChunkLoader.removeAt(world, pos);
             final BlockEntity tile = world.getBlockEntity(pos);
             if (tile instanceof ILauncherComponent)
             {

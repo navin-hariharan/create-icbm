@@ -1,5 +1,6 @@
 package com.createicbm.content.entity.phantom;
 
+import com.createicbm.lib.EntityTicking;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
@@ -29,6 +30,7 @@ public class PhantomCreeper extends Creeper implements PhantomMob
     public PhantomCreeper(EntityType<? extends PhantomCreeper> type, Level level)
     {
         super(type, level);
+        EntityTicking.keepTicking(this);
     }
 
     @Override

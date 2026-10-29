@@ -496,6 +496,7 @@
   "create_icbm.configuration.simulation_enter_speed": "Simulation Enter Speed",
   "create_icbm.configuration.simulation_exit_height": "Simulation Exit Height",
   "create_icbm.configuration.simulation_flight_speed": "Simulation Flight Speed",
+  "create_icbm.configuration.target_chunk_preload_seconds": "Target Chunk Preload Seconds",
   "create_icbm.configuration.size": "Size",
   "create_icbm.configuration.per_player": "Per Player",
   "create_icbm.configuration.lifetime": "Lifetime",

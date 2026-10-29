@@ -1,5 +1,6 @@
 package com.createicbm.content.entity.phantom;
 
+import com.createicbm.lib.EntityTicking;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.damagesource.DamageSource;
@@ -19,6 +20,7 @@ public class PhantomSpider extends Spider implements PhantomMob
     public PhantomSpider(EntityType<? extends PhantomSpider> type, Level level)
     {
         super(type, level);
+        EntityTicking.keepTicking(this);
     }
 
     @Override

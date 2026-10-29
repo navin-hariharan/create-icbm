@@ -1,12 +1,14 @@
 package com.createicbm.content.blast.threaded;
 
 import com.createicbm.CreateICBM;
+import com.createicbm.api.actions.status.IActionStatus;
 import com.createicbm.api.refs.ICBMExplosives;
 import com.createicbm.client.ICBMSounds;
 import com.createicbm.config.blast.ConfigBlast;
 import com.createicbm.content.blast.BlastMutation;
 import com.createicbm.content.blast.BlastRadioactiveBlockSwaps;
 import com.createicbm.lib.network.packet.PacketMushroomCloud;
+import com.createicbm.lib.diagnostics.ICBMDiagnostics;
 import com.createicbm.lib.transform.vector.Location;
 import com.createicbm.lib.transform.vector.Pos;
 import net.minecraft.world.level.block.LiquidBlock;
@@ -154,6 +156,9 @@ public class BlastNuclear extends BlastThreaded {
     @Override
     public boolean setupBlast() {
         super.setupBlast();
+        ICBMDiagnostics.info("NUCLEAR_SETUP_BEGIN dim={} center=({}, {}, {}) radius={} energy={} mushroomCloudEnabled={} thread={}",
+            world() == null ? "unknown" : world().dimension().location(), x(), y(), z(), getBlastRadius(), energy,
+            ConfigBlast.nuclear.mushroomCloud, Thread.currentThread().getName());
         if (this.world() != null) {
             if (ConfigBlast.nuclear.mushroomCloud && world instanceof ServerLevel level) {
                 // Same cloud as the antimatter blast, a bit smaller, every client draws its own from this one packet
@@ -245,6 +250,8 @@ public class BlastNuclear extends BlastThreaded {
 
     @Override
     public void onBlastCompleted() {
+        ICBMDiagnostics.info("NUCLEAR_PRIMARY_BLAST_COMPUTE_COMPLETE dim={} center=({}, {}, {}) radius={} energy={} thread={}",
+            world() == null ? "unknown" : world().dimension().location(), x(), y(), z(), getBlastRadius(), energy, Thread.currentThread().getName());
         super.onBlastCompleted();
         if (world() != null && !world().isClientSide()) {
             try {
@@ -252,13 +259,20 @@ public class BlastNuclear extends BlastThreaded {
                 this.doDamageEntities((float)ConfigBlast.nuclear.entityDamageScale, (float) (this.energy * ConfigBlast.nuclear.entityDamageMultiplier));
 
                 //Place radioactive blocks
-                new BlastRadioactiveBlockSwaps()
+                final double radiationScale = ConfigBlast.nuclear.rotScale;
+                ICBMDiagnostics.info("NUCLEAR_RADIOACTIVE_SWAP_BEGIN dim={} center=({}, {}, {}) scale={} thread={}",
+                    world().dimension().location(), location.x(), location.y(), location.z(), radiationScale, Thread.currentThread().getName());
+                final long radioactiveSwapStartNanos = System.nanoTime();
+                final IActionStatus radioactiveSwapStatus = new BlastRadioactiveBlockSwaps()
                     .setBlastWorld(world())
                     .setBlastSource(this.exploder)
                     .setBlastPosition(location.x(), location.y(), location.z())
-                    .setBlastSize((float)ConfigBlast.nuclear.rotScale)
+                    .setBlastSize((float) radiationScale)
                     .setExplosiveData(ICBMExplosives.ROT)
                     .buildBlast().doAction();
+                ICBMDiagnostics.info("NUCLEAR_RADIOACTIVE_SWAP_DISPATCHED dim={} center=({}, {}, {}) scale={} elapsedMs={} status={} thread={}",
+                    world().dimension().location(), location.x(), location.y(), location.z(), radiationScale,
+                    (System.nanoTime() - radioactiveSwapStartNanos) / 1_000_000.0, radioactiveSwapStatus, Thread.currentThread().getName());
 
                 new BlastMutation()
                     .setBlastWorld(world())

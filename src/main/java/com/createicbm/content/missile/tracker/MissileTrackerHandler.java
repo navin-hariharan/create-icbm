@@ -5,6 +5,7 @@ import com.createicbm.ICBMConstants;
 import com.createicbm.api.events.MissileEvent;
 import com.createicbm.config.missile.ConfigMissile;
 import com.createicbm.content.missile.entity.EntityMissile;
+import com.createicbm.content.blocks.launcher.PendingLauncherChunkLoader;
 import com.createicbm.content.missile.entity.delivery.EntityDeliveryMissile;
 import com.createicbm.content.missile.entity.explosive.EntityExplosiveMissile;
 import net.minecraft.core.BlockPos;
@@ -46,6 +47,10 @@ public class MissileTrackerHandler
             new ArrayList<>(ticketHelper.getEntityTickets().keySet()).forEach(ticketHelper::removeAllTickets);
             new ArrayList<>(ticketHelper.getBlockTickets().keySet()).forEach(ticketHelper::removeAllTickets);
         });
+
+    /** Keeps ServerLevel ticking while its saved-data tracker contains in-flight missiles, even with no players online. */
+    public static final TicketController SIMULATION_KEEPALIVE_TICKETS = new TicketController(
+        ResourceLocation.fromNamespaceAndPath(ICBMConstants.DOMAIN, "missile_simulation_keepalive"));
 
     /** Map of handlers per dimension <DimensionID, Handler> */
     private static final HashMap<ResourceKey<Level>, MissileTrackerWorld> dimToHandlerMap = new HashMap<>();
@@ -115,6 +120,8 @@ public class MissileTrackerHandler
         // (entity manager) and its chunk is in entity ticking range of the distance manager, which covers the
         // simulation distance and ticking tickets (forced chunks, chunk loader mods, our own missile tickets).
         // Both overloads of isNaturalSpawningAllowed only ask the entity manager, the second check was missing.
+        // Use the server's actual entity-ticking state, which includes native ticking tickets from other compatible
+        // chunk-loading mods. A Distant Horizons LOD is intentionally not treated as a loaded game chunk.
         return level.isPositionEntityTicking(new BlockPos(chunkX << 4, 0, chunkZ << 4));
     }
 
@@ -211,7 +218,9 @@ public class MissileTrackerHandler
     {
         if (event.getLevel() instanceof Level level && !level.isClientSide())
         {
-            getOrCreateHandler(level, true); // load handlers, to make missiles continue their flight
+            // Load saved flights now. The keepalive ticket is reconciled from LevelTickEvent.Pre, once the level is
+            // fully available for normal ticking (avoids synchronous chunk loads during level construction).
+            getOrCreateHandler(level, true);
         }
     }
 
@@ -255,6 +264,8 @@ public class MissileTrackerHandler
         public static void registerTicketControllers(RegisterTicketControllersEvent event)
         {
             event.register(CHUNK_TICKETS);
+            event.register(SIMULATION_KEEPALIVE_TICKETS);
+            event.register(PendingLauncherChunkLoader.TICKET_CONTROLLER);
         }
     }
 }

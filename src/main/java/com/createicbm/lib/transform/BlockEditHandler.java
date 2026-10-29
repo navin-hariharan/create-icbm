@@ -2,6 +2,7 @@ package com.createicbm.lib.transform;
 
 import com.createicbm.ICBMConstants;
 import com.createicbm.config.blast.ConfigBlast;
+import com.createicbm.lib.diagnostics.ICBMDiagnostics;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerLevel;
@@ -19,6 +20,7 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 
 /**
@@ -38,6 +40,7 @@ public class BlockEditHandler
     /** Shrinks the budgets while the server is lagging, see {@link ConfigBlast#ADAPTIVE_BUDGET} */
     private static final AdaptiveBudget ADAPTIVE = new AdaptiveBudget();
     private static long tickStartNanos = 0;
+    private static final AtomicLong DIAGNOSTIC_QUEUE_IDS = new AtomicLong();
 
     /** Blocks edited between two checks of the clock */
     private static final int BATCH = 64;
@@ -142,6 +145,7 @@ public class BlockEditHandler
                 done = queue.workUntil(endTime);
             }
 
+            queue.traceProgress(world, tick, done);
             if (done)
             {
                 list.remove(queue);
@@ -183,14 +187,30 @@ public class BlockEditHandler
      */
     public static void queueBatches(Level world, Collection<BlockPos> edits, Consumer<List<BlockPos>> onEditBatch, Runnable onCompleteCallback, int paceTicks)
     {
-        worldToRemoveQueue.computeIfAbsent(world.dimension(), key -> new LinkedList<>())
-            .add(new EditQueue(edits, onEditBatch, onCompleteCallback, paceTicks));
+        final Queue<EditQueue> pending = worldToRemoveQueue.computeIfAbsent(world.dimension(), key -> new LinkedList<>());
+        final boolean diagnostics = ICBMDiagnostics.enabled();
+        final long diagnosticId = diagnostics ? DIAGNOSTIC_QUEUE_IDS.incrementAndGet() : 0L;
+        final EditQueue queue = new EditQueue(world, edits, onEditBatch, onCompleteCallback, paceTicks, diagnosticId);
+        pending.add(queue);
+        if (diagnostics)
+        {
+            ICBMDiagnostics.info("BLOCK_EDIT_QUEUE_ENQUEUED queueId={} dim={} positions={} paceTicks={} pendingQueues={} tick={} budgetMsPerTick={} adaptiveBudget={}",
+                diagnosticId, world.dimension().location(), edits.size(), paceTicks, pending.size(),
+                world instanceof ServerLevel serverLevel ? serverLevel.getServer().getTickCount() : -1,
+                ConfigBlast.BLOCK_EDIT_MS_PER_TICK, ConfigBlast.ADAPTIVE_BUDGET);
+        }
     }
 
     public static class EditQueue
     {
         // PERF: an array and a cursor, a linked list of a few hundred thousand positions was a node per block
         private final BlockPos[] positions;
+        private final long diagnosticId;
+        private final String diagnosticDimension;
+        private final int diagnosticEnqueuedTick;
+        private final long diagnosticEnqueuedNanos;
+        private int diagnosticLastTick = Integer.MIN_VALUE;
+        private int diagnosticLastRemaining;
         private int cursor = 0;
         final Consumer<List<BlockPos>> onEditBatch;
         final Runnable onCompleteCallback;
@@ -206,10 +226,61 @@ public class BlockEditHandler
 
         public EditQueue(Collection<BlockPos> edits, Consumer<List<BlockPos>> onEditBatch, Runnable onCompleteCallback, int paceTicks)
         {
+            this(null, edits, onEditBatch, onCompleteCallback, paceTicks,
+                ICBMDiagnostics.enabled() ? DIAGNOSTIC_QUEUE_IDS.incrementAndGet() : 0L);
+        }
+
+        private EditQueue(Level world, Collection<BlockPos> edits, Consumer<List<BlockPos>> onEditBatch,
+                          Runnable onCompleteCallback, int paceTicks, long diagnosticId)
+        {
             this.positions = edits.toArray(new BlockPos[0]);
             this.onEditBatch = onEditBatch;
             this.onCompleteCallback = onCompleteCallback;
             this.paceTicks = paceTicks;
+            this.diagnosticId = diagnosticId;
+            if (diagnosticId > 0)
+            {
+                this.diagnosticDimension = world == null ? "unknown" : world.dimension().location().toString();
+                this.diagnosticEnqueuedTick = world instanceof ServerLevel serverLevel ? serverLevel.getServer().getTickCount() : -1;
+                this.diagnosticEnqueuedNanos = System.nanoTime();
+                this.diagnosticLastRemaining = this.positions.length;
+            }
+            else
+            {
+                this.diagnosticDimension = "unknown";
+                this.diagnosticEnqueuedTick = -1;
+                this.diagnosticEnqueuedNanos = 0L;
+                this.diagnosticLastRemaining = 0;
+            }
+        }
+
+        void traceProgress(Level world, int tick, boolean done)
+        {
+            if (!ICBMDiagnostics.enabled() || this.diagnosticId <= 0)
+            {
+                return;
+            }
+            final int remaining = remaining();
+            if (!done && (tick <= 0 || tick % 20 != 0 || diagnosticLastTick == tick))
+            {
+                return;
+            }
+            final int processedSinceLastReport = Math.max(0, diagnosticLastRemaining - remaining);
+            final double elapsedMs = (System.nanoTime() - diagnosticEnqueuedNanos) / 1_000_000.0;
+            if (done)
+            {
+                ICBMDiagnostics.info("BLOCK_EDIT_QUEUE_FINISHED queueId={} dim={} positions={} processed={} remaining={} elapsedMs={} ageTicks={} finishTick={} paceTicks={} thread={}",
+                    diagnosticId, diagnosticDimension, positions.length, positions.length - remaining, remaining,
+                    elapsedMs, diagnosticEnqueuedTick < 0 ? -1 : tick - diagnosticEnqueuedTick, tick, paceTicks, Thread.currentThread().getName());
+            }
+            else
+            {
+                ICBMDiagnostics.info("BLOCK_EDIT_QUEUE_PROGRESS queueId={} dim={} positions={} processed={} remaining={} processedSinceLastReport={} elapsedMs={} ageTicks={} tick={} paceTicks={}",
+                    diagnosticId, diagnosticDimension, positions.length, positions.length - remaining, remaining, processedSinceLastReport,
+                    elapsedMs, diagnosticEnqueuedTick < 0 ? -1 : tick - diagnosticEnqueuedTick, tick, paceTicks);
+                diagnosticLastTick = tick;
+                diagnosticLastRemaining = remaining;
+            }
         }
 
         int remaining()

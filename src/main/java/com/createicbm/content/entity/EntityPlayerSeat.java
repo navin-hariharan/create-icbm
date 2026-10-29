@@ -1,5 +1,6 @@
 package com.createicbm.content.entity;
 
+import com.createicbm.lib.EntityTicking;
 import com.createicbm.content.blocks.launcher.base.TileLauncherBase;
 import com.createicbm.content.reg.EntityReg;
 import com.createicbm.lib.transform.rotation.EulerAngle;
@@ -50,6 +51,7 @@ public class EntityPlayerSeat extends Entity implements IEntityWithComplexSpawn
     public EntityPlayerSeat(EntityType<? extends EntityPlayerSeat> type, Level world)
     {
         super(type, world);
+        EntityTicking.keepTicking(this);
     }
 
     public EntityPlayerSeat(Level world)

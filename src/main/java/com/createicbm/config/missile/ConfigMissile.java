@@ -54,17 +54,22 @@ public class ConfigMissile
     public static int HANDHELD_FUEL = 200;
 
     @Config.Name("direct_fire_chunk_loading")
-    @Config.Comment("Missiles flying in a straight line (handheld and cruise launchers), and missiles the missile tracker could not take, keep the chunks just ahead of them loaded, so they don't freeze and vanish at the edge of the simulation distance")
+    @Config.Comment("Missiles flying in a straight line (handheld, cruise and surface-to-air missiles), and missiles the missile tracker could not take, keep the chunks just ahead of them loaded and entity-ticking. Turning this off can make remote missiles freeze at the edge of simulation distance.")
     public static boolean DIRECT_FIRE_CHUNK_LOADING = true;
 
     @Config.Name("keep_visible_in_flight")
-    @Config.Comment("A missile stays a real, visible entity while a player is within the server view distance of it, instead of vanishing into the missile tracker as soon as the chunks ahead stop ticking. The chunks ahead are kept loaded for it (see max_missile_chunk_tickets). Far from every player it is simulated as before.")
+    @Config.Comment("A missile stays a real, visible entity while a player is within the server view distance of it, instead of vanishing into the missile tracker as soon as the chunks ahead stop ticking. The chunks ahead are kept entity-ticking for it (see max_missile_chunk_tickets). Far from every player it is simulated as before.")
     public static boolean KEEP_VISIBLE_IN_FLIGHT = true;
 
     @Config.Name("max_missile_chunk_tickets")
-    @Config.Comment("Most chunks all missiles of one dimension hold loaded ahead of them together (see direct_fire_chunk_loading).\nOn a server with a big salvo in the air this keeps the chunk loading and world generation bounded, a missile always keeps its own chunk and the next one.")
+    @Config.Comment("Most chunks all missiles of one dimension hold loaded and entity-ticking ahead of them together (see direct_fire_chunk_loading).\nOn a server with a big salvo in the air this keeps chunk loading and world generation bounded; each missile always keeps its own chunk and the next one.")
     @Config.RangeInt(min = 2, max = 100000)
     public static int MAX_MISSILE_CHUNK_TICKETS = 512;
+
+    @Config.Name("target_chunk_preload_seconds")
+    @Config.Comment("How many simulated-flight seconds before arrival to start preloading the target area. Preload tickets warm chunks but do not entity-tick them; a separate ticking ticket is acquired before the missile is spawned. A larger value gives slow world generation more time but holds target chunks loaded for longer. Set to 0 to preload only when the missile arrives.")
+    @Config.RangeInt(min = 0, max = 120)
+    public static int TARGET_CHUNK_PRELOAD_SECONDS = 15;
 
     @Config.Name("health_tier_1")
     @Config.Comment("Amount of damage a missile can take from any source before death")
