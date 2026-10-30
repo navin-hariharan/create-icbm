@@ -12,7 +12,12 @@ import com.createicbm.config.machines.ConfigRadar;
 import com.createicbm.content.blocks.radarstation.data.RadarRenderData;
 import com.createicbm.content.blocks.radarstation.data.RadarRenderDot;
 import com.createicbm.content.blocks.radarstation.gui.ContainerRadarStation;
+import com.createicbm.config.missile.ConfigMissile;
+import com.createicbm.content.missile.entity.CapabilityMissile;
 import com.createicbm.content.missile.entity.anti.EntitySurfaceToAirMissile;
+import com.createicbm.content.missile.tracker.MissileTrackerData;
+import com.createicbm.content.missile.tracker.MissileTrackerHandler;
+import com.createicbm.content.missile.tracker.MissileTrackerWorld;
 import com.createicbm.content.reg.BlockReg;
 import com.createicbm.lib.NBTConstants;
 import com.createicbm.lib.data.IMachineInfo;
@@ -24,16 +29,20 @@ import com.createicbm.lib.network.lambda.tile.PacketCodexTile;
 import com.createicbm.lib.radar.RadarRegistry;
 import com.createicbm.lib.radio.RadioRegistry;
 import com.createicbm.lib.radio.imp.Radio;
+import com.createicbm.lib.radio.messages.CounterstrikeMessage;
 import com.createicbm.lib.radio.messages.IncomingMissileMessage;
+import com.createicbm.lib.radio.messages.IncomingMissileWarningMessage;
 import com.createicbm.lib.radio.messages.RadioTranslations;
-import com.createicbm.lib.radio.messages.TriggerActionTargetMessage;
 import com.createicbm.lib.saving.NbtSaveHandler;
 import com.createicbm.lib.tile.TickAction;
 import com.createicbm.lib.tile.TickDoOnce;
+import com.createicbm.lib.world.MachineChunkLoader;
 import com.createicbm.prefab.gui.IPlayerUsing;
 import com.createicbm.prefab.tile.IGuiTile;
 import com.createicbm.prefab.tile.TileKineticMachine;
 import com.simibubi.create.content.kinetics.KineticNetwork;
+import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
+import it.unimi.dsi.fastutil.longs.LongSet;
 import lombok.Getter;
 import lombok.Setter;
 import com.createicbm.lib.capability.holder.ICapabilityHolderTile;
@@ -65,7 +74,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.function.BiConsumer;
 
-public class TileRadarStation extends TileKineticMachine implements IMachineInfo, IGuiTile, IPlayerUsing, ICapabilityHolderTile
+public class TileRadarStation extends TileKineticMachine implements MachineChunkLoader.IRadioMachine, IMachineInfo, IGuiTile, IPlayerUsing, ICapabilityHolderTile
 {
     public static final ResourceLocation REGISTRY_NAME = ResourceLocation.fromNamespaceAndPath(ICBMConstants.DOMAIN, "radarstation");
 
@@ -117,6 +126,13 @@ public class TileRadarStation extends TileKineticMachine implements IMachineInfo
 
     private int firingCooldown = 0;
 
+    /** Ticks between early warnings about missiles still out of sight */
+    private static final int WARNING_TICKS = 20;
+    /** Seconds before arrival a missile still out of sight is announced to the Cruise Turrets */
+    private static final int WARNING_SECONDS = 15;
+    /** Game time each incoming missile was last reported to the Cruise Turrets */
+    private final Map<UUID, Long> airDefenceAlerts = new HashMap<>();
+
     /** Missiles whose launch coordinates have already produced a successful counter-strike. */
     private final Set<UUID> counterstrikeFired = new LinkedHashSet<>();
     /** Radio callbacks are synchronous in the current network; this correlates a response to its missile. */
@@ -157,6 +173,20 @@ public class TileRadarStation extends TileKineticMachine implements IMachineInfo
         consumer.accept("MAX_RANGE", ConfigRadar.MAX_RANGE);
     }
 
+    /**
+     * Keeps this radar loaded while it reports on a radio channel, so it sees missiles and calls SAMs and
+     * counter-strikes with no player nearby
+     */
+    private void syncMachineChunks()
+    {
+        final LongSet wanted = new LongOpenHashSet();
+        if (!RadioRegistry.EMPTY_HZ.equals(radio.getChannel()))
+        {
+            MachineChunkLoader.addArea(wanted, getBlockPos());
+        }
+        MachineChunkLoader.sync(this, wanted);
+    }
+
     @Override
     public void update()
     {
@@ -164,6 +194,12 @@ public class TileRadarStation extends TileKineticMachine implements IMachineInfo
 
         if (isServer())
         {
+            // PERF: offset by position so machines loaded together do not all check on the same tick
+            if (Math.floorMod(ticks + getBlockPos().hashCode(), MachineChunkLoader.SYNC_TICKS) == 0)
+            {
+                syncMachineChunks();
+            }
+
             // Scans only while the dish turns fast enough
             final boolean hasPower = isRunning();
 
@@ -179,18 +215,22 @@ public class TileRadarStation extends TileKineticMachine implements IMachineInfo
                 // Drop missiles that died since the last scan so SAMs are not fired at them
                 this.incomingThreats.removeIf(m -> m.getMissileEntity() == null || !m.getMissileEntity().isAlive());
 
-                // Fire one coordinated response per cooldown. The advanced radar targets the attacker's
-                // recorded launch coordinates; the standard radar retains its original incoming-missile response.
-                if (!radio.getChannel().equals(RadioRegistry.EMPTY_HZ) && !this.incomingThreats.isEmpty())
+                // Counter-strike cooldown runs down all the time, it used to stop while the sky was clear and a
+                // new attack then waited out what was left of the last one
+                if (firingCooldown > 0)
                 {
-                    if (firingCooldown > 0)
-                    {
-                        firingCooldown--;
-                    }
+                    firingCooldown--;
+                }
 
-                    if (firingCooldown <= 0)
+                if (!radio.getChannel().equals(RadioRegistry.EMPTY_HZ))
+                {
+                    if (!this.incomingThreats.isEmpty())
                     {
-                        if (isAdvancedRadar())
+                        // Both radars call the Cruise Turrets on their channel to fire SAMs
+                        alertAirDefence();
+
+                        // Only the Advanced Radar also sends the Launch Controllers on its channel to the launch site
+                        if (isAdvancedRadar() && firingCooldown <= 0)
                         {
                             // Accepted waits the full cooldown, unanswered or refused tries again soon
                             final int cooldown = sendCounterstrike();
@@ -199,11 +239,10 @@ public class TileRadarStation extends TileKineticMachine implements IMachineInfo
                                 firingCooldown = cooldown;
                             }
                         }
-                        else
-                        {
-                            firingCooldown = Math.max(1, ConfigRadar.SAM_TICKS);
-                            RadioRegistry.popMessage(level, radio, new IncomingMissileMessage(radio.getChannel(), this.incomingThreats.get(0), true));
-                        }
+                    }
+                    else if (Math.floorMod(ticks + getBlockPos().hashCode(), WARNING_TICKS) == 0)
+                    {
+                        warnAirDefence();
                     }
                 }
             }
@@ -266,7 +305,8 @@ public class TileRadarStation extends TileKineticMachine implements IMachineInfo
                 final IMissile newMissile = CreateICBMHelpers.getMissile(entity);
                 if (newMissile != null && newMissile.getTicksInAir() > 1)
                 {
-                    if (this.isMissileGoingToHit(newMissile))
+                    // Friend or foe: missiles launched on this radar's channel are shown but never reported
+                    if (!CapabilityMissile.isFriendly(entity, radio.getChannel()) && this.isMissileGoingToHit(newMissile))
                     {
                         this.incomingThreats.add(newMissile);
                     }
@@ -293,6 +333,18 @@ public class TileRadarStation extends TileKineticMachine implements IMachineInfo
                 }
             }
             counterstrikeAttempts.keySet().retainAll(current);
+        }
+        if (!airDefenceAlerts.isEmpty())
+        {
+            final Set<UUID> current = new HashSet<>();
+            for (IMissile missile : incomingThreats)
+            {
+                if (missile.getMissileEntity() != null)
+                {
+                    current.add(missile.getMissileEntity().getUUID());
+                }
+            }
+            airDefenceAlerts.keySet().retainAll(current);
         }
 
         if(!this.detectedThreats.isEmpty()) {
@@ -421,6 +473,76 @@ public class TileRadarStation extends TileKineticMachine implements IMachineInfo
     }
 
     /**
+     * Calls the Cruise Turrets on this channel to fire at the closest incoming missile. A missile seen for the first
+     * time is reported at once, the old fixed delay between reports let a falling missile land before any turret
+     * heard of it. The same missile is reported again every {@link ConfigRadar#SAM_TICKS} so turrets follow it and
+     * fire again if a SAM missed.
+     */
+    private void alertAirDefence()
+    {
+        final long now = level.getGameTime();
+        for (IMissile missile : incomingThreats)
+        {
+            final Entity entity = missile.getMissileEntity();
+            if (entity == null || !entity.isAlive())
+            {
+                continue;
+            }
+            final Long last = airDefenceAlerts.get(entity.getUUID());
+            if (last != null && now - last < Math.max(1, ConfigRadar.SAM_TICKS))
+            {
+                // Reported a moment ago, name the next missile so a wave is spread over the turrets instead of every
+                //  turret only ever hearing about the closest one
+                continue;
+            }
+            airDefenceAlerts.put(entity.getUUID(), now);
+            RadioRegistry.popMessage(level, radio, new IncomingMissileMessage(radio.getChannel(), missile, true));
+            ICBMDiagnostics.info("RADAR_SAM_ALERT radar={} channel={} missile={} first={}",
+                getBlockPos(), radio.getChannel(), entity.getUUID(), last == null);
+            // One report per tick, closest first
+            return;
+        }
+    }
+
+    /**
+     * Warns the Cruise Turrets on this channel about a missile still crossing the map out of sight that will come
+     * down inside the detection range, so they turn towards the point where it will appear and are ready to fire.
+     */
+    private void warnAirDefence()
+    {
+        final MissileTrackerWorld tracker = MissileTrackerHandler.getOrCreateHandler(level, false);
+        if (tracker == null)
+        {
+            return;
+        }
+        final double range = Math.min(detectionRange, ConfigRadar.MAX_RANGE);
+        final double radarX = getBlockPos().getX() + 0.5;
+        final double radarZ = getBlockPos().getZ() + 0.5;
+        final String channel = radio.getChannel();
+        final MissileTrackerData[] closest = new MissileTrackerData[1];
+        tracker.forEachSimulated(data -> {
+            if (data.targetPos == null || channel.equals(data.radioChannel)
+                || data.ticksLeftToTarget > WARNING_SECONDS
+                || Math.abs(data.targetPos.x() - radarX) > range || Math.abs(data.targetPos.z() - radarZ) > range)
+            {
+                return;
+            }
+            if (closest[0] == null || data.ticksLeftToTarget < closest[0].ticksLeftToTarget)
+            {
+                closest[0] = data;
+            }
+        });
+        if (closest[0] != null)
+        {
+            // The tracker brings it back at the simulation enter height straight above its target
+            final Vec3 entry = new Vec3(closest[0].targetPos.x(), ConfigMissile.SIMULATION_ENTER_HEIGHT, closest[0].targetPos.z());
+            RadioRegistry.popMessage(level, radio, new IncomingMissileWarningMessage(channel, entry));
+            ICBMDiagnostics.info("RADAR_SAM_WARNING radar={} channel={} entry={} seconds={}",
+                getBlockPos(), channel, entry, closest[0].ticksLeftToTarget);
+        }
+    }
+
+    /**
      * Sends one counter-strike at the launch site of the closest missile not yet answered.
      *
      * @return ticks to wait before the next try, 0 when there was nothing to strike
@@ -460,7 +582,7 @@ public class TileRadarStation extends TileKineticMachine implements IMachineInfo
             final int delivered;
             try
             {
-                delivered = RadioRegistry.popMessage(level, radio, new TriggerActionTargetMessage(radio.getChannel(), source.getPosition()));
+                delivered = RadioRegistry.popMessage(level, radio, new CounterstrikeMessage(radio.getChannel(), source.getPosition()));
             }
             finally
             {
@@ -617,7 +739,12 @@ public class TileRadarStation extends TileKineticMachine implements IMachineInfo
     @Nullable
     public <T> T getCapability(BlockCapability<T, Direction> capability, @Nullable Direction facing)
     {
-        // Create addon: no Forge Energy any more, the radar runs straight off its shaft
+        // Create addon: no Forge Energy any more, the radar runs straight off its shaft. Its radio lets tools copy
+        // the channel.
+        if (capability == CreateICBMAPI.RADIO_CAPABILITY)
+        {
+            return (T) radio;
+        }
         return null;
     }
 

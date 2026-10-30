@@ -8,7 +8,6 @@ import com.createicbm.api.events.MissileRideEvent;
 import com.createicbm.api.missiles.parts.IMissileFlightLogic;
 import com.createicbm.client.ICBMSounds;
 import com.createicbm.config.missile.ConfigMissile;
-import com.createicbm.content.missile.logic.flight.BallisticFlightLogicOld;
 import com.createicbm.content.missile.logic.flight.DeadFlightLogic;
 import com.createicbm.content.missile.tracker.MissileChunkLoader;
 import com.createicbm.lib.EntityTicking;
@@ -26,6 +25,8 @@ import com.createicbm.lib.saving.NbtSaveHandler;
 import com.createicbm.lib.saving.NbtSaveNode;
 import io.netty.buffer.ByteBuf;
 import lombok.Getter;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
@@ -40,6 +41,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.capabilities.EntityCapability;
@@ -84,6 +86,9 @@ public abstract class EntityMissile<E extends EntityMissile<E>> extends EntityPr
     @Getter
     private final MissileChunkLoader chunkLoader = new MissileChunkLoader();
 
+    /** Server only: server tick of the last tick this missile ran, a missile an optimization mod stops is rescued */
+    private int lastServerTick = -1;
+
     public EntityMissile(EntityType<? extends EntityMissile> type, Level world)
     {
         super(type, world);
@@ -111,6 +116,11 @@ public abstract class EntityMissile<E extends EntityMissile<E>> extends EntityPr
     @Override
     public void tick() {
         super.tick();
+
+        if (!level().isClientSide() && level().getServer() != null)
+        {
+            lastServerTick = level().getServer().getTickCount();
+        }
 
         if (level().isClientSide() && !isRemoved())
         {
@@ -340,10 +350,7 @@ public abstract class EntityMissile<E extends EntityMissile<E>> extends EntityPr
 
     public double getMountedYOffset()
     {
-        if (this.ticksInAir <= 0 && getMissileCapability().getFlightLogic() instanceof BallisticFlightLogicOld) //TODO abstract or find better way to handle seat position
-        {
-            return getBbHeight();
-        } else if (getMissileCapability().getFlightLogic() instanceof DeadFlightLogic)
+        if (getMissileCapability().getFlightLogic() instanceof DeadFlightLogic)
         {
             return getBbHeight() / 10;
         }
@@ -399,6 +406,31 @@ public abstract class EntityMissile<E extends EntityMissile<E>> extends EntityPr
             }
         }
         return false;
+    }
+
+    /**
+     * Server tick this missile last ran, -1 before its first tick
+     */
+    public int getLastServerTick()
+    {
+        return lastServerTick;
+    }
+
+    /**
+     * Marks the missile as running now, so a missile that was rescued gets a full grace period again
+     */
+    public void markTicked(int serverTick)
+    {
+        lastServerTick = serverTick;
+    }
+
+    /**
+     * Sets the missile off at a position, used when it stopped ticking right above its target
+     */
+    public void forceImpact(Vec3 location)
+    {
+        setPos(location.x, location.y, location.z);
+        onImpact(new BlockHitResult(location, Direction.UP, BlockPos.containing(location), false));
     }
 
     @Override

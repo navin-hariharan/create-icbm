@@ -19,6 +19,16 @@ public class ConfigMain
     @Config.Comment("Machines need rotation from a shaft to run. Set to false to let them run without rotation.")
     public static boolean REQUIRES_POWER = true;
 
+    @Config.Name("keep_radio_machines_loaded")
+    @Config.Comment("Launch Controllers, Cruise Turrets and radars with a radio channel, and crates wired to a Remote Detonator, keep their chunks loaded and ticking, like a chunk loader. "
+        + "Without this a launch site far from every player can't hear a Laser Designator, Remote Detonator or radar, and a far radar sees nothing.")
+    public static boolean KEEP_RADIO_MACHINES_LOADED = true;
+
+    @Config.Name("radio_machine_load_radius")
+    @Config.Comment("Chunks around each of those machines (and each Launch Pad of a Launch Controller) kept loaded, so the shafts driving them keep turning. 0 = only their own chunk. Wired crates only load their own chunk.")
+    @Config.RangeInt(min = 0, max = 2)
+    public static int RADIO_MACHINE_LOAD_RADIUS = 1;
+
     @Config.Name("protective_armor")
     @Config.Comment("Settings for setting protection support on armor items")
     public static ProtectiveArmorConfig protectiveArmor = new ProtectiveArmorConfig();

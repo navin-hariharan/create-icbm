@@ -27,6 +27,6 @@ public class ConfigRadar
     public static int SCAN_TICKS = 5;
 
     @Config.Name("sam_delay")
-    @Config.Comment("Delay in ticks before triggering more SAM launches")
+    @Config.Comment("Ticks before the same incoming missile is reported to the Cruise Turrets again (a newly seen missile is reported at once), and the wait after an accepted Advanced Radar counter-strike")
     public static int SAM_TICKS = 40;
 }

@@ -7,6 +7,7 @@ import com.createicbm.api.radio.messages.ITargetMessage;
 import com.createicbm.api.radio.messages.ITriggerActionMessage;
 import com.createicbm.config.missile.ConfigMissile;
 import com.createicbm.lib.radio.imp.RadioTile;
+import com.createicbm.lib.radio.messages.IAirDefenceMessage;
 import com.createicbm.prefab.FakeRadioSender;
 import com.createicbm.lib.radio.messages.RadioTranslations;
 import com.createicbm.lib.radio.messages.TextMessage;
@@ -20,6 +21,10 @@ public class RadioScreen extends RadioTile<TileLauncherScreen> implements IRadio
 
     @Override
     public void onMessage(IRadioSender sender, IRadioMessage packet) {
+        // Radar reports of missiles in the sky are for Cruise Turrets, a launch pad can't hit a flying missile
+        if (packet instanceof IAirDefenceMessage) {
+            return;
+        }
         if (canReceive(sender, packet)) {
 
             // Set target packet, run first as laser-det triggers both (set & fire) from the same packet

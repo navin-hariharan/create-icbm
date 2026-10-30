@@ -5,7 +5,7 @@
 <h3 align="center">Missiles, radar and launch networks, built the Create way.</h3>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Version-1.0.4-8B5CF6?style=for-the-badge" alt="Version 1.0.4">
+  <img src="https://img.shields.io/badge/Version-1.0.5-8B5CF6?style=for-the-badge" alt="Version 1.0.5">
   <img src="https://img.shields.io/badge/Minecraft-1.21.1-62B47A?style=for-the-badge" alt="Minecraft 1.21.1">
   <img src="https://img.shields.io/badge/NeoForge-21.1.219%2B-E2711D?style=for-the-badge" alt="NeoForge 21.1.219+">
   <img src="https://img.shields.io/badge/Create-6.0.10%2B-C9A45C?style=for-the-badge" alt="Create 6.0.10+">
@@ -64,6 +64,12 @@ Drop the jar into `mods` next to Create. It is needed on the server and on every
 5. **Pick a target** with a **Laser Range Finder**, or type coordinates into the controller.
 6. **Fire** from the controller, with redstone, or with a **Remote Detonator** or **Laser Designator** on the same radio channel.
 
+Something above the pad? Raise its **Lock Height** in the pad's screen (0 to 256 blocks, press Enter): the missile climbs that far straight up before it turns.
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/navin-hariharan/create-icbm/main/doc/images/lock-height.png" alt="Launch Pad lock height: the missile climbs to the lock height, flies its arc and drops onto the target" width="90%">
+</p>
+
 ## 🏭 Machines
 
 | Machine | Power | In short |
@@ -72,7 +78,7 @@ Drop the jar into `mods` next to Create. It is needed on the server and on every
 | Launch Gantry / Connector | none | Link pads, controllers and storage into one launch network. |
 | Launch Controller | none | Target, radio channel and the *Launch* button for a whole network. |
 | Cruise Turret | 6 SU/RPM | Aims and fires a missile in a straight line, also fires Surface to Air Missiles. |
-| Radar Station | 4 SU/RPM at 100 m, 16 RPM+ | Tracks incoming missiles up to 500 blocks and alerts turrets and controllers. Longer range, more stress. |
+| Radar Station | 4 SU/RPM at 100 m, 16 RPM+ | Tracks incoming missiles up to 500 blocks and calls Cruise Turrets to shoot them down. Longer range, more stress. |
 | Advanced Radar | Same as Radar Station | Sends launchers on its channel to the launch site of incoming missiles. |
 
 ## 🚀 Missiles
@@ -106,15 +112,17 @@ Every explosive also makes a **bomb cart** (powered activator rail lights it) an
 ## 🧰 Tools
 
 - **Laser Range Finder:** reads a block's coordinates and hands them to a launcher.
-- **Remote Detonator:** fires launchers and wired crates on its radio channel, at any distance.
+- **Remote Detonator:** fires Launch Controllers and wired crates on its radio channel, at any distance.
 - **Laser Designator:** paints a block and calls a strike on it.
 - **Rocket Launcher: Direct / Ballistic:** shoulder launchers, straight line or high arc.
 
 ## 🛡️ Air defence
 
-Spin a **Radar Station** at 16 RPM or more, set its range and radio channel, then put **Cruise Turrets** on the same channel loaded with Surface to Air Missiles. Incoming missiles trigger the turrets and the radar's redstone output.
+Spin a **Radar Station** at 16 RPM or more, set its range and radio channel, then put **Cruise Turrets** on the same channel loaded with Surface to Air Missiles. The moment a missile is seen, the turrets fire, and long-range missiles are announced up to 15 seconds before they drop in, so the turrets are already aimed. Missiles launched on your own channel are friendly: radars and SAMs leave them alone.
 
-To hit back, put an **Advanced Radar** on a second channel with a Launch Controller and armed pads, or Cruise Turrets loaded with missiles. When a missile comes in, they fire at the place it was launched from. A strike only counts once a missile really fires or is queued; otherwise the radar retries every second.
+To hit back, use an **Advanced Radar**: its turrets shoot down the missile, and Launch Controllers with armed pads on its channel fire at the place it was launched from. It is the only radar that sends launch pads. A strike only counts once a missile really fires or is queued; otherwise the radar retries every second.
+
+Cruise Turrets only answer radars: the Remote Detonator and Laser Designator fire Launch Controllers, never turrets.
 
 <p align="center">
   <img src="https://raw.githubusercontent.com/navin-hariharan/create-icbm/main/doc/images/advanced-radar-counterstrike.png" alt="Advanced Radar counter-strike" width="100%">
@@ -129,7 +137,7 @@ To hit back, put an **Advanced Radar** on a second channel with a Launch Control
 
 ## 🖥️ Server performance
 
-Paced block edits with a time budget that shrinks while the server lags, a blast worker thread (1 to 8), a cap of 512 missile chunk tickets per dimension, half the position updates with client-side smoothing, capped debris effects and clean-up on unload. Ops get `/icbm lag` and `/icbm remove`. Details in the [README](https://github.com/navin-hariharan/create-icbm#server-performance).
+Paced block edits with a time budget that shrinks while the server lags, a blast worker thread (1 to 8), a cap of 512 missile chunk tickets per dimension, stall rescue for missiles that an optimization mod stops from ticking, armed launch sites and radars on a radio channel kept loaded so they answer from anywhere, half the position updates with client-side smoothing, capped debris effects and clean-up on unload. Ops get `/icbm lag` and `/icbm remove`. Details in the [README](https://github.com/navin-hariharan/create-icbm#server-performance).
 
 ## 🔌 Compatibility
 
@@ -145,7 +153,22 @@ Almost everything can be made two ways: on Create's machines (Mechanical Craftin
 
 Config files are `create_icbm-*.toml` in the `config` folder (main, launcher, radar, missile, blast, client, thread, jei, bluemap). Commands are under `/icbm` (operators): `help`, `remove`, `lag`, `blast list`, `blast trigger`, `blast spread`. Every option is in the [README](https://github.com/navin-hariharan/create-icbm#configuration).
 
-## 📝 Latest: 1.0.4
+## 📝 Latest: 1.0.5
+
+- **Turrets answer radars only:** the Remote Detonator and Laser Designator no longer fire Cruise Turrets.
+- **No more wasted SAMs:** turrets without a firing delay hold fire when SAMs already in the air will bring the missile down, and a SAM that loses its target retargets or blows up harmlessly instead of flying off.
+- **Timed SAM salvos:** turrets with a firing delay always fire on a radar alert, so a row of turrets with stepped delays fires in sequence. Radars spread a missile wave over the turrets.
+- **Friend or foe:** radars and Surface to Air Missiles ignore missiles launched on their own channel.
+- **Faster air defence:** a new missile is reported to turrets at once, with early warning for missiles still out of sight.
+- **Cruise Turret firing delay**, like the Launch Pad's.
+- **Lock height fixed:** values typed into machine screens now also set on Enter or when you close the screen, so the Launch Pad's lock height sticks.
+- **Updated Ponder scenes** for lock height, firing delays, friend or foe and the Advanced Radar.
+- **Fixed block rendering:** no more see-through gaps between machines placed side by side, and no black faces or flicker on explosive crates and Launch Controllers.
+- **Only the Advanced Radar sends launch pads;** a plain Radar Station calls Cruise Turrets only.
+- **Far launch sites answer:** armed Launch Controllers and Cruise Turrets, radars on a radio channel and wired crates keep their chunks loaded, so the Laser Designator, Remote Detonator, radars and counter-strikes reach them from anywhere, also after a restart.
+- **Missiles always arrive:** a missile that an optimization or chunk mod stops from ticking is flown on to its target by the missile tracker.
+
+**1.0.4**
 
 - **New: Advanced Radar**, counter-strikes at the launch site of incoming missiles, and a new circular radar scope.
 - **Fixed counter-strikes:** unanswered strikes retry every second instead of waiting the full cooldown, delayed and aiming launches count as fired, Cruise Turrets turn down orders they can't carry out, and a cancelled target no longer fires at the old one.

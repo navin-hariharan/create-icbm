@@ -9,17 +9,14 @@ import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.LevelReader;
 import com.createicbm.ICBMConstants;
 import com.createicbm.content.blocks.launcher.network.ILauncherComponent;
-import com.createicbm.content.blocks.launcher.network.LauncherNetwork;
 import com.createicbm.content.reg.BlockReg;
 import com.createicbm.lib.InventoryUtility;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.network.chat.Component;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.ItemInteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
@@ -37,6 +34,8 @@ import net.minecraft.world.level.material.MapColor;
 import net.minecraft.world.phys.BlockHitResult;
 
 import javax.annotation.Nullable;
+import net.minecraft.world.phys.shapes.Shapes;
+import net.minecraft.world.phys.shapes.VoxelShape;
 
 /**
  *
@@ -72,13 +71,6 @@ public class BlockLauncherBase extends BaseEntityBlock implements IRotate
         final BlockEntity tile = worldIn.getBlockEntity(pos);
         if (tile instanceof TileLauncherBase && !worldIn.isClientSide())
         {
-            if (heldItem.getItem() == Items.STONE_AXE)
-            {
-                final LauncherNetwork network = ((TileLauncherBase) tile).getNetworkNode().getNetwork();
-                playerIn.sendSystemMessage(Component.literal("Network: " + network));
-                playerIn.sendSystemMessage(Component.literal("L: " + (network != null ? network.getLaunchers().size() : 0)));
-                return ItemInteractionResult.SUCCESS;
-            }
             if (!((TileLauncherBase) tile).tryInsertMissile(playerIn, hand, heldItem))
             {
                 ((TileLauncherBase) tile).openGui(playerIn);
@@ -143,6 +135,17 @@ public class BlockLauncherBase extends BaseEntityBlock implements IRotate
     {
         super.setPlacedBy(level, pos, state, placer, stack);
         KineticBlockHooks.setPlacedBy(level, pos);
+    }
+
+    /**
+     * Nothing hides a neighbour's face, and no neighbour hides one of ours. The models stick out of the cube or leave
+     * parts of it open, and culling against the full block shape (vanilla for solid blocks, culling and connected
+     * texture mods for every block) left see-through gaps where two machines touched.
+     */
+    @Override
+    protected VoxelShape getOcclusionShape(BlockState state, BlockGetter level, BlockPos pos)
+    {
+        return Shapes.empty();
     }
 
     @Override

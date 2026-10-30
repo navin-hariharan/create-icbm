@@ -6,7 +6,7 @@
   <img src="https://img.shields.io/badge/Minecraft-1.21.1-62B47A?style=for-the-badge" alt="Minecraft 1.21.1">
   <img src="https://img.shields.io/badge/NeoForge-21.1.219%2B-E2711D?style=for-the-badge" alt="NeoForge 21.1.219+">
   <img src="https://img.shields.io/badge/Create-6.0.10%2B-C9A45C?style=for-the-badge" alt="Create 6.0.10+">
-  <img src="https://img.shields.io/badge/Release-v1.0.4-22C55E?style=for-the-badge" alt="Release v1.0.4">
+  <img src="https://img.shields.io/badge/Release-v1.0.5-22C55E?style=for-the-badge" alt="Release v1.0.5">
   <img src="https://img.shields.io/badge/License-CC_BY--NC_4.0-3B82F6?style=for-the-badge" alt="CC BY-NC 4.0 licence">
 </p>
 
@@ -50,6 +50,7 @@ It is a new addon, inspired by the classic **ICBM** mod (see [Credits](#credits)
   - [Tier 4](#tier-4)
 - [Bomb carts](#bomb-carts)
 - [Tools](#tools)
+  - [Radio channels](#radio-channels)
   - [Laser Range Finder](#laser-range-finder)
   - [Remote Detonator](#remote-detonator)
   - [Laser Designator](#laser-designator)
@@ -139,7 +140,7 @@ It is a new addon, inspired by the classic **ICBM** mod (see [Credits](#credits)
 See [Compatibility](#compatibility) for what each optional mod adds.
 
 Drop the `create-icbm` jar into your `mods` folder next to Create. The mod is needed on both the server and every
-client. This is version **1.0.4**.
+client. This is version **1.0.5**.
 
 ## Your first launch
 
@@ -195,18 +196,27 @@ opposite side, so a pad on the ground takes its shaft from below.
   still above it. Every missile works: explosive missiles, Missile Modules, Surface to Air Missiles and Delivery
   Missiles.
 - **Settings** (right-click the pad):
-  - **Lock Height** (default 3): how far the missile climbs straight up before it turns towards the target.
+  - **Lock Height** (default 3, 0 to 256 blocks): how far the missile climbs straight up before it turns towards the
+    target. Raise it to clear walls, trees or a roof around the pad. On the ground the missile always lifts at least
+    2 blocks.
   - **Firing Delay** (in ticks, default 0): a wait before this pad fires, to stagger a salvo.
+  - Typed values are set when you press **Enter**, click elsewhere or close the screen.
   - **Group** and **Index**: labels shown on the goggles. The controller fires every pad on its network together.
   - **Missile Rotation** (top right): **Alt + click** turns the missile clockwise, **Shift + click** the other way.
     This only changes how it looks and where you sit.
 - **Firing:** the pad has no button of its own. It fires when a Launch Controller on its network fires.
 - **Riding:** right-click the loaded missile to sit on it and ride it to the target.
 
-**Flight.** The missile warms up on the pad for 2 seconds, climbs to its lock height and flies a ballistic arc. The arc peaks as high as the target is far, up to 1,000 blocks. Targets 500 blocks or more away
-make the missile climb straight up out of sight. It then crosses the map out of sight, through unloaded chunks too (simulated at 20 blocks a
-second by default, so 1,000 blocks take about 50 seconds), and drops back in above the target. A pad reaches **10,000 blocks** in each direction and needs targets at least 10
-blocks away.
+**Flight.** The missile warms up on the pad for 2 seconds, climbs to its lock height and flies a ballistic arc from
+there. The arc peaks as high as the target is far, up to 1,000 blocks, and comes back down to the lock height right
+above the target before the missile drops onto it. Targets 500 blocks or more away make the missile climb straight up
+out of sight. It then crosses the map out of sight, through unloaded chunks too (simulated at 20 blocks a second by
+default, so 1,000 blocks take about 50 seconds), and drops back in above the target. A pad reaches **10,000 blocks**
+in each direction and needs targets at least 10 blocks away.
+
+<p align="center">
+  <img src="doc/images/lock-height.png" alt="Launch Pad lock height: the missile climbs to the lock height, flies its arc and drops onto the target" width="90%">
+</p>
 
 **Accuracy.** A missile lands within about 2 blocks of the target, up to 12 at the full 10,000 blocks, plus 1 block
 for every extra pad in the same salvo. The controller shows the expected spread.
@@ -260,7 +270,8 @@ The firing panel for every launcher on its network: pads, and Cruise Turrets too
 - **Redstone:** a lever, button, repeater or redstone dust pointing into the controller fires it. While the signal
   stays on it fires again as soon as a pad is ready, so use a pulse for a single salvo.
 - **Radio:** a Remote Detonator on its channel fires it at the current target. A Laser Designator sets a new target
-  and fires. A Radar Station on its channel retargets it onto an incoming missile and fires.
+  and fires. An [Advanced Radar](#advanced-radar) on its channel sends it to strike the launch site of an incoming
+  missile. A plain Radar Station leaves it alone: a launch pad can't hit a missile in the sky.
 - **Loading:** missiles put into a controller (by hand, hopper or funnel) go to the empty pads in its network.
 
 <p align="center">
@@ -277,11 +288,30 @@ A rotating turret that swings round to face its target and fires a missile strai
 
 - **Power:** 6 SU per RPM from a shaft below. It turns at its normal speed at 32 RPM, slower below that, and up to 4
   times faster at 128 RPM. It winds up a launch charge the same way as the Launch Pad.
-- **Screen** (right-click): missile slot, charge bar, target (`x, y, z`), radio channel and a *Launch* button.
+- **Screen** (right-click): missile slot, charge bar, target (`x, y, z`), radio channel, firing delay and a *Launch*
+  button.
+- **Firing delay:** ticks the turret waits once it is aimed and charged before it fires, like the Launch Pad (20
+  ticks a second). Use it to stagger turrets on the same channel. It counts for every order: radar, redstone, the
+  Launch Controller and the *Launch* button.
 - **Firing:** it fires once it is on target and fully wound. Press *Launch*, give it a redstone signal, fire it from a
-  Launch Controller on the same network, or use a Remote Detonator or Laser Designator on its channel.
-- **Air defence:** set it to a Radar Station's channel and load a [Surface to Air Missile](#surface-to-air-missile).
-  When the radar spots an incoming missile, the turret aims at it and fires, and the SAM locks on.
+  Launch Controller on the same network, or let a radar on its channel call it. The Remote Detonator and Laser
+  Designator can't fire a turret.
+- **Air defence:** set it to a Radar Station's or Advanced Radar's channel and load a
+  [Surface to Air Missile](#surface-to-air-missile). The moment the radar spots an incoming missile, the turret aims
+  at it and fires, and the SAM locks on. A missile still crossing the map out of sight is announced up to 15 seconds
+  before it comes down near the radar, so the turret is already turned towards it. Missiles launched on the turret's
+  own channel are friendly and left alone.
+- **No wasted SAMs:** a turret only answers air defence alerts while it holds a Surface to Air Missile. With no
+  firing delay it holds fire when SAMs already in the air will bring the missile down (one SAM for tier 1 to 3, two
+  for tier 4), and a queued SAM stays in the turret when its target is shot down or lands first. Busy turrets keep
+  their missile, and the radar names each missile of a wave in turn, so idle turrets spread over the wave.
+- **Timed salvos:** give turrets on the same channel different firing delays (for example 0, 10, 20, 30). Every
+  turret with a firing delay answers each alert and fires when its delay runs out, even when the missile is already
+  covered or gone; a SAM without its target hunts any other missile it finds. If its missile is gone before it fires,
+  the turret takes the next missile the radar reports.
+- **Radio orders:** only radars reach a turret. The Remote Detonator and Laser Designator are ignored.
+- **Counter-strikes:** turrets ignore an Advanced Radar's order to strike a launch site and keep their missile for
+  air defence.
 - **Flight:** missiles fly in a straight line at 40 blocks a second, with fuel for about 400 blocks, then fall. The
   target has to be at least 20 blocks away, and the space just above the turret has to be clear.
 - Takes any missile, by hand, hopper, funnel or chute. Right-click it with a Laser Range Finder to hand over a target.
@@ -307,9 +337,15 @@ don't set it off.
   wherever it is aimed. The radar scans four times a second. The trigger range is only drawn on the scope.
 - **Redstone:** while missiles are incoming it powers every side, one signal level per missile (up to 15). On by
   default. Use the switch on its screen, or right-click it with Redstone Dust, to turn it on or off.
-- **Radio:** every 2 seconds while a missile is incoming, it sends the closest one on its channel. Cruise Turrets on
-  that channel shoot at it and Launch Controllers fire at it.
-- The radar can't be read by tools, so type its channel into the other machines.
+- **Radio:** the moment a missile is seen coming in, the radar reports it on its channel, and again every 2 seconds
+  (`sam_delay`) while it is still coming. Cruise Turrets on that channel fire Surface to Air Missiles at it. Only
+  turrets answer a plain Radar Station; launch pads are sent out by the [Advanced Radar](#advanced-radar).
+- **Early warning:** a long-range missile crosses the map out of sight and comes back right above its target. When
+  that target is inside the detection range, the radar warns its turrets up to 15 seconds before, so they turn
+  towards it and fire as soon as it appears.
+- **Friend or foe:** missiles launched from a Launch Controller or Cruise Turret on the radar's channel are shown on
+  the scope but never reported, and SAMs from that channel never chase them.
+- Right-click the radar with a Remote Detonator or Laser Designator to copy its channel.
 
 <p align="center">
   <img src="doc/images/recipes/radar-station.png" alt="Radar Station recipe" width="80%">
@@ -321,30 +357,32 @@ don't set it off.
   <img src="doc/images/machines/advanced-radar.png" alt="Advanced Radar" width="260">
 </p>
 
-A Radar Station upgraded with precision mechanisms that strikes back. It has the same screen, range settings,
-redstone output and power needs as the [Radar Station](#radar-station), but instead of pointing your launchers at the
-incoming missile it sends them to **where that missile was launched from**.
+A Radar Station upgraded with precision mechanisms that strikes back. It does everything the
+[Radar Station](#radar-station) does, Cruise Turrets on its channel fire SAMs at incoming missiles, and on top of
+that it sends the Launch Controllers on its channel to **where that missile was launched from**. It is the only radar
+that talks to launch pads.
 
 - **Power:** the same as the Radar Station, 4 SU per RPM at 100 blocks of detection range, more for longer ranges, at
   **16 RPM or more**.
 - **Setup:** give the Advanced Radar a radio channel, and type the same channel into a
-  [Launch Controller](#launch-controller) with loaded Launch Pads, or into [Cruise Turrets](#cruise-turret) loaded
-  with missiles. Their launchers must be linked and loaded as usual.
-- **Counter-strike:** when a missile inside its detection range flies towards it, the radar reads the missile's launch site and sends
-  it on its channel. Every Launch Controller on that channel targets it and fires its pads; every Cruise Turret on that
-  channel aims at it and fires.
-- **What counts as fired:** a missile that leaves the pad, or one that is queued behind a firing delay or a turret that
-  is still turning to aim. After that the radar waits `sam_delay` (2 seconds) before the next missile, and never
-  strikes back twice for the same missile.
+  [Launch Controller](#launch-controller) with loaded Launch Pads for counter-strikes, and into
+  [Cruise Turrets](#cruise-turret) loaded with Surface to Air Missiles for air defence.
+- **Counter-strike:** when a missile inside its detection range flies towards it, the radar reads the missile's launch
+  site and sends it on its channel. Every Launch Controller on that channel targets it and fires its pads. Cruise
+  Turrets ignore this order and shoot down the missile instead.
+- **What counts as fired:** a missile that leaves the pad, or one that is queued behind a firing delay. After that the
+  radar waits `sam_delay` (2 seconds) before the next counter-strike, and never strikes back twice for the same
+  missile.
 - **When nobody fires** (no receivers, launchers unloaded or empty, a target another mod refused), the radar does not
   pretend it worked. It tries again every second, up to 30 times per missile, then moves on and logs a warning that
   says which channel went unanswered.
 - **Skipped:** missiles launched from another dimension, and missiles without a known launch site (spawned by
   commands, for example).
-- Keep silos that should **not** answer on a different channel: anything on the radar's channel will fire.
+- Keep silos that should **not** answer on a different channel: anything on the radar's channel will fire. Missiles
+  launched on the radar's own channel never trigger a counter-strike.
 
 <p align="center">
-  <img src="doc/images/advanced-radar-counterstrike.png" alt="Advanced Radar counter-strike: the radar sends the launch site to Launch Controllers and Cruise Turrets on its channel" width="90%">
+  <img src="doc/images/advanced-radar-counterstrike.png" alt="Advanced Radar counter-strike: the radar sends the launch site to Launch Controllers and the incoming missile to Cruise Turrets on its channel" width="90%">
 </p>
 
 <p align="center">
@@ -423,11 +461,14 @@ A missile that hunts other missiles. Fire it from a [Cruise Turret](#cruise-turr
 [rocket launcher](#rocket-launcher-direct) or even a Launch Pad.
 
 - In flight it looks for missiles within 30 blocks around it, twice a second, and chases the nearest one at 80 blocks
-  a second. It goes after any missile except other SAMs, friendly ones included.
+  a second. It goes after any missile except other SAMs and missiles launched on the same radio channel as the turret
+  that fired it (friend or foe). A SAM from a handheld launcher has no channel and chases any missile.
 - Within 4 blocks it hits for 100 damage and is spent. One SAM brings down any tier 1 to 3 missile; a tier 4 missile
   takes two.
 - A missile shot down by a SAM does **not** set off its warhead.
 - Fired from a turret on a radar's channel, the SAM is locked onto the radar's target from the start.
+- If its target is gone (shot down by another SAM, landed or out of sight), it looks for another missile nearby and
+  blows up harmlessly in the air after about a second if there is none, instead of flying off.
 - It has 10 seconds of fuel once it locks on, and gives up after 60 seconds in the air.
 
 <p align="center">
@@ -1103,15 +1144,17 @@ makes the vanilla TNT Minecart.
 | Tool | In short |
 |---|---|
 | [Laser Range Finder](#laser-range-finder) | Reads the coordinates of a block and hands them to a launcher. |
-| [Remote Detonator](#remote-detonator) | Fires launchers and wired explosive crates on its radio channel, at any distance. |
+| [Remote Detonator](#remote-detonator) | Fires Launch Controllers and wired explosive crates on its radio channel, at any distance. |
 | [Laser Designator](#laser-designator) | Marks a block and calls a strike on it. |
 | [Rocket Launcher: Direct](#rocket-launcher-direct) | Fires a missile in a straight line from your shoulder. |
 | [Rocket Launcher: Ballistic](#rocket-launcher-ballistic) | Lobs a missile in a high arc onto where you aim. |
 
-**Radio channels.** Launch Controllers and Cruise Turrets each have a radio channel. Right-click one of them
-with a Remote Detonator or Laser Designator to tune the tool to the same channel. Explosive crates work the other way
-round: right-click a crate with a Remote Detonator to give the crate the detonator's channel. Radio reaches the whole
-dimension.
+### Radio channels
+
+Launch Controllers, Cruise Turrets and radars each have a radio channel. Right-click one of them with a Remote
+Detonator or Laser Designator to tune the tool to the same channel. Explosive crates work the other way round:
+right-click a crate with a Remote Detonator to give the crate the detonator's channel. Radio reaches the whole
+dimension. The tools fire Launch Controllers and crates; Cruise Turrets only answer radars.
 
 ### Laser Range Finder
 
@@ -1133,11 +1176,11 @@ dimension.
   <img src="doc/images/tools/remote-detonator.png" alt="Remote Detonator" width="260">
 </p>
 
-- **Right-click** a Launch Controller or Cruise Turret to tune the detonator to its channel.
+- **Right-click** a Launch Controller or radar to tune the detonator to its channel.
 - **Right-click an explosive crate** to wire it to the detonator's channel. A detonator with no channel yet picks a
   random one. Wire as many crates as you like; a crate stays wired until it goes off or is mined.
-- **Right-click** anywhere else to send the fire signal. Every controller, turret and tower on that channel fires at
-  the target it already has, and every crate wired to it is lit, however far away it is. Answers show above your
+- **Right-click** anywhere else to send the fire signal. Every Launch Controller on that channel fires at the target
+  it already has, and every crate wired to it is lit, however far away it is. Answers show above your
   hotbar.
 - Laser Designator strikes and radar alerts don't set off crates, only the detonator's fire signal does.
 
@@ -1151,9 +1194,9 @@ dimension.
   <img src="doc/images/tools/laser-designator.png" alt="Laser Designator" width="260">
 </p>
 
-- **Right-click** a Launch Controller or Cruise Turret to tune the designator to its channel.
-- **Right-click** a block up to 200 blocks away to paint it: every launcher on the channel takes it as the new target
-  and fires. Hold the button to repeat about once a second.
+- **Right-click** a Launch Controller or radar to tune the designator to its channel.
+- **Right-click** a block up to 200 blocks away to paint it: every Launch Controller on the channel takes it as the new
+  target and fires. Cruise Turrets ignore it. Hold the button to repeat about once a second.
 
 <p align="center">
   <img src="doc/images/recipes/laser-designator.png" alt="Laser Designator recipe" width="80%">
@@ -1242,14 +1285,13 @@ threshold, the rating is the chance that each dose is blocked: 0.75 blocks three
    channel.
 2. Place one or more **Cruise Turrets** with a shaft below, load each with a **Surface to Air Missile** and type the
    radar's channel into them. Feed them from a hopper or funnel so they reload by themselves.
-3. When a missile carrying a warhead flies towards the radar, it sends an alert every 2 seconds. The turrets swing
-   round and fire, and each SAM locks onto the missile.
+3. When a missile carrying a warhead flies towards the radar, it sends an alert at once and again every 2 seconds.
+   The turrets swing round and fire, and each SAM locks onto the missile. Turrets don't fire more SAMs than it takes
+   to bring the missile down.
 4. The radar's redstone output can sound sirens or close blast doors at the same time.
 
-A Launch Controller on the radar's channel fires its pads at the incoming missile's position, so keep your silos on a
-different channel unless that's what you want.
-
-To hit back as well, put an [Advanced Radar](#advanced-radar) on a second channel together with a Launch Controller
+Launch Controllers ignore a plain Radar Station's alerts, so silos on the same channel keep their missiles. To hit back
+as well, put an [Advanced Radar](#advanced-radar) on a second channel together with a Launch Controller
 and its armed pads. While your turrets deal with the missile, the controller fires at the place it came from.
 
 ## Storage and automation
@@ -1382,6 +1424,8 @@ Everything here works out of the box; the settings are there to tune it.
 | **Adaptive budget** | The budgets shrink by themselves while the server is slow: when the smoothed tick time stays above 45 ms they drop 3 % a tick, down to 10 % of normal, and they grow back 2 % a tick once it is under 35 ms. A blast always finishes in the end. | `adaptive_budget` (`true`) |
 | **Worker threads** | Blast shapes are calculated off the main thread from a snapshot of the chunks. Results are handed back to the server thread, which only applies them. Edits that fall in chunks which have meanwhile unloaded are skipped instead of force-loading them. | `thread_count` (1, up to 8) |
 | **Missile chunk loading** | A missile only holds the chunks right ahead of it, with short tickets that run out on their own, like a thrown ender pearl. All missiles of one dimension together may hold at most 512 tickets, and a missile always keeps its own chunk and the next one. | `direct_fire_chunk_loading` (`true`), `max_missile_chunk_tickets` (512) |
+| **Radio machines stay loaded** | A Launch Controller (with its pads) or Cruise Turret on a radio channel that holds a missile, a radar on a radio channel, and a crate wired to a Remote Detonator, keep their chunks loaded and ticking with saved NeoForge chunk tickets, like a chunk loader. A launch site thousands of blocks away still answers the Laser Designator, Remote Detonator and radars, also after a restart. Machines with no channel or no missile load nothing, and a machine drops its tickets when it is broken, emptied or its channel is cleared. | `keep_radio_machines_loaded` (`true`), `radio_machine_load_radius` (1 = 3 by 3 chunks) |
+| **Stall rescue** | Some optimization and chunk mods stop entities from ticking far from players even in chunks that should tick. A missile that has not ticked for 3 seconds is handed to the missile tracker, which flies it to its target without the entity, or it goes off right there when it stalled above its target. Surface to Air Missiles and ridden missiles are left alone. | `stall_rescue` (`true`), `stall_rescue_ticks` (60) |
 | **Destination preloading** | Simulated missiles begin warming the target chunk and its four cardinal neighbours before arrival with expiring region tickets, giving slow world generation time to finish. They remain queued rather than being spawned into a chunk that still does not tick entities. | `target_chunk_preload_seconds` (15) |
 | **Simulated flight** | A long-range missile that leaves the loaded area stops being an entity. A tracker counts it down once per second at `simulation_flight_speed` and spawns it again above the target. Costs a few numbers per missile. | `simulation_flight_speed` (20 blocks/s), `arc_distance_limit` (500) |
 | **Network** | Missiles send a position every 2 ticks and the client smooths the rest. Mushroom clouds, flashes and cutscenes are one small packet each. Debris effects are capped. Sound packets only go to players within view distance. | `block_effects_per_blast` (64), `block_effects_per_tick` (1024) |
@@ -1591,8 +1635,9 @@ A plain TNT block still makes the vanilla TNT Minecart.
 ## Ponder and JEI
 
 - **Ponder scenes** (hold **W** over the item): Launch Pad, Launch Gantry, Launch Connector and Launch Controller share
-  a launch scene, and the Cruise Turret and Radar Station each have their own. Explosive
-  crates, missiles and bomb carts have an arming scene. The powered machines also appear under Create's *Kinetic
+  a launch scene (charge, lock height, firing delay and every way to fire). The Cruise Turret has its own (aim speed,
+  firing delay and which radio orders it takes), and the Radar Station and Advanced Radar share a radar scene
+  (redstone, alerts, friend or foe and counter-strikes). Explosive crates, missiles and bomb carts have an arming scene. The powered machines also appear under Create's *Kinetic
   Appliances* tag.
 - **Engineer's Goggles** show each machine's charge and status: the pad's charge and missile, the turret's aim and the
   radar's status.
@@ -1612,6 +1657,8 @@ common configs, so on a server the server's files apply.
 | Option | Default | What it changes |
 |---|---|---|
 | `use_energy` | `true` | Set to `false` to let the machines run without rotation. |
+| `keep_radio_machines_loaded` | `true` | Launch Controllers and their pads and Cruise Turrets that hold a missile, radars on a radio channel, and crates wired to a Remote Detonator, keep their chunks loaded so radio orders reach them from anywhere. |
+| `radio_machine_load_radius` | 1 | Chunks loaded around each such machine (0 = its own chunk, 1 = 3 by 3, 2 = 5 by 5), enough for the shaft that powers it. Wired crates only load their own chunk. |
 | `protective_armor.require_helmet` | `true` | Gas and radiation protection only counts with a helmet on. |
 | `protective_armor.item_ratings` | `[]` | Protection ratings for armour from other mods, as `"mod:item=0.0-1.0"`. |
 | `protective_armor.min_debilitation_gas_protection` | 0.1 | Rating needed against debilitation gas. |
@@ -1647,7 +1694,7 @@ common configs, so on a server the server's files apply.
 | `min_speed` | 16 | RPM the dish needs to work. |
 | `stress_impact` | 4 | Stress impact in SU per RPM. |
 | `scan_rate` | 5 | Ticks between scans. |
-| `sam_delay` | 40 | Ticks between radio alerts. |
+| `sam_delay` | 40 | Ticks before a radar reports the same incoming missile again, and between Advanced Radar counter-strikes. A newly seen missile is reported at once. |
 
 </details>
 
@@ -1665,6 +1712,8 @@ common configs, so on a server the server's files apply.
 | `simulation_enter_speed` | 1 | Blocks per tick it drops at when it re-enters the world above its target. |
 | `keep_visible_in_flight` | `true` | A missile stays a real, visible entity while a player is within the server's view distance of it, and keeps its chunks ahead loaded. |
 | `max_missile_chunk_tickets` | 512 | Most chunks all missiles of one dimension hold loaded ahead of them together. |
+| `stall_rescue` | `true` | A missile that stops ticking while it flies (an optimization mod pausing far entities, a chunk that never starts ticking) is handed to the missile tracker, which flies it on to its target. One that stalls right above its target goes off there. |
+| `stall_rescue_ticks` | 60 | Server ticks a flying missile may go without ticking before `stall_rescue` takes over. |
 | `health_tier_1` to `health_tier_4` | 50, 80, 100, 200 | Missile health by explosive tier. |
 | `impact_damage_scale`, `impact_damage_limit` | 20, -1 | Damage a missile does when it flies into a mob, and its cap (`-1` no cap, `0` off). |
 | `SAM_MISSILE.target_range` | 30 | How far a SAM looks for targets. |
@@ -1740,6 +1789,63 @@ All under `/icbm`, for operators (permission level 2).
 | `/icbm blast spread <count> <distance> <explosive> <dimension> <x> <y> <z> <size>` | Sets off a grid of blasts, for stress testing. |
 
 ## Changelog
+
+### 1.0.5
+
+**New**
+
+- **Friend or foe:** missiles remember the radio channel of the Launch Controller or Cruise Turret that launched
+  them. Radars and Surface to Air Missiles on that channel leave them alone.
+- **Early warning:** radars warn their Cruise Turrets about long-range missiles still out of sight that will come down
+  inside the detection range, so the turrets are already aimed when the missile appears.
+
+- **Cruise Turret firing delay:** set in the turret's screen, like the Launch Pad's.
+- **Ponder:** the launch, turret and radar scenes now cover lock height, firing delays, which tools and radars fire
+  which machine, friend or foe and the Advanced Radar's counter-strike.
+
+**Changed**
+
+- Only the Advanced Radar sends Launch Controllers out (to strike the launch site). A plain Radar Station only calls
+  Cruise Turrets, and Cruise Turrets ignore counter-strike orders and keep their missile for air defence.
+- The Advanced Radar now also calls Cruise Turrets to fire Surface to Air Missiles at incoming missiles.
+- Radars can be read by the Remote Detonator and Laser Designator to copy their channel.
+- Cruise Turrets no longer fire on orders from the Remote Detonator or Laser Designator, only radars call them.
+- Cruise Turrets only answer air defence alerts while they hold a Surface to Air Missile. Without a firing delay they
+  don't fire another SAM at a missile that SAMs already in the air will bring down; turrets with a firing delay always
+  fire, for timed salvos.
+- Radars name each missile of a wave in turn instead of only the closest one, and a turret queued for one missile
+  ignores reports about the others until it has fired.
+- Lock height is limited to 0 to 256 blocks, and a negative firing delay counts as none.
+- Removed leftover debug messages when right-clicking launch blocks with a stone axe, and unused old code.
+
+**Fixed**
+
+- Cruise Turrets kept firing Surface to Air Missiles into the sky. The radar repeats its alert every 2 seconds, so a
+  turret fed by a hopper fired a new SAM at a missile that was already being chased, and every SAM left without a
+  target turned towards the world origin until its fuel ran out. Turrets now hold fire while the missile is covered
+  and drop a queued SAM when its target is gone, and a SAM that loses its target looks for another one nearby or
+  blows up harmlessly in the air.
+- A lock height (or any other value) typed into a machine screen was only set when you clicked somewhere else in the
+  screen. Pressing Enter did nothing, and closing the screen threw the value away, so missiles kept the old lock
+  height. Enter and closing the screen now set it too.
+- The radar Ponder scene said right-clicking with Redstone switches the redstone output on. It is on from the start,
+  and Redstone toggles it.
+- Radars told turrets about a newly seen missile only after a leftover delay of up to 2 seconds from the last
+  missile, and missiles that fell from the sky landed before the turrets fired. A new missile is now reported at
+  once.
+- Machines placed next to each other could hide each other's sides and leave see-through gaps to the sky, worst
+  with culling or connected-texture mods. No Create: ICBM block hides a neighbour's face any more, and none of their
+  faces is hidden by a neighbour.
+- Explosive crates and Launch Controllers drew the parts that stick out of the block (straps, plates, antenna)
+  black, and the straps of two crates side by side flickered into each other. Both blocks now let light in like the
+  other machines, and the crate strap no longer overlaps its neighbour.
+- Launch sites, Cruise Turrets and radars far from every player did not hear the Laser Designator, Remote Detonator,
+  radars or counter-strikes, because radio only reaches machines in loaded chunks. Launch Controllers and Cruise
+  Turrets on a radio channel that hold a missile, radars on a radio channel and wired crates now keep their chunks
+  loaded and ticking, also after a restart.
+- Long-range missiles could hang in the air far from players when an optimization or chunk mod stopped them from
+  ticking. A missile that stops ticking for 3 seconds is now flown on to its target by the missile tracker, or goes
+  off right there when it stalled above its target.
 
 ### 1.0.4
 

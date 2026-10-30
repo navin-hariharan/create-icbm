@@ -42,6 +42,9 @@ public class CapabilityMissile implements IMissile, INBTSerializable<CompoundTag
     /** Id of this flight, kept while the missile is simulated in unloaded chunks and spawned again at the target */
     private UUID flightId;
 
+    /** Radio channel of the site that launched this missile, empty when none. Radars and SAMs on it leave it alone */
+    private String radioChannel = "";
+
     /** Player who sent this missile, worked out once from the launch history and saved with the missile */
     private LauncherOwner sender;
     private boolean senderResolved = false;
@@ -106,6 +109,38 @@ public class CapabilityMissile implements IMissile, INBTSerializable<CompoundTag
     public IMissileFlightLogic getFlightLogic()
     {
         return this.flightLogic;
+    }
+
+    /**
+     * @return radio channel of the site that launched this missile, empty when none
+     */
+    public String getRadioChannel()
+    {
+        return radioChannel;
+    }
+
+    /**
+     * Records the radio channel of the launch site, radars and Surface to Air Missiles on it treat the missile as friendly
+     */
+    public void setRadioChannel(@Nullable String channel)
+    {
+        this.radioChannel = channel == null ? "" : channel;
+    }
+
+    /**
+     * @return true when this missile was launched from a site on the given radio channel
+     */
+    public boolean isFriendlyTo(@Nullable String channel)
+    {
+        return channel != null && !channel.isEmpty() && channel.equals(radioChannel);
+    }
+
+    /**
+     * @return true when the entity is a missile launched from a site on the given radio channel
+     */
+    public static boolean isFriendly(@Nullable Entity entity, @Nullable String channel)
+    {
+        return entity instanceof EntityMissile<?> other && other.getMissileCapability().isFriendlyTo(channel);
     }
 
     @Override
@@ -276,6 +311,7 @@ public class CapabilityMissile implements IMissile, INBTSerializable<CompoundTag
         /* */.nodeINBTSerializable("source", CapabilityMissile::getMissileSource)
         /* */.nodeUUID("flightId", (cap) -> cap.flightId, (cap, id) -> cap.flightId = id)
         /* */.nodeCompoundTag("sender", CapabilityMissile::saveSender, CapabilityMissile::loadSender)
+        /* */.nodeString("radioChannel", cap -> cap.radioChannel.isEmpty() ? null : cap.radioChannel, CapabilityMissile::setRadioChannel)
         .base();
 
     @Nullable

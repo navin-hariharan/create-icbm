@@ -44,7 +44,9 @@ public class FollowTargetLogic extends DeadFlightLogic
     public void onEntityTick(Entity entity, IMissile missile, int ticksInAir)
     {
         super.onEntityTick(entity, missile, ticksInAir);
-        if(!entity.level().isClientSide() && hasFuel(entity) && missile.getTargetData() != null) //TODO if we have no target data have missile fly around in random directions until it hits something
+        // Without a valid target keep the current heading, the empty target read as 0, 0, 0 and turned SAMs towards
+        //  the world origin
+        if(!entity.level().isClientSide() && hasFuel(entity) && missile.getTargetData() != null && missile.getTargetData().isValid())
         {
             double motionX = missile.getTargetData().getX() - entity.getX();
             double motionY = missile.getTargetData().getY() - entity.getY();

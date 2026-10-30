@@ -18,6 +18,7 @@ import com.createicbm.content.blocks.launcher.LauncherBaseCapability;
 import com.createicbm.content.blocks.launcher.status.FiringWithDelay;
 import com.createicbm.content.blocks.launcher.status.LaunchedWithMissile;
 import com.createicbm.content.blocks.launcher.status.LauncherStatus;
+import com.createicbm.content.missile.entity.CapabilityMissile;
 import com.createicbm.content.missile.logic.flight.ArcFlightLogic;
 import com.createicbm.content.missile.logic.flight.WarmupFlightLogic;
 import com.createicbm.content.missile.logic.flight.move.MoveByFacingLogic;
@@ -191,6 +192,10 @@ public class LauncherCapability extends LauncherBaseCapability {
         missile.setTargetData(new BallisticTargetingData(target, 2)); //TODO pull from targeting data
         missile.setFlightLogic(buildFLightPath());
         missile.setMissileSource(source); //TODO encode player that built launcher, firing method (laser, remote, redstone), and other useful data
+        // Friend or foe: radars and SAMs on the launch site's channel leave this missile alone
+        if (missile instanceof CapabilityMissile capability && host.getNetworkNode().getNetwork() != null) {
+            capability.setRadioChannel(host.getNetworkNode().getNetwork().getRadioChannel());
+        }
         missile.launch();
 
         //Spawn entity

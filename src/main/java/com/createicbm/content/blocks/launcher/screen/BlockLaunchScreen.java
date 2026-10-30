@@ -4,17 +4,14 @@ import com.mojang.serialization.MapCodec;
 import com.createicbm.api.CreateICBMHelpers;
 import com.createicbm.api.caps.IGPSData;
 import com.createicbm.content.blocks.launcher.network.ILauncherComponent;
-import com.createicbm.content.blocks.launcher.network.LauncherNetwork;
 import com.createicbm.content.reg.BlockReg;
 import com.createicbm.lib.capability.gps.GPSDataHelpers;
 import com.createicbm.prefab.tile.BlockICBM;
 import net.minecraft.core.BlockPos;
-import net.minecraft.network.chat.Component;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.ItemInteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.BaseEntityBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -35,7 +32,9 @@ public class BlockLaunchScreen extends BlockICBM
 
     public BlockLaunchScreen()
     {
-        super("launcherscreen");
+        // No occlusion: the antenna and front lip stick out of the cube, and a solid block has no light inside it, so
+        //  those faces rendered black
+        super("launcherscreen", machineProperties().noOcclusion());
         // The screen has no slots of its own (the battery slot went with Forge Energy), and the item handler it
         //  exposes is the network's, so it must not drop that
         this.dropInventory = false;
@@ -60,11 +59,6 @@ public class BlockLaunchScreen extends BlockICBM
                 if (GPSDataHelpers.handlePlayerInteraction(gpsData, player, screen::setTarget))
                 {
                     return ItemInteractionResult.SUCCESS;
-                }
-                else if(stack.getItem() == Items.STONE_AXE) {
-                    final LauncherNetwork network = screen.getNetworkNode().getNetwork();
-                    player.sendSystemMessage(Component.literal("Network: " + network));
-                    player.sendSystemMessage(Component.literal("L: " + (network != null ? network.getLaunchers().size() : 0)));
                 }
                 else
                 {

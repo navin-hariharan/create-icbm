@@ -1,9 +1,12 @@
 package com.createicbm.content.missile.tracker;
 
+import com.createicbm.CreateICBM;
 import com.createicbm.ICBMConstants;
+import com.createicbm.api.missiles.parts.IMissileTarget;
 import com.createicbm.api.missiles.parts.IMissileFlightLogic;
 import com.createicbm.config.missile.ConfigMissile;
 import com.createicbm.content.missile.entity.EntityMissile;
+import com.createicbm.content.missile.entity.anti.EntitySurfaceToAirMissile;
 import com.createicbm.lib.diagnostics.ICBMDiagnostics;
 import com.createicbm.content.missile.logic.flight.DeadFlightLogic;
 import net.minecraft.core.BlockPos;
@@ -22,6 +25,7 @@ import net.minecraft.server.level.TicketType;
 import net.minecraft.util.Mth;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.phys.Vec3;
 
 /**
@@ -38,6 +42,10 @@ import net.minecraft.world.phys.Vec3;
  * <p>
  * Tickets are renewed from the level tick, not from the missile's own tick. A missile that already sits in a chunk
  * that isn't ticking yet (slow world generation) doesn't tick, and used to let its tickets run out and stay frozen.
+ * <p>
+ * Some optimization and chunk mods stop entities from ticking in chunks that should tick, so the level tick also
+ * watches for missiles that stopped running, see {@link #rescueIfStalled}. Those are handed to the missile tracker,
+ * which flies them to their target without the entity, or set off right there when they stalled above the target.
  */
 @EventBusSubscriber(modid = ICBMConstants.DOMAIN)
 public class MissileChunkLoader
@@ -54,6 +62,9 @@ public class MissileChunkLoader
     private static final int MAX_HELD_CHUNKS = 16;
     /** Always allowed, the chunk the missile is in and the next one, whatever the total budget says */
     private static final int MIN_HELD_CHUNKS = 2;
+
+    /** Horizontal distance to the target in which a stalled missile is set off instead of simulated again */
+    private static final double RESCUE_IMPACT_DISTANCE = 32;
 
     /** Distance 2 gives ticket level 31, the level where entities tick */
     private static final int TICKET_DISTANCE = 2;
@@ -192,6 +203,11 @@ public class MissileChunkLoader
     {
         if (!missile.level().isClientSide())
         {
+            // A missile that never runs its first tick is rescued as well
+            if (missile.getLastServerTick() < 0 && missile.level().getServer() != null)
+            {
+                missile.markTicked(missile.level().getServer().getTickCount());
+            }
             TRACKED.computeIfAbsent(missile.level(), level -> ConcurrentHashMap.newKeySet()).add(missile);
         }
     }
@@ -243,8 +259,65 @@ public class MissileChunkLoader
             if (event.getLevel() instanceof ServerLevel serverLevel)
             {
                 loader.traceStatus(missile, serverLevel, serverLevel.getServer().getTickCount());
+                rescueIfStalled(missile, serverLevel, serverLevel.getServer().getTickCount());
             }
             budget -= loader.heldCount();
+        }
+    }
+
+    /**
+     * Rescues a missile that stopped running although it is in the level. Optimization mods that pause or throttle
+     * entities far from players, chunk system rewrites and full ticket budgets all used to leave long range missiles
+     * hanging in the air until a player flew out to them.
+     */
+    private static void rescueIfStalled(EntityMissile<?> missile, ServerLevel level, int serverTick)
+    {
+        if (!ConfigMissile.STALL_RESCUE || missile.isRemoved())
+        {
+            return;
+        }
+        if (!level.tickRateManager().runsNormally())
+        {
+            // Frozen with /tick freeze, nothing is stalled
+            missile.markTicked(serverTick);
+            return;
+        }
+        final int lastTick = missile.getLastServerTick();
+        if (lastTick < 0 || serverTick - lastTick < ConfigMissile.STALL_RESCUE_TICKS)
+        {
+            return;
+        }
+        // A full period before the next try, whatever happens below
+        missile.markTicked(serverTick);
+
+        // SAMs chase a moving missile and ridden missiles belong to their rider, neither has a spot to be taken to
+        final IMissileTarget target = missile.getMissileCapability().getTargetData();
+        if (missile instanceof EntitySurfaceToAirMissile || target == null || missile.isPassenger() || missile.hasPlayerRiding())
+        {
+            return;
+        }
+
+        final double dx = target.getX() - missile.getX();
+        final double dz = target.getZ() - missile.getZ();
+        if (dx * dx + dz * dz <= RESCUE_IMPACT_DISTANCE * RESCUE_IMPACT_DISTANCE)
+        {
+            // Right above the target, simulating it again would only bring it back to the same frozen spot
+            final BlockPos column = BlockPos.containing(target.getX(), 0, target.getZ());
+            if (!level.hasChunkAt(column))
+            {
+                return;
+            }
+            final double ground = Math.max(level.getHeight(Heightmap.Types.MOTION_BLOCKING, column.getX(), column.getZ()), level.getMinBuildHeight());
+            CreateICBM.logger().warn("{} stopped ticking for {} ticks above its target, an optimization or chunk mod may be pausing it. Setting it off at {}, {}, {}.",
+                missile, serverTick - lastTick, target.getX(), ground, target.getZ());
+            missile.forceImpact(new Vec3(target.getX(), ground, target.getZ()));
+            return;
+        }
+
+        if (MissileTrackerHandler.canSimulate(missile) && MissileTrackerHandler.simulateMissile(missile))
+        {
+            CreateICBM.logger().warn("{} stopped ticking for {} ticks on its way, an optimization or chunk mod may be pausing it. The missile tracker flies it on to its target.",
+                missile, serverTick - lastTick);
         }
     }
 

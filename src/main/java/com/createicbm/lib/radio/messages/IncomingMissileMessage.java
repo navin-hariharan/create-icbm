@@ -10,7 +10,7 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.phys.Vec3;
 
 @Data
-public class IncomingMissileMessage implements IIncomingMissileMessage {
+public class IncomingMissileMessage implements IIncomingMissileMessage, IAirDefenceMessage {
     private final String channel;
     private final IMissile missile;
     private final boolean trigger;

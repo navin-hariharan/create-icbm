@@ -37,6 +37,7 @@ import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
 
 import javax.annotation.Nullable;
+import net.minecraft.world.phys.shapes.Shapes;
 
 /**
  * Parcel a delivery missile leaves where it lands. Slab sized, holds one stack and carries a label with the
@@ -58,7 +59,8 @@ public class BlockMail extends BaseEntityBlock
             .strength(-1.0F, 3600000.0F)
             .sound(SoundType.WOOL)
             .noLootTable()
-            .pushReaction(PushReaction.BLOCK));
+            .pushReaction(PushReaction.BLOCK)
+            .noOcclusion());
         registerDefaultState(stateDefinition.any().setValue(FACING, Direction.NORTH));
     }
 
@@ -90,6 +92,17 @@ public class BlockMail extends BaseEntityBlock
     protected VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context)
     {
         return SHAPE;
+    }
+
+    /**
+     * Nothing hides a neighbour's face, and no neighbour hides one of ours. The models stick out of the cube or leave
+     * parts of it open, and culling against the full block shape (vanilla for solid blocks, culling and connected
+     * texture mods for every block) left see-through gaps where two machines touched.
+     */
+    @Override
+    protected VoxelShape getOcclusionShape(BlockState state, BlockGetter level, BlockPos pos)
+    {
+        return Shapes.empty();
     }
 
     @Override

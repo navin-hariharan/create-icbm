@@ -18,7 +18,10 @@ import com.createicbm.lib.capability.ex.CapabilityExplosiveStack;
 import com.createicbm.lib.capability.holder.ICapabilityHolderTile;
 import com.createicbm.lib.radio.RadioRegistry;
 import com.createicbm.lib.transform.vector.Pos;
+import com.createicbm.lib.world.MachineChunkLoader;
 import com.createicbm.prefab.tile.BlockICBM;
+import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
+import it.unimi.dsi.fastutil.longs.LongSet;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
@@ -34,6 +37,7 @@ import net.minecraft.server.TickTask;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
@@ -48,7 +52,7 @@ import javax.annotation.Nullable;
  * The explosive type lives here and is exposed to the client model through {@link #EXPLOSIVE_PROPERTY} model data, and
  * to loot/pick block through the {@link ComponentReg#EXPLOSIVE} implicit component.
  */
-public class TileEntityExplosive extends BlockEntity implements IRotatable, ICapabilityHolderTile
+public class TileEntityExplosive extends BlockEntity implements MachineChunkLoader.IRadioMachine, IRotatable, ICapabilityHolderTile
 {
     public static final String NBT_EXPLOSIVE_STACK = "explosive_stack";
     public static final String NBT_RADIO = "radio";
@@ -123,6 +127,20 @@ public class TileEntityExplosive extends BlockEntity implements IRotatable, ICap
         {
             RadioRegistry.add(radioCap);
         }
+        syncMachineChunks();
+    }
+
+    /**
+     * Keeps a wired crate's chunk loaded, so its Remote Detonator reaches it from anywhere in the dimension
+     */
+    private void syncMachineChunks()
+    {
+        final LongSet wanted = new LongOpenHashSet();
+        if (radioCap.hasChannel())
+        {
+            wanted.add(ChunkPos.asLong(getBlockPos()));
+        }
+        MachineChunkLoader.sync(this, wanted);
     }
 
     @Override
@@ -147,6 +165,7 @@ public class TileEntityExplosive extends BlockEntity implements IRotatable, ICap
         {
             RadioRegistry.add(radioCap);
         }
+        syncMachineChunks();
         setChanged();
     }
 

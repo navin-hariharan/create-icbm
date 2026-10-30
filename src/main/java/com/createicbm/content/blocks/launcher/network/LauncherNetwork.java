@@ -10,6 +10,7 @@ import com.createicbm.content.blocks.launcher.base.TileLauncherBase;
 import com.createicbm.content.blocks.launcher.cruise.TileCruiseLauncher;
 import net.minecraft.world.phys.Vec3;
 import com.createicbm.lib.capability.holder.ICapabilityHolderTile;
+import com.createicbm.content.blocks.launcher.screen.TileLauncherScreen;
 import lombok.Getter;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -43,6 +44,18 @@ public class LauncherNetwork {
 
         // Trigger new network state
         components.stream().filter(node -> node != source).forEach(LauncherNode::connectToTiles);
+    }
+
+    /**
+     * @return radio channel of the first Launch Controller on this network, empty when it has none
+     */
+    public String getRadioChannel() {
+        for (LauncherNode node : components) {
+            if (node.getSelf() instanceof TileLauncherScreen screen && !screen.isRemoved() && !screen.radioCap.getChannel().isEmpty()) {
+                return screen.radioCap.getChannel();
+            }
+        }
+        return "";
     }
 
     public List<LauncherEntry> getLaunchers(int group) {
