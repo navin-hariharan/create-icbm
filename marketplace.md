@@ -32,13 +32,14 @@
 
 ## ✨ Features
 
-- **Rotation-powered machines.** Launch Pads, Cruise Turrets and Radar Stations take a shaft and draw stress like any Create machine. No batteries, no electricity.
+- **Rotation-powered machines.** Launch Pads, Cruise Turrets and both radars take a shaft and draw stress like any Create machine. No batteries, no electricity.
 - **26 explosives in 4 tiers**, from a beefed-up TNT to antimatter and a red matter black hole. Each is a crate, a missile warhead and a bomb cart.
 - **Blasts you see and hear from far away:** mushroom clouds for nuclear and antimatter, a blinding antimatter flash, and explosion sounds with the delay of distance for everyone within view distance.
 - **Ender missile abduction:** a giant Enderman drags players through a purple warp tunnel to a spot far away.
 - **Long-range missiles** that fly a ballistic arc up to 10,000 blocks, stay visible and fly smoothly all the way to the ground.
 - **A real launch network:** chain pads, gantries and connectors to one Launch Controller and fire whole salvos.
 - **Air defence:** a Radar Station spots incoming missiles and Cruise Turrets shoot them down with Surface to Air Missiles.
+- **Strike back:** the new **Advanced Radar** sends your Launch Controllers and Cruise Turrets to the launch site of every incoming missile.
 - **Delivery Missiles** drop a stack of items into a chest across the map, or leave a **Mail** parcel with the sender's name.
 - **Made with Create:** every recipe uses only Create and vanilla items, on Create's machines or at a plain crafting table. Ponder scenes, goggles, tooltips and JEI included.
 - **Built for big servers:** paced and adaptive blast budgets, a worker thread for blast maths, capped chunk loading, smooth client-side missile flight.
@@ -71,7 +72,8 @@ Drop the jar into `mods` next to Create. It is needed on the server and on every
 | Launch Gantry / Connector | none | Link pads, controllers and storage into one launch network. |
 | Launch Controller | none | Target, radio channel and the *Launch* button for a whole network. |
 | Cruise Turret | 6 SU/RPM | Aims and fires a missile in a straight line, also fires Surface to Air Missiles. |
-| Radar Station | 4 SU/RPM, 16 RPM+ | Tracks incoming missiles up to 500 blocks and alerts turrets and controllers. |
+| Radar Station | 4 SU/RPM at 100 m, 16 RPM+ | Tracks incoming missiles up to 500 blocks and alerts turrets and controllers. Longer range, more stress. |
+| Advanced Radar | Same as Radar Station | Sends launchers on its channel to the launch site of incoming missiles. |
 
 ## 🚀 Missiles
 
@@ -112,6 +114,12 @@ Every explosive also makes a **bomb cart** (powered activator rail lights it) an
 
 Spin a **Radar Station** at 16 RPM or more, set its range and radio channel, then put **Cruise Turrets** on the same channel loaded with Surface to Air Missiles. Incoming missiles trigger the turrets and the radar's redstone output.
 
+To hit back, put an **Advanced Radar** on a second channel with a Launch Controller and armed pads, or Cruise Turrets loaded with missiles. When a missile comes in, they fire at the place it was launched from. A strike only counts once a missile really fires or is queued; otherwise the radar retries every second.
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/navin-hariharan/create-icbm/main/doc/images/advanced-radar-counterstrike.png" alt="Advanced Radar counter-strike" width="100%">
+</p>
+
 ## 🎬 Effects and sounds
 
 - **Mushroom clouds** for Nuclear (70 % size) and Antimatter, drawn by each client from one packet, with a configurable particle budget.
@@ -139,7 +147,10 @@ Config files are `create_icbm-*.toml` in the `config` folder (main, launcher, ra
 
 ## 📝 Latest: 1.0.4
 
-Optimizer compatibility now exempts every Create: ICBM entity, including surface-to-air missiles, blast controllers, missile seats, decoys and flying blocks. Launch pads and radar stations remain normal block entities, while designators and detonators keep their server-side item handling. Diagnostics are opt-in, and unnecessary no-op compatibility code was removed. Full [changelog](https://github.com/navin-hariharan/create-icbm#changelog).
+- **New: Advanced Radar**, counter-strikes at the launch site of incoming missiles, and a new circular radar scope.
+- **Fixed counter-strikes:** unanswered strikes retry every second instead of waiting the full cooldown, delayed and aiming launches count as fired, Cruise Turrets turn down orders they can't carry out, and a cancelled target no longer fires at the old one.
+- **Fixed radio:** Launch Controllers reconnect to their network and radio after loading, and removed blocks no longer answer twice.
+- **Optimizer compatibility** now exempts every Create: ICBM entity, including surface-to-air missiles, blast controllers, missile seats, decoys and flying blocks. Diagnostics are opt-in. Full [changelog](https://github.com/navin-hariharan/create-icbm#changelog).
 
 ## 🙏 Credits
 

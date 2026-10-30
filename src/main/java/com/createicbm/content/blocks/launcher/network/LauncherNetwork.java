@@ -4,7 +4,11 @@ import com.createicbm.api.CreateICBMAPI;
 import com.createicbm.api.actions.cause.IActionCause;
 import com.createicbm.api.launcher.ILauncherSolution;
 import com.createicbm.api.launcher.IMissileLauncher;
+import com.createicbm.api.missiles.parts.IMissileTarget;
 import com.createicbm.content.blocks.launcher.FiringPackage;
+import com.createicbm.content.blocks.launcher.base.TileLauncherBase;
+import com.createicbm.content.blocks.launcher.cruise.TileCruiseLauncher;
+import net.minecraft.world.phys.Vec3;
 import com.createicbm.lib.capability.holder.ICapabilityHolderTile;
 import lombok.Getter;
 import net.minecraft.core.Direction;
@@ -52,11 +56,41 @@ public class LauncherNetwork {
     public Stream<LauncherEntry> launch(ILauncherSolution solution, IActionCause cause, boolean simulate) {
         //TODO consider pre-checking launchers to calculate actual firing count rather than desired... for inaccuracy reasons
         return streamLaunchers(solution.getFiringGroup()).peek(entry -> {
-            entry.setLastFiringPackage(new FiringPackage(solution.getTarget(entry.getLauncher()), cause));
+            final IMissileTarget target = solution.getTarget(entry.getLauncher());
+            entry.setLastFiringPackage(new FiringPackage(target, cause));
             entry.setLastFiringTime(System.currentTimeMillis());
+            final FiringPackage queuedBefore = getQueuedPackage(entry.getHost());
             entry.setLastFiringStatus(entry.getLauncher().launch(solution, cause, simulate));
+            // A delayed or aiming launch reports a blocking status. It only counts as accepted when this call queued a
+            // new package for this target, an older package (launcher already busy) does not.
+            final FiringPackage queuedAfter = getQueuedPackage(entry.getHost());
+            entry.setLastLaunchQueued(!simulate && queuedAfter != null && queuedAfter != queuedBefore && isSameTarget(queuedAfter, target));
             //TODO consider wrapping solution with a static version to prevent mutability problems
         });
+    }
+
+    /**
+     * @return the launch waiting on the launcher for its delay or aim, null if none or not one of ours
+     */
+    @Nullable
+    public static FiringPackage getQueuedPackage(@Nullable BlockEntity host) {
+        if (host instanceof TileLauncherBase pad) {
+            return pad.getFiringPackage();
+        }
+        if (host instanceof TileCruiseLauncher cruise) {
+            return cruise.getFiringPackage();
+        }
+        return null;
+    }
+
+    private static boolean isSameTarget(FiringPackage queued, @Nullable IMissileTarget target) {
+        final IMissileTarget queuedTarget = queued.getTargetData();
+        if (queuedTarget == null || target == null) {
+            return queuedTarget == target;
+        }
+        final Vec3 a = queuedTarget.getPosition();
+        final Vec3 b = target.getPosition();
+        return a != null && b != null && a.distanceToSqr(b) < 1.0E-4;
     }
 
     protected void clearData() {

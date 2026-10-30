@@ -4,81 +4,92 @@ import com.createicbm.content.blocks.radarstation.TileRadarStation;
 import io.netty.buffer.ByteBuf;
 import lombok.Getter;
 
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
-public class RadarRenderData {
-
+public class RadarRenderData
+{
     public static final int UV_SIZE = 54;
+    private static final int MAP_RADIUS = UV_SIZE / 2 - 3;
 
     private final TileRadarStation host;
 
     @Getter
     private final List<RadarRenderDot> dots = new LinkedList<>();
 
-    public RadarRenderData(TileRadarStation host) {
+    public RadarRenderData(TileRadarStation host)
+    {
         this.host = host;
     }
 
-    public void update() {
-
-        addDot(this.host.getBlockPos().getX() + 0.5, this.host.getBlockPos().getZ() + 0.5, RadarDotType.MARKER);
-
-        // Edge
-        addDot(this.host.getDetectionRange() + this.host.getBlockPos().getX() + 0.5, this.host.getBlockPos().getZ() + 0.5, RadarDotType.MARKER);
-        addDot(-this.host.getDetectionRange() + this.host.getBlockPos().getX() + 0.5, this.host.getBlockPos().getZ() + 0.5, RadarDotType.MARKER);
-        addDot(this.host.getBlockPos().getX() + 0.5, this.host.getBlockPos().getZ() + 0.5 + this.host.getDetectionRange(), RadarDotType.MARKER);
-        addDot(this.host.getBlockPos().getX() + 0.5, this.host.getBlockPos().getZ() + 0.5 - this.host.getDetectionRange(), RadarDotType.MARKER);
-
-        // Trigger
-        addDot(this.host.getBlockPos().getX() + 0.5 + this.host.getTriggerRange(), this.host.getBlockPos().getZ() + 0.5, RadarDotType.MARKER);
-        addDot(this.host.getBlockPos().getX() + 0.5 - this.host.getTriggerRange(), this.host.getBlockPos().getZ() + 0.5, RadarDotType.MARKER);
-        addDot(this.host.getBlockPos().getX() + 0.5, this.host.getBlockPos().getZ() + 0.5 + this.host.getTriggerRange(), RadarDotType.MARKER);
-        addDot(this.host.getBlockPos().getX() + 0.5, this.host.getBlockPos().getZ() + 0.5 - this.host.getTriggerRange(), RadarDotType.MARKER);
-
-        this.host.getDetectedThreats().forEach((entity) ->  addDot(entity.getX(), entity.getZ(), RadarDotType.HOSTILE));
-        this.host.getIncomingThreats().forEach((entity) ->  addDot(entity.x(), entity.z(), RadarDotType.INCOMING));
+    public void update()
+    {
+        dots.clear();
+        addDot(host.getBlockPos().getX() + 0.5, host.getBlockPos().getZ() + 0.5, RadarDotType.MARKER);
+        host.getDetectedThreats().forEach(entity -> addDot(entity.getX(), entity.getZ(), RadarDotType.HOSTILE));
+        host.getIncomingThreats().forEach(missile -> addDot(missile.x(), missile.z(), RadarDotType.INCOMING));
     }
 
-    public void addDot(double ex, double ez, RadarDotType type) {
-        final double deltaX = ex - (this.host.getBlockPos().getX() + 0.5);
-        final double deltaZ = ez - (this.host.getBlockPos().getZ() + 0.5);
-
-        final double vecX = deltaX / this.host.getDetectionRange();
-        final double vecZ = deltaZ / this.host.getDetectionRange();
-
-        final int x = (int)Math.floor(vecX * (UV_SIZE / 2f));
-        final int z = (int)Math.floor(vecZ * (UV_SIZE / 2f));
-
+    public void addDot(double ex, double ez, RadarDotType type)
+    {
+        final double range = Math.max(1, host.getDetectionRange());
+        final double deltaX = ex - (host.getBlockPos().getX() + 0.5);
+        final double deltaZ = ez - (host.getBlockPos().getZ() + 0.5);
+        double scaledX = deltaX / range * MAP_RADIUS;
+        double scaledZ = deltaZ / range * MAP_RADIUS;
+        final double length = Math.sqrt(scaledX * scaledX + scaledZ * scaledZ);
+        if (length > MAP_RADIUS)
+        {
+            final double factor = MAP_RADIUS / length;
+            scaledX *= factor;
+            scaledZ *= factor;
+        }
+        final int x = Math.max(-MAP_RADIUS, Math.min(MAP_RADIUS, (int) Math.round(scaledX)));
+        final int z = Math.max(-MAP_RADIUS, Math.min(MAP_RADIUS, (int) Math.round(scaledZ)));
         dots.add(new RadarRenderDot(x, z, type));
     }
 
-    public void clear() {
+    public void clear()
+    {
         dots.clear();
     }
 
-    public void setDots(List<RadarRenderDot> dots) {
+    public void setDots(List<RadarRenderDot> dots)
+    {
         this.dots.clear();
-        this.dots.addAll(dots);
+        for (RadarRenderDot dot : dots)
+        {
+            final int x = Math.max(-MAP_RADIUS, Math.min(MAP_RADIUS, dot.getX()));
+            final int y = Math.max(-MAP_RADIUS, Math.min(MAP_RADIUS, dot.getY()));
+            this.dots.add(new RadarRenderDot(x, y, dot.getType()));
+        }
     }
 
-    public static List<RadarRenderDot> decodeDots(ByteBuf buf) {
-
+    public static List<RadarRenderDot> decodeDots(ByteBuf buf)
+    {
         final List<RadarRenderDot> dots = new LinkedList<>();
-
-        int dotCount = buf.readInt();
-        for(int i = 0; i < dotCount; i++) {
+        int dotCount = Math.max(0, Math.min(buf.readInt(), 4096));
+        for (int i = 0; i < dotCount; i++)
+        {
             dots.add(new RadarRenderDot(buf.readInt(), buf.readInt(), RadarDotType.get(buf.readByte())));
         }
         return dots;
     }
 
-    public static void encodeDots(ByteBuf buf, List<RadarRenderDot> dots) {
-        buf.writeInt(dots.size());
-        dots.forEach(dot -> {
+    public static void encodeDots(ByteBuf buf, List<RadarRenderDot> dots)
+    {
+        // Keep encoder and decoder limits aligned so a very busy scope cannot desynchronise the packet buffer.
+        final int count = Math.min(dots.size(), 4096);
+        buf.writeInt(count);
+        // Iterate, the list is linked so indexed access would be quadratic
+        final Iterator<RadarRenderDot> iterator = dots.iterator();
+        for (int i = 0; i < count && iterator.hasNext(); i++)
+        {
+            final RadarRenderDot dot = iterator.next();
             buf.writeInt(dot.getX());
             buf.writeInt(dot.getY());
             buf.writeByte(dot.getType().ordinal());
-        });
+        }
     }
 }

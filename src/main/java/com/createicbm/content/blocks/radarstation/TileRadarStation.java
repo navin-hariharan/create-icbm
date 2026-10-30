@@ -1,9 +1,11 @@
 package com.createicbm.content.blocks.radarstation;
 
+import com.createicbm.CreateICBM;
 import com.createicbm.ICBMConstants;
 import com.createicbm.api.CreateICBMAPI;
 import com.createicbm.api.CreateICBMHelpers;
 import com.createicbm.api.missiles.IMissile;
+import com.createicbm.api.actions.cause.IActionSource;
 import com.createicbm.api.radio.IRadioChannelAccess;
 import com.createicbm.config.ConfigMain;
 import com.createicbm.config.machines.ConfigRadar;
@@ -14,6 +16,7 @@ import com.createicbm.content.missile.entity.anti.EntitySurfaceToAirMissile;
 import com.createicbm.content.reg.BlockReg;
 import com.createicbm.lib.NBTConstants;
 import com.createicbm.lib.data.IMachineInfo;
+import com.createicbm.lib.diagnostics.ICBMDiagnostics;
 import com.createicbm.lib.network.lambda.GeneralCodexs;
 import com.createicbm.lib.network.lambda.PacketCodex;
 import com.createicbm.lib.network.lambda.PacketCodexReg;
@@ -22,12 +25,15 @@ import com.createicbm.lib.radar.RadarRegistry;
 import com.createicbm.lib.radio.RadioRegistry;
 import com.createicbm.lib.radio.imp.Radio;
 import com.createicbm.lib.radio.messages.IncomingMissileMessage;
+import com.createicbm.lib.radio.messages.RadioTranslations;
+import com.createicbm.lib.radio.messages.TriggerActionTargetMessage;
 import com.createicbm.lib.saving.NbtSaveHandler;
 import com.createicbm.lib.tile.TickAction;
 import com.createicbm.lib.tile.TickDoOnce;
 import com.createicbm.prefab.gui.IPlayerUsing;
 import com.createicbm.prefab.tile.IGuiTile;
 import com.createicbm.prefab.tile.TileKineticMachine;
+import com.simibubi.create.content.kinetics.KineticNetwork;
 import lombok.Getter;
 import lombok.Setter;
 import com.createicbm.lib.capability.holder.ICapabilityHolderTile;
@@ -48,6 +54,13 @@ import net.minecraft.network.chat.Component;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.LinkedHashSet;
+import java.util.Set;
+import java.util.UUID;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.function.BiConsumer;
@@ -59,6 +72,7 @@ public class TileRadarStation extends TileKineticMachine implements IMachineInfo
     public static final Component TRANSLATION_GUI_NAME = Component.translatable("gui.create_icbm:radar.name");
     public static final Component TRANSLATION_TOOLTIP_RANGE = Component.translatable("gui.create_icbm:radar.range");
     public static final Component TRANSLATION_TOOLTIP_RANGE_SHIFT = Component.translatable("gui.create_icbm:radar.range.shift");
+    public static final Component TRANSLATION_TOOLTIP_ADVANCED_RANGE_SHIFT = Component.translatable("gui.create_icbm:advanced_radar.range.shift");
     public static final Component TRANSLATION_TOOLTIP_REDSTONE_OFF = Component.translatable("gui.create_icbm:radar.redstone.off");
     public static final Component TRANSLATION_TOOLTIP_REDSTONE_ON = Component.translatable("gui.create_icbm:radar.redstone.on");
 
@@ -68,12 +82,12 @@ public class TileRadarStation extends TileKineticMachine implements IMachineInfo
     public static final String NBT_INVENTORY = "inventory";
     public static final String NBT_RADIO = "radio";
 
-    /** Range to detect any radar contracts */
-    @Getter @Setter
+    /** Maximum horizontal detection radius, in blocks. */
+    @Getter
     private int detectionRange = 100;
 
-    /** Range to trigger if a threat will land in the area */
-    @Getter @Setter
+    /** Horizontal radius that counts as a protected target area. */
+    @Getter
     private int triggerRange = 50;
 
     /** True if we should output redstone */
@@ -102,6 +116,22 @@ public class TileRadarStation extends TileKineticMachine implements IMachineInfo
     private final List<Player> playersUsing = new LinkedList<>();
 
     private int firingCooldown = 0;
+
+    /** Missiles whose launch coordinates have already produced a successful counter-strike. */
+    private final Set<UUID> counterstrikeFired = new LinkedHashSet<>();
+    /** Radio callbacks are synchronous in the current network; this correlates a response to its missile. */
+    private UUID pendingCounterstrikeId;
+
+    /** Ticks to wait before trying again when nobody accepted a counter-strike */
+    private static final int COUNTERSTRIKE_RETRY_TICKS = 20;
+    /** Unanswered tries per missile before the radar gives up on it */
+    private static final int COUNTERSTRIKE_MAX_ATTEMPTS = 30;
+    /** Failed tries per missile, cleared when the missile leaves the threat list */
+    private final Map<UUID, Integer> counterstrikeAttempts = new HashMap<>();
+    /** Answers to the counter-strike being sent, only counted while it is being sent */
+    private boolean collectingCounterstrike;
+    private int counterstrikeAccepted;
+    private int counterstrikeRefused;
 
     public TileRadarStation(BlockPos pos, BlockState state) {
         super(BlockReg.TILE_RADAR_STATION.get(), pos, state);
@@ -149,16 +179,31 @@ public class TileRadarStation extends TileKineticMachine implements IMachineInfo
                 // Drop missiles that died since the last scan so SAMs are not fired at them
                 this.incomingThreats.removeIf(m -> m.getMissileEntity() == null || !m.getMissileEntity().isAlive());
 
-                //Spam launch packets to nearby silos
+                // Fire one coordinated response per cooldown. The advanced radar targets the attacker's
+                // recorded launch coordinates; the standard radar retains its original incoming-missile response.
                 if (!radio.getChannel().equals(RadioRegistry.EMPTY_HZ) && !this.incomingThreats.isEmpty())
                 {
-                    if(firingCooldown > 0) {
+                    if (firingCooldown > 0)
+                    {
                         firingCooldown--;
                     }
 
-                    if(firingCooldown <= 0) {
-                        firingCooldown = ConfigRadar.SAM_TICKS;
-                        RadioRegistry.popMessage(level, radio, new IncomingMissileMessage(radio.getChannel(), this.incomingThreats.get(0), true));
+                    if (firingCooldown <= 0)
+                    {
+                        if (isAdvancedRadar())
+                        {
+                            // Accepted waits the full cooldown, unanswered or refused tries again soon
+                            final int cooldown = sendCounterstrike();
+                            if (cooldown > 0)
+                            {
+                                firingCooldown = cooldown;
+                            }
+                        }
+                        else
+                        {
+                            firingCooldown = Math.max(1, ConfigRadar.SAM_TICKS);
+                            RadioRegistry.popMessage(level, radio, new IncomingMissileMessage(radio.getChannel(), this.incomingThreats.get(0), true));
+                        }
                     }
                 }
             }
@@ -167,6 +212,7 @@ public class TileRadarStation extends TileKineticMachine implements IMachineInfo
             {
                 incomingThreats.clear();
                 detectedThreats.clear();
+                radarRenderData.clear();
             }
 
             //Update redstone state
@@ -235,6 +281,20 @@ public class TileRadarStation extends TileKineticMachine implements IMachineInfo
             this.incomingThreats.sort(this::compare);
         }
 
+        // Forget retry counts of missiles that are no longer coming at us
+        if (!counterstrikeAttempts.isEmpty())
+        {
+            final Set<UUID> current = new HashSet<>();
+            for (IMissile missile : incomingThreats)
+            {
+                if (missile.getMissileEntity() != null)
+                {
+                    current.add(missile.getMissileEntity().getUUID());
+                }
+            }
+            counterstrikeAttempts.keySet().retainAll(current);
+        }
+
         if(!this.detectedThreats.isEmpty()) {
             this.detectedThreats.sort(this::compare);
         }
@@ -285,15 +345,188 @@ public class TileRadarStation extends TileKineticMachine implements IMachineInfo
         {
             return false;
         }
-        //TODO rewrite this as a 2D without objects for less memory waste
+        // Incoming means closing in on the radar. Asking for the landing spot to be inside the trigger range stopped
+        // alerts for missiles aimed at anything near the radar but its own spot, and turrets never fired their SAMs.
+        final Entity entity = missile.getMissileEntity();
+        final Vec3 radarPos = new Vec3(getBlockPos().getX() + 0.5, getBlockPos().getY() + 0.5, getBlockPos().getZ() + 0.5);
+        final Vec3 missilePos = entity.position();
+        final Vec3 nextPos = missilePos.add(entity.getDeltaMovement());
+        if (!isFinite(missilePos) || !isFinite(nextPos))
+        {
+            return false;
+        }
+        return nextPos.distanceToSqr(radarPos) < missilePos.distanceToSqr(radarPos);
+    }
 
-        Vec3 mpos = new Vec3(missile.xf(),missile.yf(), missile.zf());    // missile position
-        Vec3 rpos = new Vec3(getBlockPos().getX(), getBlockPos().getY(), getBlockPos().getZ());   // radar position
+    /** Detection range drives both the scan radius and Create stress load. */
+    public void setDetectionRange(int range)
+    {
+        final int clamped = Math.max(1, Math.min(ConfigRadar.MAX_RANGE, range));
+        if (detectionRange == clamped)
+        {
+            return;
+        }
+        detectionRange = clamped;
+        if (triggerRange > detectionRange)
+        {
+            triggerRange = detectionRange;
+        }
+        refreshKineticStress();
+        if (level != null && !level.isClientSide())
+        {
+            setChanged();
+        }
+    }
 
-        double nextDistance = mpos.add(missile.getMissileEntity().getDeltaMovement()).distanceTo(rpos);   // next distance from missile to radar
-        double currentDistance = mpos.distanceTo(rpos); // current distance from missile to radar
+    public void setTriggerRange(int range)
+    {
+        final int clamped = Math.max(1, Math.min(detectionRange, range));
+        if (triggerRange == clamped)
+        {
+            return;
+        }
+        triggerRange = clamped;
+        if (level != null && !level.isClientSide())
+        {
+            setChanged();
+        }
+    }
 
-        return nextDistance < currentDistance;   // we assume that the missile hits if the distance decreases (the missile is coming closer)
+    /** Advanced mode is selected by the registered block, not a second block-entity implementation. */
+    public boolean isAdvancedRadar()
+    {
+        return getBlockState().is(BlockReg.blockAdvancedRadar.get());
+    }
+
+    /** More detection distance costs proportionally more kinetic stress (100 m = configured base load). */
+    @Override
+    public float calculateStressApplied()
+    {
+        final float scaledStress = super.calculateStressApplied() * (detectionRange / 100f);
+        // Create uses this cached value when the network is persisted and restored.
+        this.lastStressApplied = scaledStress;
+        return scaledStress;
+    }
+
+    private void refreshKineticStress()
+    {
+        if (isServer() && hasNetwork())
+        {
+            final KineticNetwork network = getOrCreateNetwork();
+            if (network != null)
+            {
+                network.updateStressFor(this, calculateStressApplied());
+            }
+        }
+    }
+
+    /**
+     * Sends one counter-strike at the launch site of the closest missile not yet answered.
+     *
+     * @return ticks to wait before the next try, 0 when there was nothing to strike
+     */
+    private int sendCounterstrike()
+    {
+        for (IMissile missile : incomingThreats)
+        {
+            final Entity entity = missile.getMissileEntity();
+            if (entity == null || !entity.isAlive() || counterstrikeFired.contains(entity.getUUID()))
+            {
+                continue;
+            }
+
+            final IActionSource source = missile.getMissileSource();
+            if (source == null || source.getWorld() == null || source.getPosition() == null
+                || !source.getWorld().dimension().equals(level.dimension()) || !isFinite(source.getPosition()))
+            {
+                // A source in another dimension cannot be attacked by a local launchpad.
+                continue;
+            }
+
+            final UUID id = entity.getUUID();
+            final int attempts = counterstrikeAttempts.getOrDefault(id, 0);
+            if (attempts >= COUNTERSTRIKE_MAX_ATTEMPTS)
+            {
+                // Gave up on this one, try the next missile
+                continue;
+            }
+
+            // Launch screens on this channel update their target and fire. Only a screen or cruise launcher that
+            // actually queued or fired a launch counts, everything else is retried soon instead of after the cooldown.
+            pendingCounterstrikeId = id;
+            counterstrikeAccepted = 0;
+            counterstrikeRefused = 0;
+            collectingCounterstrike = true;
+            final int delivered;
+            try
+            {
+                delivered = RadioRegistry.popMessage(level, radio, new TriggerActionTargetMessage(radio.getChannel(), source.getPosition()));
+            }
+            finally
+            {
+                collectingCounterstrike = false;
+            }
+
+            if (counterstrikeAccepted > 0)
+            {
+                counterstrikeAttempts.remove(id);
+                markCounterstrikeFired(id);
+                ICBMDiagnostics.info("RADAR_COUNTERSTRIKE_ACCEPTED radar={} channel={} target={} accepted={} receivers={}",
+                    getBlockPos(), radio.getChannel(), source.getPosition(), counterstrikeAccepted, delivered);
+                return Math.max(1, ConfigRadar.SAM_TICKS);
+            }
+
+            final int attempt = attempts + 1;
+            counterstrikeAttempts.put(id, attempt);
+            ICBMDiagnostics.warn("RADAR_COUNTERSTRIKE_UNANSWERED radar={} channel={} target={} receivers={} refused={} attempt={}/{}",
+                getBlockPos(), radio.getChannel(), source.getPosition(), delivered, counterstrikeRefused, attempt, COUNTERSTRIKE_MAX_ATTEMPTS);
+            if (attempt >= COUNTERSTRIKE_MAX_ATTEMPTS)
+            {
+                CreateICBM.logger().warn("Advanced radar at {} gave up on a counter-strike on channel '{}' after {} tries: {} receivers, none launched."
+                    + " Check that a launch screen or cruise launcher on that channel is linked to a loaded, armed launcher.",
+                    getBlockPos(), radio.getChannel(), attempt, delivered);
+            }
+            return COUNTERSTRIKE_RETRY_TICKS;
+        }
+        return 0;
+    }
+
+    void onCounterstrikeResponse(String message)
+    {
+        if (!collectingCounterstrike || pendingCounterstrikeId == null)
+        {
+            return;
+        }
+        // Launch screens answer SUCCESS, cruise launchers answer TRIGGERED once they queued the shot
+        if (RadioTranslations.RADIO_LAUNCH_SUCCESS.equals(message) || RadioTranslations.RADIO_LAUNCH_TRIGGERED.equals(message))
+        {
+            counterstrikeAccepted++;
+        }
+        else if (!RadioTranslations.RADIO_TARGET_SET.equals(message))
+        {
+            // Failed launch, busy cruise launcher, missing target. Target set alone is only a step on the way.
+            counterstrikeRefused++;
+        }
+    }
+
+    private void markCounterstrikeFired(UUID id)
+    {
+        counterstrikeFired.add(id);
+        // Keep this set bounded for long-running servers.
+        while (counterstrikeFired.size() > 1024)
+        {
+            final Iterator<UUID> iterator = counterstrikeFired.iterator();
+            if (iterator.hasNext())
+            {
+                iterator.next();
+                iterator.remove();
+            }
+        }
+    }
+
+    private static boolean isFinite(@Nullable Vec3 position)
+    {
+        return position != null && Double.isFinite(position.x) && Double.isFinite(position.y) && Double.isFinite(position.z);
     }
 
     public EnumRadarState getRadarState() {
@@ -350,7 +583,7 @@ public class TileRadarStation extends TileKineticMachine implements IMachineInfo
     public boolean addToGoggleTooltip(List<Component> tooltip, boolean isPlayerSneaking)
     {
         super.addToGoggleTooltip(tooltip, isPlayerSneaking);
-        addGoggleHeader(tooltip, "radar_station");
+        addGoggleHeader(tooltip, isAdvancedRadar() ? "advanced_radar" : "radar_station");
         final EnumRadarState state = getVisualState();
         final ChatFormatting colour = switch (state) {
             case OFF -> ChatFormatting.DARK_GRAY;
@@ -375,7 +608,9 @@ public class TileRadarStation extends TileKineticMachine implements IMachineInfo
     @Override
     public Component getDisplayName()
     {
-        return TRANSLATION_GUI_NAME;
+        return isAdvancedRadar()
+            ? Component.translatable("gui.create_icbm:advanced_radar.name")
+            : TRANSLATION_GUI_NAME;
     }
 
     @Override
@@ -445,8 +680,9 @@ public class TileRadarStation extends TileKineticMachine implements IMachineInfo
 
     public static final PacketCodexTile<TileRadarStation, TileRadarStation> PACKET_GUI = (PacketCodexTile<TileRadarStation, TileRadarStation>) new PacketCodexTile<TileRadarStation, TileRadarStation>(REGISTRY_NAME, "gui")
         .fromServer()
-        .nodeInt(TileRadarStation::getTriggerRange, TileRadarStation::setTriggerRange)
+        // Detection first so client-side trigger-range validation uses the newly synced outer range.
         .nodeInt(TileRadarStation::getDetectionRange, TileRadarStation::setDetectionRange)
+        .nodeInt(TileRadarStation::getTriggerRange, TileRadarStation::setTriggerRange)
         .nodeString((t) -> t.radio.getChannel(), (t, s) -> t.radio.setChannel(s))
         .nodeBoolean((t) -> t.radio.isDisabled(), (t, b) -> t.radio.setDisabled(b))
         .nodeBoolean(TileRadarStation::isOutputRedstone, TileRadarStation::setOutputRedstone)

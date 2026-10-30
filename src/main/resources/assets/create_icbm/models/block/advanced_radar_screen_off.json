@@ -1,0 +1,4 @@
+{
+	"parent": "create_icbm:block/advanced_radar_screen",
+	"textures": {"screen": "create_icbm:block/advanced_radar/screen_off"}
+}

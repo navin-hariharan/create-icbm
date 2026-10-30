@@ -41,8 +41,8 @@ public abstract class RadioTile<T extends BlockEntity> extends Radio {
         return !isDisabled()
             // Usually sender isn't receive, but could happen in rare cases
             && sender != this
-            // Only accept server side
-            && host.hasLevel() && !host.getLevel().isClientSide()
+            // Only accept server side, and never on a block entity that was unloaded or broken
+            && host.hasLevel() && !host.getLevel().isClientSide() && !host.isRemoved()
             // Validate channel, this might create the channel string if null
             && Objects.equals(getChannel(), packet.getChannel());
     }

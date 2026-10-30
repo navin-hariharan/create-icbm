@@ -73,18 +73,20 @@ public final class RadioRegistry
      *
      * @param sender posting message
      * @param packet containing message
+     * @return receivers the message was handed to, 0 if nothing in the dimension listens
      */
-    public static void popMessage(Level world, IRadioSender sender, IRadioMessage packet)
+    public static int popMessage(Level world, IRadioSender sender, IRadioMessage packet)
     {
         if(world == null || world.isClientSide()) {
             CreateICBM.logger().error("RadarRegistry: Invalid world : " + world, new RuntimeException());
-            return;
+            return 0;
         }
         if (RADIO_MAPS.containsKey(world.dimension()))
         {
             RadioMap map = getRadarMapForDim(world.dimension());
-            map.popMessage(sender, packet);
+            return map.popMessage(sender, packet);
         }
+        return 0;
     }
 
     /**

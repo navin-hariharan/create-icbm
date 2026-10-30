@@ -37,8 +37,13 @@ public class BlockRadarStation extends BlockKineticICBM
 
     public BlockRadarStation()
     {
+        this("radarStation");
+    }
+
+    protected BlockRadarStation(String registryName)
+    {
         // No occlusion so light reaches the block entity, otherwise the shaft and dish render black
-        super("radarStation", machineProperties().noOcclusion()); //TODO rename to "radar_screen"
+        super(registryName, machineProperties().noOcclusion());
         registerDefaultState(defaultBlockState().setValue(REDSTONE_PROPERTY, false).setValue(RADAR_STATE, EnumRadarState.OFF));
     }
 

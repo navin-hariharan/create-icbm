@@ -62,6 +62,9 @@ public class TileLauncherScreen extends TileMachine implements ILauncherComponen
 {
     public static final ResourceLocation REGISTRY_NAME = ResourceLocation.fromNamespaceAndPath(ICBMConstants.DOMAIN, "launcherscreen");
 
+    /** Ticks between checks that the screen is still on its launcher network and radio */
+    private static final int RECONNECT_TICKS = 40;
+
     /** Target position of the launcher */
     private Vec3 _targetPos = Vec3.ZERO;
 
@@ -108,6 +111,17 @@ public class TileLauncherScreen extends TileMachine implements ILauncherComponen
 
         if (isServer())
         {
+            // A launcher network or radio map that was not ready when this screen loaded (chunk borders, a
+            // neighbour loading later, a dimension reload) used to leave the screen deaf until it was replaced
+            if (Math.floorMod(ticks + getBlockPos().hashCode(), RECONNECT_TICKS) == 0)
+            {
+                if (getNetworkNode().getNetwork() == null && !getNetworkNode().isInvalid())
+                {
+                    getNetworkNode().connectToTiles();
+                }
+                RadioRegistry.add(radioCap);
+            }
+
             //Only launch if redstone
             if (ticks % 3 == 0 && level.getDirectSignalTo(getBlockPos()) > 0) //TODO check for pulse instead of high only & add delay
             {
@@ -258,7 +272,8 @@ public class TileLauncherScreen extends TileMachine implements ILauncherComponen
         final ILauncherSolution solution = new LauncherSolution(target, getFiringGroup(), launchers.size());
         return getNetworkNode().getNetwork()
             .launch(solution, cause, simulate)
-            .filter(entry -> !entry.getLastFiringStatus().isBlocking())
+            // Fired, or queued behind its firing delay / aim. Refused and cancelled launches don't count.
+            .filter(LauncherEntry::wasLastLaunchAccepted)
             // count is required, as anyMatch() or similar will short-circuit before running all
             .count() > 0;
     }

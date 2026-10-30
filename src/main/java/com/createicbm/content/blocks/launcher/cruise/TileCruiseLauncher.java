@@ -143,6 +143,12 @@ public class TileCruiseLauncher extends TileKineticMachine implements IGuiTile, 
         return ConfigMain.REQUIRES_POWER ? ConfigLauncher.POWER_COST : 0;
     }
 
+    /** True when the launch charge is full enough to fire */
+    public boolean isCharged()
+    {
+        return energyStorage.consumePower(getFiringCost(), true);
+    }
+
     /** Launch charge as 0-1 */
     public float getChargePercent()
     {
@@ -265,8 +271,10 @@ public class TileCruiseLauncher extends TileKineticMachine implements IGuiTile, 
                 }
             }
 
+            // Wait for the launch charge too: a turret that just fired recharges while it turns, firing before that
+            // dropped the order. Without rotation it never charges, then the launch fails and the order is dropped.
             final FiringPackage pending = firingPackage;
-            if (pending != null && isAimed()) {
+            if (pending != null && isAimed() && (isCharged() || getAimSpeedFactor() <= 0)) {
                 pending.setCountDown(pending.getCountDown() - 1);
                 if (pending.getCountDown() <= 0) {
                     ICBMDiagnostics.info("LAUNCHER_PACKAGE_FIRE type=cruise pos={} dim={} target={}", getBlockPos(),

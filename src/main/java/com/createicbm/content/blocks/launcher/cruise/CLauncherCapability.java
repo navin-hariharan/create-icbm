@@ -89,8 +89,12 @@ public class CLauncherCapability extends LauncherBaseCapability {
         // Set target so we can aim
         host.setTarget(target.getPosition()); // TODO store IMissileTarget
 
-        // If not aimed, wait for aim and fire
+        // If not aimed, wait for aim and fire. A turret without rotation never finishes aiming, so refuse instead of
+        // reporting a launch that will not happen.
         if (!host.isAimed()) {
+            if (host.getAimSpeedFactor() <= 0) {
+                return LauncherStatus.ERROR_POWER;
+            }
             host.setFiringPackage(new FiringPackage(target, cause, 0));
             return LauncherStatus.FIRING_AIMING; // TODO return aiming status, with callback to check if did fire
         }

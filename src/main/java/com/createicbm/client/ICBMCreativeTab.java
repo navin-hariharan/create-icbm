@@ -57,6 +57,7 @@ public final class ICBMCreativeTab
         add(items, BlockReg.blockLaunchConnector);
         add(items, BlockReg.blockCruiseLauncher);
         add(items, BlockReg.blockRadarStation);
+        add(items, BlockReg.blockAdvancedRadar);
 
         add(items, ItemReg.itemRocketLauncher);
         add(items, ItemReg.itemBallisticLauncher);

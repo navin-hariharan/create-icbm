@@ -12,6 +12,7 @@ public final class ICBMPartialModels
 {
     /** Radar dish, spins around the vertical axis through the block centre */
     public static final PartialModel RADAR_DISH = block("radar_station/dish");
+    public static final PartialModel ADVANCED_RADAR_DISH = block("advanced_radar_station/dish");
 
     private ICBMPartialModels()
     {

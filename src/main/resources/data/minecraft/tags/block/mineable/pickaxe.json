@@ -7,6 +7,7 @@
     "create_icbm:launcher_connector",
     "create_icbm:cruiselauncher",
     "create_icbm:radarstation",
+    "create_icbm:advanced_radar",
     "create_icbm:radioactive_dirt",
     "create_icbm:radioactive_stone"
   ]

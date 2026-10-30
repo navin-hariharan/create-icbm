@@ -51,6 +51,7 @@ public class ItemReg
     //Block items
     public static final DeferredItem<ItemBlockExplosive> itemBlockExplosive = ITEMS.register("explosives", () -> new ItemBlockExplosive(BlockReg.blockExplosive.get()));
     public static final DeferredItem<BlockItem> itemRadarStation = blockItem(BlockReg.blockRadarStation);
+    public static final DeferredItem<BlockItem> itemAdvancedRadar = blockItem(BlockReg.blockAdvancedRadar);
     public static final DeferredItem<BlockItem> itemLaunchSupport = blockItem(BlockReg.blockLaunchSupport);
     public static final DeferredItem<BlockItem> itemLaunchBase = blockItem(BlockReg.blockLaunchBase);
     public static final DeferredItem<BlockItem> itemLaunchConnector = blockItem(BlockReg.blockLaunchConnector);

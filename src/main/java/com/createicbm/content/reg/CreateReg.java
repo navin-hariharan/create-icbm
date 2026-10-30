@@ -35,6 +35,7 @@ public final class CreateReg
         BlockStressValues.IMPACTS.register(BlockReg.blockLaunchBase.get(), () -> ConfigLauncher.LAUNCH_PAD_STRESS);
         BlockStressValues.IMPACTS.register(BlockReg.blockCruiseLauncher.get(), () -> ConfigLauncher.CRUISE_TURRET_STRESS);
         BlockStressValues.IMPACTS.register(BlockReg.blockRadarStation.get(), () -> ConfigRadar.STRESS_IMPACT);
+        BlockStressValues.IMPACTS.register(BlockReg.blockAdvancedRadar.get(), () -> ConfigRadar.STRESS_IMPACT);
 
         for (DeferredHolder<Item, ? extends Item> holder : ItemReg.ITEMS.getEntries())
         {

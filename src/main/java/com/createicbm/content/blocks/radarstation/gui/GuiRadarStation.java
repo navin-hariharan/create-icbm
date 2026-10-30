@@ -64,7 +64,10 @@ public class GuiRadarStation extends GuiContainerBase<ContainerRadarStation>
         addComponent(new RadarComponent(tileEntity, 5, 18));
 
         // Range tooltip
-        addComponent(new TooltipTranslations(4, 76, 14, 14, TileRadarStation.TRANSLATION_TOOLTIP_RANGE).withShift(TileRadarStation.TRANSLATION_TOOLTIP_RANGE_SHIFT).withDelay(1));
+        final Component rangeShiftTooltip = tileEntity.isAdvancedRadar()
+            ? TileRadarStation.TRANSLATION_TOOLTIP_ADVANCED_RANGE_SHIFT
+            : TileRadarStation.TRANSLATION_TOOLTIP_RANGE_SHIFT;
+        addComponent(new TooltipTranslations(4, 76, 14, 14, TileRadarStation.TRANSLATION_TOOLTIP_RANGE).withShift(rangeShiftTooltip).withDelay(1));
 
         // Radio tooltip
         addComponent(new TooltipTranslations(119, 16, 14, 14, LauncherLangs.TRANSLATION_TOOLTIP_RADIO).withDelay(1));

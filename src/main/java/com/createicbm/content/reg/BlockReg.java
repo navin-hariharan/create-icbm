@@ -16,6 +16,7 @@ import com.createicbm.content.blocks.launcher.frame.TileLauncherFrame;
 import com.createicbm.content.blocks.launcher.screen.BlockLaunchScreen;
 import com.createicbm.content.blocks.launcher.screen.TileLauncherScreen;
 import com.createicbm.content.blocks.radarstation.BlockRadarStation;
+import com.createicbm.content.blocks.radarstation.BlockAdvancedRadar;
 import com.createicbm.content.blocks.radarstation.TileRadarStation;
 import com.createicbm.content.radioactive.BlockRadioactive;
 import net.minecraft.core.registries.Registries;
@@ -49,6 +50,7 @@ public class BlockReg
     public static final DeferredBlock<BlockLaunchFrame> blockLaunchSupport = BLOCKS.register("launcherframe", BlockLaunchFrame::new);
     public static final DeferredBlock<BlockLaunchConnector> blockLaunchConnector = BLOCKS.register("launcher_connector", BlockLaunchConnector::new);
     public static final DeferredBlock<BlockRadarStation> blockRadarStation = BLOCKS.register("radarstation", BlockRadarStation::new);
+    public static final DeferredBlock<BlockAdvancedRadar> blockAdvancedRadar = BLOCKS.register("advanced_radar", BlockAdvancedRadar::new);
     public static final DeferredBlock<BlockCruiseLauncher> blockCruiseLauncher = BLOCKS.register("cruiselauncher", BlockCruiseLauncher::new);
 
     /** Parcel left by delivery missiles, has no item on purpose */
@@ -59,7 +61,7 @@ public class BlockReg
 
     // Block entities, constructors are (BlockPos, BlockState)
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<TileEntityExplosive>> TILE_EXPLOSIVE = tile("explosive", TileEntityExplosive::new, blockExplosive);
-    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<TileRadarStation>> TILE_RADAR_STATION = tile("radarstation", TileRadarStation::new, blockRadarStation);
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<TileRadarStation>> TILE_RADAR_STATION = tile("radarstation", TileRadarStation::new, blockRadarStation, blockAdvancedRadar);
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<TileLauncherFrame>> TILE_LAUNCHER_FRAME = tile("launcherframe", TileLauncherFrame::new, blockLaunchSupport);
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<TileLauncherConnector>> TILE_LAUNCHER_CONNECTOR = tile("launcher_connector", TileLauncherConnector::new, blockLaunchConnector);
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<TileLauncherBase>> TILE_LAUNCHER_BASE = tile("launcherbase", TileLauncherBase::new, blockLaunchBase);

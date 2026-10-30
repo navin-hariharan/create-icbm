@@ -7,6 +7,7 @@ import com.createicbm.api.radio.IRadio;
 import com.createicbm.api.radio.IRadioMessage;
 import com.createicbm.api.radio.IRadioReceiver;
 import com.createicbm.api.radio.IRadioSender;
+import com.createicbm.lib.radio.imp.RadioTile;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.resources.ResourceKey;
@@ -61,6 +62,9 @@ public class RadioMap
             {
                 if (!fullMapRangeReceives.contains(receiver))
                 {
+                    // A block entity that was replaced without being removed from the map (chunk reload, a mod
+                    // swapping it) would answer the same message twice, once from its old copy
+                    fullMapRangeReceives.removeIf(old -> isStaleCopyOf(old, receiver));
                     fullMapRangeReceives.add(receiver);
                 }
                 return true;
@@ -73,6 +77,23 @@ public class RadioMap
             }
         }
 
+        return false;
+    }
+
+    /**
+     * @return true if old is a removed block entity radio, or another radio of the same kind at the same position
+     */
+    private static boolean isStaleCopyOf(IRadioReceiver old, IRadioReceiver receiver)
+    {
+        if (old instanceof RadioTile<?> oldTile)
+        {
+            if (oldTile.getHost().isRemoved())
+            {
+                return true;
+            }
+            return old.getClass() == receiver.getClass() && receiver instanceof RadioTile<?> newTile
+                && oldTile.getHost() != newTile.getHost() && oldTile.getBlockPos().equals(newTile.getBlockPos());
+        }
         return false;
     }
 
@@ -215,29 +236,41 @@ public class RadioMap
      *
      * @param sender pushing the message
      * @param packet containing message
+     * @return receivers the message was handed to, they still check the channel themselves
      */
-    public void popMessage(IRadioSender sender, IRadioMessage packet)
+    public int popMessage(IRadioSender sender, IRadioMessage packet)
     {
 
         if(packet == null || packet.getChannel() == null || packet.getChannel().trim().isEmpty() || sender == null) {
             CreateICBM.logger().error("RadarMap[" + dimID + "]: Invalid radio message " + sender + " " + packet, new RuntimeException());
-            return;
+            return 0;
         }
 
         //Cache for senders that know they will be active
         if (sender_to_receivers_cache.containsKey(sender))
         {
-            for (IRadioReceiver receiver : sender_to_receivers_cache.get(sender))
+            int delivered = 0;
+            for (IRadioReceiver receiver : new ArrayList<>(sender_to_receivers_cache.get(sender)))
             {
                 receiver.onMessage(sender, packet);
+                delivered++;
             }
-            return;
+            return delivered;
         }
 
+        int delivered = 0;
+
         //Receivers that have full map range, used for legacy systems mainly
-        for(int i = fullMapRangeReceives.size() - 1; i >= 0; i--)
+        // Drop radios whose block entity is gone, they can't answer and only hid real receivers in diagnostics
+        fullMapRangeReceives.removeIf(r -> r instanceof RadioTile<?> tile && tile.getHost().isRemoved());
+        // Copy, a receiver that launches or breaks blocks can add or remove radios while the message goes out
+        for (IRadioReceiver receiver : new ArrayList<>(fullMapRangeReceives))
         {
-            fullMapRangeReceives.get(i).onMessage(sender, packet);
+            if (receiver != sender)
+            {
+                receiver.onMessage(sender, packet);
+                delivered++;
+            }
         }
 
         //Slow way to update receives with messages
@@ -247,7 +280,7 @@ public class RadioMap
             //Use simpler method if the range of number of entries is small
             if (receive_to_chunks.size() < 200 || (senderRange.upperBound().getX() - senderRange.lowerBound().getX()) > 320 || (senderRange.upperBound().getZ() - senderRange.lowerBound().getZ()) > 320) //20 chunks
             {
-                for (IRadioReceiver receiver : receive_to_chunks.keySet())
+                for (IRadioReceiver receiver : new ArrayList<>(receive_to_chunks.keySet()))
                 {
                     if (receiver != null && receiver != sender)
                     {
@@ -255,6 +288,7 @@ public class RadioMap
                         if (doesOverlap(senderRange, receiverRange) || doesOverlap(receiverRange, senderRange))
                         {
                             receiver.onMessage(sender, packet);
+                            delivered++;
                         }
                     }
                 }
@@ -281,9 +315,11 @@ public class RadioMap
                 for (IRadioReceiver receiver : receivers)
                 {
                     receiver.onMessage(sender, packet);
+                    delivered++;
                 }
             }
         }
+        return delivered;
     }
 
     /**

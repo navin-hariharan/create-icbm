@@ -4,6 +4,7 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.simibubi.create.AllPartialModels;
 import com.simibubi.create.content.kinetics.base.KineticBlockEntityRenderer;
 import com.createicbm.client.create.ICBMPartialModels;
+import com.createicbm.content.reg.BlockReg;
 import net.createmod.catnip.render.CachedBuffers;
 import net.createmod.catnip.render.SuperByteBuffer;
 import net.minecraft.client.renderer.LevelRenderer;
@@ -41,7 +42,10 @@ public class RadarStationRenderer extends KineticBlockEntityRenderer<TileRadarSt
         final float angle = getAngleForBe(radar, radar.getBlockPos(), Direction.Axis.Y);
         // The dish sits in the block above, light it from there
         final int dishLight = radar.getLevel() != null ? LevelRenderer.getLightColor(radar.getLevel(), radar.getBlockPos().above()) : packedLight;
-        CachedBuffers.partial(ICBMPartialModels.RADAR_DISH, state)
+        final var dishModel = state.is(BlockReg.blockAdvancedRadar.get())
+            ? ICBMPartialModels.ADVANCED_RADAR_DISH
+            : ICBMPartialModels.RADAR_DISH;
+        CachedBuffers.partial(dishModel, state)
             .rotateCentered(angle, Direction.UP)
             .light(dishLight)
             .renderInto(poseStack, buffer.getBuffer(RenderType.cutoutMipped()));

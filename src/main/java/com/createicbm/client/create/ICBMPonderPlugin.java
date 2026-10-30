@@ -30,6 +30,7 @@ public class ICBMPonderPlugin implements PonderPlugin
         helper.addStoryBoard(ItemReg.itemLaunchConnector.getId(), "launch_pad", ICBMPonderScenes::launchPad);
         helper.addStoryBoard(ItemReg.itemCruiseLauncher.getId(), "cruise_turret", ICBMPonderScenes::cruiseTurret);
         helper.addStoryBoard(ItemReg.itemRadarStation.getId(), "radar_station", ICBMPonderScenes::radarStation);
+        helper.addStoryBoard(ItemReg.itemAdvancedRadar.getId(), "radar_station", ICBMPonderScenes::radarStation);
 
         // Warheads are deployed onto missile modules and minecarts
         helper.addStoryBoard(ItemReg.itemExplosiveMissile.getId(), "arming", ICBMPonderScenes::arming);
@@ -44,6 +45,7 @@ public class ICBMPonderPlugin implements PonderPlugin
         helper.addToTag(AllCreatePonderTags.KINETIC_APPLIANCES)
             .add(BlockReg.blockLaunchBase.getId())
             .add(BlockReg.blockCruiseLauncher.getId())
-            .add(BlockReg.blockRadarStation.getId());
+            .add(BlockReg.blockRadarStation.getId())
+            .add(BlockReg.blockAdvancedRadar.getId());
     }
 }

@@ -34,6 +34,7 @@ It is a new addon, inspired by the classic **ICBM** mod (see [Credits](#credits)
   - [Launch Controller](#launch-controller)
   - [Cruise Turret](#cruise-turret)
   - [Radar Station](#radar-station)
+  - [Advanced Radar](#advanced-radar)
 - [Missiles](#missiles)
   - [Missile Casing](#missile-casing)
   - [Missile Module](#missile-module)
@@ -170,7 +171,8 @@ client. This is version **1.0.4**.
 | [Launch Connector](#launch-connector) | none | A flat cable for the launch network. |
 | [Launch Controller](#launch-controller) | none | Target, radio channel and the *Launch* button for a whole network. |
 | [Cruise Turret](#cruise-turret) | 6 SU/RPM, shaft below | A turret that aims a missile and fires it straight at the target. |
-| [Radar Station](#radar-station) | 4 SU/RPM, shaft below, 16 RPM or more | Tracks incoming missiles up to 500 blocks away. |
+| [Radar Station](#radar-station) | 4 SU/RPM at 100 m, shaft below, 16 RPM or more | Tracks missiles with a circular scope; higher range raises stress. |
+| [Advanced Radar](#advanced-radar) | Same range-scaled stress as Radar Station, shaft below, 16 RPM or more | Counter-strikes incoming missiles at their recorded launch coordinates. |
 
 A machine runs while its shaft turns at or above its minimum speed and the network isn't overstressed. Engineer's
 Goggles show each machine's charge and status, and every machine has a Ponder scene: hold **W** over it in your
@@ -297,11 +299,12 @@ A rotating turret that swings round to face its target and fires a missile strai
 A spinning dish that watches the sky for missiles carrying a warhead. Surface to Air Missiles and Delivery Missiles
 don't set it off.
 
-- **Power:** 4 SU per RPM from a shaft below, at **16 RPM or more**.
-- **Screen** (right-click): a live radar screen, the **detection range** (default 100, up to 500 blocks), the
-  **trigger range** (default 50, drawn on the screen as an inner box), the radio channel and a redstone switch.
-- **Incoming missiles:** a missile counts as incoming while it flies towards the radar. The radar scans four times a
-  second over a square of its detection range.
+- **Power:** 4 SU per RPM at the default 100-block detection range, from a shaft below, at **16 RPM or more**.
+  Higher detection ranges cost proportionally more Create stress (up to 20 SU/RPM at 500 blocks).
+- **Screen** (right-click): a live, circular radar scope; the **detection range** (default 100, up to 500 blocks),
+  the **trigger range** (default 50, shown as an amber inner ring), the radio channel and a redstone switch.
+- **Incoming missiles:** any missile inside the detection range that flies towards the radar counts as incoming,
+  wherever it is aimed. The radar scans four times a second. The trigger range is only drawn on the scope.
 - **Redstone:** while missiles are incoming it powers every side, one signal level per missile (up to 15). On by
   default. Use the switch on its screen, or right-click it with Redstone Dust, to turn it on or off.
 - **Radio:** every 2 seconds while a missile is incoming, it sends the closest one on its channel. Cruise Turrets on
@@ -312,6 +315,41 @@ don't set it off.
   <img src="doc/images/recipes/radar-station.png" alt="Radar Station recipe" width="80%">
 </p>
 
+### Advanced Radar
+
+<p align="center">
+  <img src="doc/images/machines/advanced-radar.png" alt="Advanced Radar" width="260">
+</p>
+
+A Radar Station upgraded with precision mechanisms that strikes back. It has the same screen, range settings,
+redstone output and power needs as the [Radar Station](#radar-station), but instead of pointing your launchers at the
+incoming missile it sends them to **where that missile was launched from**.
+
+- **Power:** the same as the Radar Station, 4 SU per RPM at 100 blocks of detection range, more for longer ranges, at
+  **16 RPM or more**.
+- **Setup:** give the Advanced Radar a radio channel, and type the same channel into a
+  [Launch Controller](#launch-controller) with loaded Launch Pads, or into [Cruise Turrets](#cruise-turret) loaded
+  with missiles. Their launchers must be linked and loaded as usual.
+- **Counter-strike:** when a missile inside its detection range flies towards it, the radar reads the missile's launch site and sends
+  it on its channel. Every Launch Controller on that channel targets it and fires its pads; every Cruise Turret on that
+  channel aims at it and fires.
+- **What counts as fired:** a missile that leaves the pad, or one that is queued behind a firing delay or a turret that
+  is still turning to aim. After that the radar waits `sam_delay` (2 seconds) before the next missile, and never
+  strikes back twice for the same missile.
+- **When nobody fires** (no receivers, launchers unloaded or empty, a target another mod refused), the radar does not
+  pretend it worked. It tries again every second, up to 30 times per missile, then moves on and logs a warning that
+  says which channel went unanswered.
+- **Skipped:** missiles launched from another dimension, and missiles without a known launch site (spawned by
+  commands, for example).
+- Keep silos that should **not** answer on a different channel: anything on the radar's channel will fire.
+
+<p align="center">
+  <img src="doc/images/advanced-radar-counterstrike.png" alt="Advanced Radar counter-strike: the radar sends the launch site to Launch Controllers and Cruise Turrets on its channel" width="90%">
+</p>
+
+<p align="center">
+  <img src="doc/images/recipes/advanced-radar.png" alt="Advanced Radar recipe" width="80%">
+</p>
 
 ## Missiles
 
@@ -1211,6 +1249,9 @@ threshold, the rating is the chance that each dose is blocked: 0.75 blocks three
 A Launch Controller on the radar's channel fires its pads at the incoming missile's position, so keep your silos on a
 different channel unless that's what you want.
 
+To hit back as well, put an [Advanced Radar](#advanced-radar) on a second channel together with a Launch Controller
+and its armed pads. While your turrets deal with the missile, the controller fires at the place it came from.
+
 ## Storage and automation
 
 - Launch Pads and Cruise Turrets take missiles from hoppers, Create funnels and chutes on any side. A Launch Controller,
@@ -1425,6 +1466,7 @@ still works. The number after → is the **yield**: how many items one craft or 
 | **Launch Connector** | Shaped crafting | `AWA`<br>`WHW`<br>`AWA`<br>`A` Andesite Alloy, `W` Copper Sheet, `H` Hopper | 4× |
 | **Radar Station** | Shaped crafting | `GBG`<br>`ESE`<br>`KCK`<br>`G` Golden Sheet, `B` Brass Sheet, `E` Electron Tube, `S` Launch Controller, `K` Copper Casing, `C` Cogwheel | 1× |
 | **Radar Station** | Create: Mechanical Crafter | `BGB`<br>`PSP`<br>`KHK`<br>`B` Brass Sheet, `G` Golden Sheet, `P` Precision Mechanism, `S` Launch Controller, `K` Copper Casing, `H` Shaft | 1× |
+| **Advanced Radar** | Shaped crafting | `BEB`<br>`PRP`<br>`CBC`<br>`B` Brass Sheet, `E` Electron Tube, `P` Precision Mechanism, `R` Radar Station, `C` Copper Casing | 1× |
 | **Cruise Turret** | Shaped crafting | `BTB`<br>`SLP`<br>`KCK`<br>`B` Brass Sheet, `T` Turntable, `S` Launch Controller, `L` Launch Pad, `P` Precision Mechanism, `K` Copper Sheet, `C` Brass Casing | 1× |
 | **Cruise Turret** | Create: Mechanical Crafter | `CPC`<br>`SLB`<br>`ITI`<br>`C` Copper Sheet, `P` Precision Mechanism, `S` Launch Controller, `L` Launch Pad, `B` Brass Casing, `I` Industrial Iron Block, `T` Turntable | 1× |
 
@@ -1700,6 +1742,32 @@ All under `/icbm`, for operators (permission level 2).
 ## Changelog
 
 ### 1.0.4
+
+**New**
+
+- **Advanced Radar:** an upgraded Radar Station that sends Launch Controllers and Cruise Turrets on its channel to
+  the launch site of incoming missiles. See [Advanced Radar](#advanced-radar).
+- Circular radar scope with range rings and a side console for both radars. Longer detection ranges cost more stress.
+
+**Fixed**
+
+- Advanced Radar counter-strikes that never fired were treated as done and waited the full cooldown. Unanswered or
+  refused tries now retry every second, up to 30 times per missile, and only a launch that really fired or was
+  queued counts.
+- A Launch Controller counted a launch behind a firing delay as a failure, and could count an old firing state as a
+  success. It now checks that a firing package for the new target was actually queued.
+- A Cruise Turret said yes to radio orders it could not carry out (no power to aim, launch blocked) and kept the order.
+  It now checks the launch first and answers that it failed.
+- When another mod cancelled a new target, Launch Controllers and Cruise Turrets fired at their old target.
+- Launch Controllers that missed their launch network or radio registration on load (chunk loading order) now retry
+  every 2 seconds instead of staying deaf until they were broken and placed again.
+- Radios of removed or replaced blocks stayed registered, so one block could answer the same message twice.
+- Cruise Turrets dropped a radar's order to fire a Surface to Air Missile when their launch charge was not full yet.
+  They now finish charging while they turn and then fire.
+- A Cruise Turret already turning towards a missile kept aiming at the spot where the radar first saw it, and the SAM
+  flew there without a lock. It now follows the radar's latest report and the SAM locks onto the missile.
+- Radar scope packets with many contacts were slow to encode.
+- The Advanced Radar mined slowly with a pickaxe and had no Ponder entry.
 - Fixed optimizer interoperability for every registered Create: ICBM entity, including surface-to-air missiles, blast controllers, seats, decoys, and flying blocks.
 - Kept launch pads/radar stations as block entities and detonators/designators as server-authoritative item interactions; entity tick exclusions are applied only to actual entity types.
 - Extended the Entity Culling whitelist to all ICBM block entities as well as all ICBM entities, covering launchers and radar-station visuals.
@@ -1807,5 +1875,9 @@ Entity Culling is client-side rendering/tick-culling and is separately handled b
 ## Diagnostic Logging for ICBM Troubleshooting
 
 Optional diagnostics write focused entries tagged `[ICBM-DIAG]` to `logs/latest.log` and `logs/debug.log`. They are disabled by default to avoid production log traffic; set `debug_icbm_diagnostics = true` in `config/create_icbm-debug.toml` while reproducing an issue, then share both logs. Turn it off after troubleshooting.
+
+Counter-strikes log `RADAR_COUNTERSTRIKE_ACCEPTED` and `RADAR_COUNTERSTRIKE_UNANSWERED` (radar position, channel,
+how many receivers heard it, how many refused, and the try count), and Cruise Turrets log `CRUISE_RADIO_TRIGGER_REFUSED`
+when they turn down a radio order.
 
 The traces include `SERVERCORE_ENTITY_EXEMPTED` and `DOESPOTATOTICK_ENTITY_EXEMPTED` confirmations, missile tick/chunk status, blast execution queue delay, threaded blast computation/application timing, nuclear radioactive-block swap dispatch/completion, gas-frontier growth and skipped unloaded chunks, particle/mushroom-cloud packet send/receive counts. This instrumentation helps isolate failures; it does not itself guarantee a gameplay fix. Disable `debug_icbm_diagnostics` after troubleshooting if you no longer need the extra log traffic.
