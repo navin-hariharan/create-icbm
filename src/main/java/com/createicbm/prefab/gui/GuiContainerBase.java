@@ -151,6 +151,20 @@ public abstract class GuiContainerBase<T extends AbstractContainerMenu> extends 
     }
 
     @Override
+    public void removed()
+    {
+        // Set a value that is still being typed, closing with Esc skipped the focus loss that sends it to the server
+        for (IGuiComponent component : components)
+        {
+            if (component instanceof EditBox && ((EditBox) component).isFocused())
+            {
+                ((EditBox) component).setFocused(false);
+            }
+        }
+        super.removed();
+    }
+
+    @Override
     protected void renderBg(GuiGraphics graphics, float partialTicks, int mouseX, int mouseY)
     {
         graphics.blit(this.getBackground(), this.leftPos, this.topPos, 0, 0, this.imageWidth, this.imageHeight);

@@ -40,7 +40,9 @@ public class BlockExplosive extends BlockICBM
 
     public BlockExplosive()
     {
-        super("explosives", Properties.of().mapColor(MapColor.FIRE).strength(2f, 2f).sound(SoundType.WOOL));
+        // No occlusion: the strap, plates and cap stick out of the cube, and a solid block has no light inside it, so those
+        //  faces rendered black
+        super("explosives", Properties.of().mapColor(MapColor.FIRE).strength(2f, 2f).sound(SoundType.WOOL).noOcclusion());
     }
 
     @Override

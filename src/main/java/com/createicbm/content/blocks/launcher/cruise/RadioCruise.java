@@ -9,9 +9,12 @@ import com.createicbm.api.radio.messages.ITriggerActionMessage;
 import com.createicbm.content.blocks.launcher.FiringPackage;
 import com.createicbm.content.blocks.launcher.LauncherLangs;
 import com.createicbm.content.blocks.launcher.status.LauncherStatus;
-import com.createicbm.content.missile.logic.source.cause.EntityCause;
+import com.createicbm.content.missile.entity.anti.EntitySurfaceToAirMissile;
 import com.createicbm.content.missile.logic.targeting.BasicTargetData;
+import com.createicbm.content.reg.ItemReg;
 import com.createicbm.lib.radio.imp.RadioTile;
+import com.createicbm.lib.radio.messages.CounterstrikeMessage;
+import com.createicbm.lib.radio.messages.IAirDefenceMessage;
 import com.createicbm.lib.radio.messages.RadioTranslations;
 import com.createicbm.lib.radio.messages.TextMessage;
 import com.createicbm.prefab.FakeRadioSender;
@@ -32,9 +35,41 @@ public class RadioCruise extends RadioTile<TileCruiseLauncher> implements IRadio
 
     @Override
     public void onMessage(IRadioSender sender, IRadioMessage packet) {
+        // Counter-strikes at a launch site are for Launch Controllers, a turret keeps its missile for air defence
+        if (packet instanceof CounterstrikeMessage) {
+            return;
+        }
+        // Turrets only answer radars, the Laser Designator and Remote Detonator can't fire them
+        if (sender instanceof FakeRadioSender) {
+            return;
+        }
+        // Air defence is for Surface to Air Missiles, any other missile fired at the sky was wasted
+        if (packet instanceof IAirDefenceMessage && host.missileHolder.getMissileStack().getItem() != ItemReg.itemSAM.get()) {
+            return;
+        }
+        if (packet instanceof IIncomingMissileMessage incoming) {
+            // Right after a launch the turret leaves the alert to a turret that is ready, the radar repeats it
+            if (host.getFiringPackage() == null && host.isOnCooldown()) {
+                return;
+            }
+            // Another turret already took this missile, so the alert spreads over the turrets
+            if (host.getFiringDelay() <= 0 && EntitySurfaceToAirMissile.isClaimedByOther(incoming.getTargetEntity(), host.getBlockPos())) {
+                return;
+            }
+            // A turret already queued for another missile that is still in the air keeps aiming at that one
+            if (host.isQueuedForOtherMissile(incoming.getTargetEntity())) {
+                return;
+            }
+            // One SAM per incoming missile: the radar repeats its alert every couple of seconds, and a second SAM fired
+            //  at a missile that is already being chased lost its target once the first one hit. A turret with a firing
+            //  delay is part of a timed salvo and always answers.
+            if (host.getFiringDelay() <= 0 && EntitySurfaceToAirMissile.isTargetCovered(incoming.getTargetEntity())) {
+                return;
+            }
+        }
         if (canReceive(sender, packet)) {
 
-            // Set target packet, run first as laser-det triggers both (set & fire) from the same packet
+            // Set target packet, run first as a radar alert sets the target and fires from the same packet
             boolean targetApplied = true;
             if(packet instanceof ITargetMessage) {
                 targetApplied = false;
@@ -67,7 +102,8 @@ public class RadioCruise extends RadioTile<TileCruiseLauncher> implements IRadio
                 if(host.getFiringPackage() != null) {
                     // A radar keeps reporting the missile while the turret turns. Follow it, the queued order still
                     // pointed at where the missile was first seen, and the SAM fired there without a lock.
-                    if (packet instanceof IIncomingMissileMessage) {
+                    if (packet instanceof IIncomingMissileMessage incoming) {
+                        host.setAirDefenceTarget(incoming.getTargetEntity());
                         final FiringPackage pending = host.getFiringPackage();
                         pending.setTargetData(new BasicTargetData(host.getTarget()));
                         pending.setOnTriggerCallback(((ITriggerActionMessage) packet)::onTriggerCallback);
@@ -77,7 +113,7 @@ public class RadioCruise extends RadioTile<TileCruiseLauncher> implements IRadio
                     sender.onMessageCallback(this, new TextMessage(getChannel(), LauncherLangs.ERROR_MISSILE_QUEUED));
                     return;
                 }
-                final FiringPackage firingPackage = getFiringPackage(sender, (ITriggerActionMessage) packet);
+                final FiringPackage firingPackage = getFiringPackage((ITriggerActionMessage) packet);
 
                 // Only acknowledge a launch that can happen: a missile, charge and a target out of minimum range, and
                 // a turret that can turn to aim. A queued package that can never fire used to be reported as triggered.
@@ -91,22 +127,17 @@ public class RadioCruise extends RadioTile<TileCruiseLauncher> implements IRadio
                     return;
                 }
                 host.setFiringPackage(firingPackage);
+                if (packet instanceof IIncomingMissileMessage incoming) {
+                    host.setAirDefenceTarget(incoming.getTargetEntity());
+                }
                 sender.onMessageCallback(this, new TextMessage(getChannel(), RadioTranslations.RADIO_LAUNCH_TRIGGERED));
             }
         }
     }
 
-    private @Nonnull FiringPackage getFiringPackage(IRadioSender sender, ITriggerActionMessage packet) {
-        FiringPackage firingPackage;
-        if(sender instanceof FakeRadioSender) {
-            //TODO add radio cause before player, pass in item used
-            firingPackage = new FiringPackage(new BasicTargetData(host.getTarget()), new EntityCause(((FakeRadioSender) sender).player), 0);
-        }
-        else {
-            // TODO set cause to radio
-            firingPackage = new FiringPackage(new BasicTargetData(host.getTarget()), null, 0);
-        }
-
+    private @Nonnull FiringPackage getFiringPackage(ITriggerActionMessage packet) {
+        // TODO set cause to radio
+        final FiringPackage firingPackage = new FiringPackage(new BasicTargetData(host.getTarget()), null, host.getFiringDelay());
         firingPackage.setOnTriggerCallback(packet::onTriggerCallback);
         return firingPackage;
     }

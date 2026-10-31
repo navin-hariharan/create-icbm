@@ -11,6 +11,7 @@ import com.createicbm.content.blocks.launcher.PendingLauncherChunkLoader;
 import com.createicbm.content.blocks.launcher.cruise.gui.ContainerCruiseLauncher;
 import com.createicbm.content.blocks.launcher.network.ILauncherComponent;
 import com.createicbm.content.blocks.launcher.network.LauncherNode;
+import com.createicbm.content.missile.entity.anti.EntitySurfaceToAirMissile;
 import com.createicbm.content.missile.logic.source.cause.EntityCause;
 import com.createicbm.content.missile.logic.source.cause.RedstoneCause;
 import com.createicbm.content.missile.logic.targeting.BasicTargetData;
@@ -26,17 +27,20 @@ import com.createicbm.lib.tile.TickAction;
 import com.createicbm.lib.tile.TickDoOnce;
 import com.createicbm.lib.transform.rotation.EulerAngle;
 import com.createicbm.lib.transform.vector.Pos;
+import com.createicbm.lib.world.MachineChunkLoader;
 import com.createicbm.prefab.gui.IPlayerUsing;
 import com.createicbm.prefab.inventory.InventorySlot;
 import com.createicbm.prefab.inventory.InventoryWithSlots;
 import com.createicbm.prefab.tile.IGuiTile;
 import com.createicbm.prefab.tile.TileKineticMachine;
+import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
+import it.unimi.dsi.fastutil.longs.LongSet;
 import lombok.Getter;
-import lombok.Setter;
 import com.createicbm.content.reg.BlockReg;
 import com.createicbm.lib.capability.holder.ICapabilityHolderTile;
 import com.createicbm.lib.diagnostics.ICBMDiagnostics;
 import net.minecraft.core.HolderLookup;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.phys.shapes.VoxelShape;
@@ -62,7 +66,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.function.BiConsumer;
 
-public class TileCruiseLauncher extends TileKineticMachine implements IGuiTile, ILauncherComponent, IMachineInfo, IPlayerUsing, ICapabilityHolderTile
+public class TileCruiseLauncher extends TileKineticMachine implements MachineChunkLoader.IRadioMachine, IGuiTile, ILauncherComponent, IMachineInfo, IPlayerUsing, ICapabilityHolderTile
 {
     public static final ResourceLocation REGISTRY_NAME = ResourceLocation.fromNamespaceAndPath(ICBMConstants.DOMAIN, "cruiselauncher");
 
@@ -105,6 +109,16 @@ public class TileCruiseLauncher extends TileKineticMachine implements IGuiTile, 
 
     @Getter
     protected FiringPackage firingPackage;
+
+    /** User defined: Time in ticks to wait before firing a missile, like the Launch Pad */
+    @Getter
+    private int firingDelay = 0;
+
+    /** Ticks left before the turret may launch again, set after every launch */
+    private int launchCooldown = 0;
+
+    /** Incoming missile the queued launch is meant for, not saved. Null for any other launch. */
+    private Entity airDefenceTarget;
 
     private final LauncherNode launcherNode = new LauncherNode(this, true);
     public final RadioCruise radio = new RadioCruise(this);
@@ -205,6 +219,12 @@ public class TileCruiseLauncher extends TileKineticMachine implements IGuiTile, 
     {
         final boolean wasPending = this.firingPackage != null;
         this.firingPackage = firingPackage;
+        // A new or finished launch is not for an incoming missile until a radar alert says so
+        if (this.airDefenceTarget != null)
+        {
+            EntitySurfaceToAirMissile.releaseClaim(this.airDefenceTarget, getBlockPos());
+        }
+        this.airDefenceTarget = null;
         // Reconcile every time a pending package is assigned: it is cheap when the ticket already exists, and retries
         // the operation if a prior ticket attempt failed while this launcher was remote from all players.
         if (firingPackage != null || wasPending != (firingPackage != null))
@@ -235,6 +255,20 @@ public class TileCruiseLauncher extends TileKineticMachine implements IGuiTile, 
         return launcherNode;
     }
 
+    /**
+     * Keeps this turret loaded while it listens on a radio channel and holds a missile, so radio orders reach it with
+     * no player nearby. Every turret gets a random channel when placed, so an empty one would stay loaded for nothing.
+     */
+    private void syncMachineChunks()
+    {
+        final LongSet wanted = new LongOpenHashSet();
+        if (!RadioRegistry.EMPTY_HZ.equals(radio.getChannel()) && !missileHolder.getMissileStack().isEmpty())
+        {
+            MachineChunkLoader.addArea(wanted, getBlockPos());
+        }
+        MachineChunkLoader.sync(this, wanted);
+    }
+
     @Override
     public void update()
     {
@@ -244,6 +278,16 @@ public class TileCruiseLauncher extends TileKineticMachine implements IGuiTile, 
         lastRotationUpdate = System.nanoTime();
 
         if(isServer()) {
+            if (launchCooldown > 0)
+            {
+                launchCooldown--;
+            }
+
+            // PERF: offset by position so machines loaded together do not all check on the same tick
+            if (Math.floorMod(ticks + getBlockPos().hashCode(), MachineChunkLoader.SYNC_TICKS) == 0)
+            {
+                syncMachineChunks();
+            }
 
             // Wind up the launch charge from the shaft
             if (energyStorage.getEnergyStored() < energyStorage.getMaxEnergyStored()) {
@@ -265,7 +309,7 @@ public class TileCruiseLauncher extends TileKineticMachine implements IGuiTile, 
                 for (Direction side : Direction.values()) {
                     final int power = level.getSignal(getBlockPos().relative(side), side);
                     if (power > 1 && firingPackage == null) {
-                        setFiringPackage(new FiringPackage(new BasicTargetData(getTarget()), new RedstoneCause(level, getBlockPos(), getBlockState(), side), 0));
+                        setFiringPackage(new FiringPackage(new BasicTargetData(getTarget()), new RedstoneCause(level, getBlockPos(), getBlockState(), side), firingDelay));
                         break;
                     }
                 }
@@ -274,22 +318,87 @@ public class TileCruiseLauncher extends TileKineticMachine implements IGuiTile, 
             // Wait for the launch charge too: a turret that just fired recharges while it turns, firing before that
             // dropped the order. Without rotation it never charges, then the launch fails and the order is dropped.
             final FiringPackage pending = firingPackage;
-            if (pending != null && isAimed() && (isCharged() || getAimSpeedFactor() <= 0)) {
+            // A SAM queued for a missile that is gone, or that SAMs from other turrets will already bring down, stays
+            //  in the turret. A turret with a firing delay is part of a timed salvo and fires anyway, its SAM hunts
+            //  whatever missile it finds.
+            if (pending != null && airDefenceTarget != null && firingDelay <= 0
+                && (!airDefenceTarget.isAlive() || EntitySurfaceToAirMissile.isTargetCovered(airDefenceTarget))) {
+                ICBMDiagnostics.info("CRUISE_AIR_DEFENCE_HOLD pos={} target={} alive={}", getBlockPos(), airDefenceTarget.getUUID(), airDefenceTarget.isAlive());
+                setFiringPackage(null);
+            }
+            else if (pending != null && launchCooldown <= 0 && isAimed() && (isCharged() || getAimSpeedFactor() <= 0)) {
+                // Keep the claim on an incoming missile while the order renews it, it is released when the order ends
+                if (airDefenceTarget != null)
+                {
+                    EntitySurfaceToAirMissile.claimTarget(airDefenceTarget, getBlockPos(), level.getGameTime() + 20);
+                }
                 pending.setCountDown(pending.getCountDown() - 1);
                 if (pending.getCountDown() <= 0) {
                     ICBMDiagnostics.info("LAUNCHER_PACKAGE_FIRE type=cruise pos={} dim={} target={}", getBlockPos(),
                         level.dimension().location(), pending.getTargetData() == null ? "null" : pending.getTargetData().getPosition());
+                    final boolean loaded = !missileHolder.getMissileStack().isEmpty();
+                    final Entity answered = airDefenceTarget;
                     try {
                         pending.launch(launcher);
+                        // A missile that left the turret starts the cooldown, a refused launch does not
+                        if (loaded && missileHolder.getMissileStack().isEmpty())
+                        {
+                            launchCooldown = Math.max(0, ConfigLauncher.CRUISE_LAUNCH_COOLDOWN);
+                        }
                     } catch (RuntimeException exception) {
                         ICBMDiagnostics.error("LAUNCHER_PACKAGE_FIRE_FAILED type=cruise pos=" + getBlockPos()
                             + " dim=" + level.dimension().location(), exception);
                     } finally {
                         setFiringPackage(null);
+                        // The SAM needs a moment to lock on, other turrets leave that missile alone until then
+                        if (answered != null && loaded && missileHolder.getMissileStack().isEmpty())
+                        {
+                            EntitySurfaceToAirMissile.claimTarget(answered, getBlockPos(), level.getGameTime() + 20);
+                        }
                     }
                 }
             }
         }
+    }
+
+    /**
+     * @return true while a launch is queued for a different incoming missile that is still in the air, so a radar
+     * report about another missile doesn't turn the turret away from it
+     */
+    public boolean isQueuedForOtherMissile(Entity missile)
+    {
+        return firingPackage != null && airDefenceTarget != null && airDefenceTarget.isAlive() && airDefenceTarget != missile;
+    }
+
+    /** Names the incoming missile the queued launch answers and reserves it so other turrets take different ones */
+    public void setAirDefenceTarget(Entity target)
+    {
+        if (this.airDefenceTarget != null && this.airDefenceTarget != target)
+        {
+            EntitySurfaceToAirMissile.releaseClaim(this.airDefenceTarget, getBlockPos());
+        }
+        this.airDefenceTarget = target;
+        if (target != null && level != null)
+        {
+            EntitySurfaceToAirMissile.claimTarget(target, getBlockPos(), level.getGameTime() + 100);
+        }
+    }
+
+    /** @return true while the turret waits out the delay after its last launch */
+    public boolean isOnCooldown()
+    {
+        return launchCooldown > 0;
+    }
+
+    public int getLaunchCooldown()
+    {
+        return launchCooldown;
+    }
+
+    /** Negative delays from a typed or packet value count as none */
+    public void setFiringDelay(int firingDelay)
+    {
+        this.firingDelay = Math.max(0, firingDelay);
     }
 
     public void setTarget(Vec3 target)
@@ -453,12 +562,13 @@ public class TileCruiseLauncher extends TileKineticMachine implements IGuiTile, 
             }
         }, () -> new FiringPackage(null, null))
         /* */.nodeInteger("energy", tile -> tile.energyStorage.getEnergyStored(), (tile, i) -> tile.energyStorage.setEnergyStored(i))
+        /* */.nodeInteger("firing_delay", TileCruiseLauncher::getFiringDelay, TileCruiseLauncher::setFiringDelay)
         /* */.nodeINBTSerializable("launcher", launcher -> launcher.launcher)
         .base();
 
     /** Registers packet codexes, block entity type lives in BlockReg */
     public static void register() {
-        PacketCodexReg.register(PACKET_DESCRIPTION, PACKET_RADIO_HZ, PACKET_RADIO_DISABLE, PACKET_TARGET, PACKET_GUI, PACKET_LAUNCH);
+        PacketCodexReg.register(PACKET_DESCRIPTION, PACKET_RADIO_HZ, PACKET_RADIO_DISABLE, PACKET_TARGET, PACKET_FIRING_DELAY, PACKET_GUI, PACKET_LAUNCH);
     }
 
     public static final PacketCodexTile<TileCruiseLauncher, TileCruiseLauncher> PACKET_DESCRIPTION = (PacketCodexTile<TileCruiseLauncher, TileCruiseLauncher>) new PacketCodexTile<TileCruiseLauncher, TileCruiseLauncher>(REGISTRY_NAME, "description")
@@ -490,7 +600,13 @@ public class TileCruiseLauncher extends TileKineticMachine implements IGuiTile, 
         .nodeInt((t) -> t.energyStorage.getEnergyStored(), (t, i) -> t.energyStorage.setEnergyStored(i))
         .nodeString((t) -> t.radio.getChannel(), (t, s) -> t.radio.setChannel(s))
         .nodeBoolean((t) -> t.radio.isDisabled(), (t, b) -> t.radio.setDisabled(b))
-        .nodeVec3d(TileCruiseLauncher::getTarget, TileCruiseLauncher::setTarget);
+        .nodeVec3d(TileCruiseLauncher::getTarget, TileCruiseLauncher::setTarget)
+        .nodeInt(TileCruiseLauncher::getFiringDelay, TileCruiseLauncher::setFiringDelay);
+
+    public static final PacketCodexTile<TileCruiseLauncher, TileCruiseLauncher> PACKET_FIRING_DELAY = (PacketCodexTile<TileCruiseLauncher, TileCruiseLauncher>) new PacketCodexTile<TileCruiseLauncher, TileCruiseLauncher>(REGISTRY_NAME, "firing.delay")
+        .fromClient()
+        .nodeInt(TileCruiseLauncher::getFiringDelay, TileCruiseLauncher::setFiringDelay)
+        .onFinished((tile, target, player) -> tile.setChanged());
 
     public static final PacketCodexTile<TileCruiseLauncher, TileCruiseLauncher> PACKET_LAUNCH = (PacketCodexTile<TileCruiseLauncher, TileCruiseLauncher>) new PacketCodexTile<TileCruiseLauncher, TileCruiseLauncher>(REGISTRY_NAME, "launch")
         .fromClient()

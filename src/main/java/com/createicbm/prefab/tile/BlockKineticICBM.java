@@ -3,6 +3,7 @@ package com.createicbm.prefab.tile;
 import com.simibubi.create.content.kinetics.base.IRotate;
 import com.createicbm.lib.InventoryUtility;
 import com.createicbm.lib.kinetic.KineticBlockHooks;
+import com.createicbm.lib.world.MachineChunkLoader;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.entity.LivingEntity;
@@ -55,6 +56,11 @@ public abstract class BlockKineticICBM extends BlockICBM implements IRotate
         if (dropInventory && !state.is(newState.getBlock()))
         {
             InventoryUtility.dropInventory(world, pos);
+        }
+        if (!state.is(newState.getBlock()))
+        {
+            // A radio machine's chunks stay loaded only while it stands
+            MachineChunkLoader.release(world, pos);
         }
         KineticBlockHooks.onRemove(state, world, pos, newState);
     }

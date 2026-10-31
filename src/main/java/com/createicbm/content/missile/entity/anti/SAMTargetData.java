@@ -5,6 +5,7 @@ import com.createicbm.api.CreateICBMAPI;
 import com.createicbm.api.missiles.parts.IMissileTarget;
 import com.createicbm.api.reg.obj.IBuilderRegistry;
 import com.createicbm.config.missile.ConfigMissile;
+import com.createicbm.content.missile.entity.CapabilityMissile;
 import com.createicbm.content.missile.entity.EntityMissile;
 import com.createicbm.lib.buildable.BuildableObject;
 import com.createicbm.lib.radar.RadarEntity;
@@ -121,10 +122,16 @@ public class SAMTargetData extends BuildableObject<SAMTargetData, IBuilderRegist
     private boolean isValid(Entity entity) {
         return entity instanceof EntityMissile
             && !(entity instanceof EntitySurfaceToAirMissile)
-            && entity.isAlive();
-        //TODO setup a FoF system to prevent targeting friendly missiles
+            && entity.isAlive()
+            // Friend or foe: never chase a missile launched on this SAM's own radio channel
+            && !CapabilityMissile.isFriendly(entity, host.getMissileCapability().getRadioChannel());
         //TODO link to radar system so we can prioritize targets
         //TODO create missile that can fake out ABs
+    }
+
+    /** @return the missile this SAM is locked on, without picking a new one from the scan queue */
+    public Entity getLockedTarget() {
+        return currentTarget;
     }
 
     public Entity getTarget() {

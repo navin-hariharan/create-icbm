@@ -31,11 +31,15 @@ public class MissileTrackerData
     public double startX, startZ;   //Where the simulation started
     public int totalTicks;          //Simulation length in seconds
 
+    /** Radio channel of the launch site, radars on it don't warn about this missile */
+    public String radioChannel = "";
+
     //Constructors
     public MissileTrackerData(EntityMissile<?> missile)
     {
         targetPos = new Pos(missile.getMissileCapability().getTargetData().getPosition()); //TODO switch to storing targeting data
         flightId = missile.getMissileCapability().getFlightId();
+        radioChannel = missile.getMissileCapability().getRadioChannel();
         startX = missile.getX();
         startZ = missile.getZ();
         missileData = new CompoundTag();
@@ -63,6 +67,7 @@ public class MissileTrackerData
         startX = nbt.contains("start_x") ? nbt.getDouble("start_x") : targetPos.x();
         startZ = nbt.contains("start_z") ? nbt.getDouble("start_z") : targetPos.z();
         totalTicks = nbt.contains("total_ticks") ? nbt.getInt("total_ticks") : ticksLeftToTarget;
+        radioChannel = nbt.getString("radio_channel");
 
         // Fix old saves, [< 4.2.0] didn't include id and is using the pre-missile rewrite data
         if(!missileData.contains("id")) {
@@ -78,6 +83,10 @@ public class MissileTrackerData
         nbt.putUUID("flight_id", flightId);
         nbt.putDouble("start_x", startX);
         nbt.putDouble("start_z", startZ);
+        if (!radioChannel.isEmpty())
+        {
+            nbt.putString("radio_channel", radioChannel);
+        }
         nbt.putInt("total_ticks", totalTicks);
         return nbt;
     }

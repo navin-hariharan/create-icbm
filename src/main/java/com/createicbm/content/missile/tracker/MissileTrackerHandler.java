@@ -8,6 +8,7 @@ import com.createicbm.content.missile.entity.EntityMissile;
 import com.createicbm.content.blocks.launcher.PendingLauncherChunkLoader;
 import com.createicbm.content.missile.entity.delivery.EntityDeliveryMissile;
 import com.createicbm.content.missile.entity.explosive.EntityExplosiveMissile;
+import com.createicbm.lib.world.MachineChunkLoader;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
@@ -266,6 +267,7 @@ public class MissileTrackerHandler
             event.register(CHUNK_TICKETS);
             event.register(SIMULATION_KEEPALIVE_TICKETS);
             event.register(PendingLauncherChunkLoader.TICKET_CONTROLLER);
+            event.register(MachineChunkLoader.TICKETS);
         }
     }
 }

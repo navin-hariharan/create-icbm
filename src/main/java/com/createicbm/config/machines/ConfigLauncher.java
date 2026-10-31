@@ -49,6 +49,13 @@ public class ConfigLauncher
     @Config.RangeDouble(min = 0, max = 1024)
     public static double CRUISE_TURRET_STRESS = 6;
 
+    @Config.Name("cruise_turret_launch_cooldown")
+    @Config.Comment("Ticks a cruise turret waits after each launch before it fires or answers a radar alert again (20 ticks = 1 second). "
+        + "The default lets a turret fire two SAMs well inside the 15 second radar warning, so 8 turrets with 2 SAMs each can answer 16 incoming missiles. "
+        + "It runs next to the wind-up (wind_up_seconds), the slower of the two sets the pace. 0 = no extra delay.")
+    @Config.RangeInt(min = 0, max = 1200)
+    public static int CRUISE_LAUNCH_COOLDOWN = 20;
+
     @Config.Name("cruise_turret_aim_rpm")
     @Config.Comment("Shaft speed at which the cruise turret turns at its normal aim speed (10 degrees a tick). It aims slower below and faster above, up to 4x.")
     @Config.RangeDouble(min = 1, max = 256)

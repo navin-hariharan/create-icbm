@@ -38,6 +38,14 @@ public class GuiTextFieldBase extends EditBox implements IGuiComponent {
 
     @Override
     public boolean onKeyTyped(int keyCode, int scanCode, int modifiers) {
+        // Enter sets the typed value, the same as clicking away from the box
+        if(isFocused() && (keyCode == GLFW.GLFW_KEY_ENTER || keyCode == GLFW.GLFW_KEY_KP_ENTER)) {
+            setFocused(false);
+            if(container != null && container.getFocused() == this) {
+                container.setFocused(null);
+            }
+            return true;
+        }
         // Consume keys while typing so the inventory key doesn't close the screen
         if(isFocused() && keyCode != GLFW.GLFW_KEY_ESCAPE) {
             keyPressed(keyCode, scanCode, modifiers);

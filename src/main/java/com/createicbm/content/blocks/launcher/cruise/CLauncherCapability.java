@@ -13,6 +13,7 @@ import com.createicbm.config.missile.ConfigMissile;
 import com.createicbm.content.blocks.launcher.FiringPackage;
 import com.createicbm.content.blocks.launcher.LauncherBaseCapability;
 import com.createicbm.content.blocks.launcher.status.LaunchedWithMissile;
+import com.createicbm.content.missile.entity.CapabilityMissile;
 import com.createicbm.content.missile.logic.flight.DirectFlightLogic;
 import com.createicbm.content.missile.logic.source.ActionSource;
 import com.createicbm.content.missile.logic.source.cause.CausedByBlock;
@@ -95,8 +96,15 @@ public class CLauncherCapability extends LauncherBaseCapability {
             if (host.getAimSpeedFactor() <= 0) {
                 return LauncherStatus.ERROR_POWER;
             }
-            host.setFiringPackage(new FiringPackage(target, cause, 0));
+            host.setFiringPackage(new FiringPackage(target, cause, host.getFiringDelay()));
             return LauncherStatus.FIRING_AIMING; // TODO return aiming status, with callback to check if did fire
+        }
+
+        // Firing delay like the Launch Pad, skipped when a waiting order is the one firing now
+        // and after a launch the turret waits out its cooldown, the order is queued and fires when it ends
+        if (host.getFiringPackage() == null && (host.getFiringDelay() > 0 || host.isOnCooldown())) {
+            host.setFiringPackage(new FiringPackage(target, cause, host.getFiringDelay()));
+            return new FiringWithDelay(Math.max(host.getFiringDelay(), host.getLaunchCooldown()));
         }
 
         final CausedByBlock selfCause = new CausedByBlock(host.getLevel(), host.getBlockPos(), host.getBlockState());
@@ -127,6 +135,10 @@ public class CLauncherCapability extends LauncherBaseCapability {
 
                     //Setup missile
                     missile.setMissileSource(missileSource);
+                    // Friend or foe: radars and SAMs on this turret's channel leave the missile alone
+                    if (missile instanceof CapabilityMissile capability) {
+                        capability.setRadioChannel(host.radio.getChannel());
+                    }
                     missile.setTargetData(target);
                     missile.setFlightLogic(new DirectFlightLogic(ConfigMissile.CRUISE_FUEL));
                     missile.launch();

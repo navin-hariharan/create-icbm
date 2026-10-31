@@ -7,13 +7,23 @@ import com.createicbm.content.missile.entity.EntityMissile;
 import com.createicbm.content.missile.logic.flight.FollowTargetLogic;
 import com.createicbm.content.reg.EntityReg;
 import com.createicbm.content.reg.ItemReg;
+import com.createicbm.prefab.entity.EntityICBM;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.level.entity.EntityTypeTest;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.neoforged.neoforge.capabilities.EntityCapability;
 
 import javax.annotation.Nullable;
+import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Created by Robin Seifert on 11/30/2021.
@@ -24,6 +34,10 @@ public class EntitySurfaceToAirMissile extends EntityMissile<EntitySurfaceToAirM
     public final SAMTargetData scanLogic = new SAMTargetData(this);
 
     private boolean hasStartedFollowing = false;
+
+    /** Ticks without a target after it lost the one it followed, enough for two scans for another missile */
+    private static final int LOST_TARGET_TICKS = 25;
+    private int lostTargetTicks = 0;
 
     public EntitySurfaceToAirMissile(EntityType<? extends EntitySurfaceToAirMissile> type, Level world) {
         super(type, world);
@@ -57,6 +71,18 @@ public class EntitySurfaceToAirMissile extends EntityMissile<EntitySurfaceToAirM
                 this.getMissileCapability().switchFlightLogic(new FollowTargetLogic(ConfigMissile.SAM_MISSILE.FUEL));
             }
 
+            // The missile it followed is gone (shot down by another SAM, landed or left the radar): look for another
+            //  one close by, and blow up in the air if there is none instead of flying off into the sky
+            if (hasStartedFollowing && currentTarget == null) {
+                if (++lostTargetTicks > LOST_TARGET_TICKS) {
+                    selfDestruct();
+                    return;
+                }
+            }
+            else {
+                lostTargetTicks = 0;
+            }
+
             //TODO move to object that gets a tick() invoke `ProximityKillHandler`
             //Handle kill target logic
             if (currentTarget != null) {
@@ -72,6 +98,65 @@ public class EntitySurfaceToAirMissile extends EntityMissile<EntitySurfaceToAirM
 
         //Normal update logic
         super.tick();
+    }
+
+    private record Claim(BlockPos owner, long until) {}
+
+    /** Incoming missiles a turret has queued a SAM for, so one alert does not make every turret fire at the same missile */
+    private static final Map<UUID, Claim> CLAIMS = new ConcurrentHashMap<>();
+
+    /** A turret reserves an incoming missile until the given game time */
+    public static void claimTarget(@Nullable Entity target, BlockPos owner, long until) {
+        if (target == null) {
+            return;
+        }
+        if (CLAIMS.size() > 64) {
+            final long now = target.level().getGameTime();
+            CLAIMS.values().removeIf(claim -> claim.until() < now);
+        }
+        CLAIMS.put(target.getUUID(), new Claim(owner.immutable(), until));
+    }
+
+    /** Drops the reservation if the turret still holds it */
+    public static void releaseClaim(@Nullable Entity target, BlockPos owner) {
+        if (target != null) {
+            CLAIMS.computeIfPresent(target.getUUID(), (id, claim) -> claim.owner().equals(owner) ? null : claim);
+        }
+    }
+
+    /** @return true when another turret has reserved this missile and the reservation has not run out */
+    public static boolean isClaimedByOther(@Nullable Entity target, BlockPos self) {
+        if (target == null) {
+            return false;
+        }
+        final Claim claim = CLAIMS.get(target.getUUID());
+        return claim != null && !claim.owner().equals(self) && claim.until() >= target.level().getGameTime();
+    }
+
+    /** Harmless burst in the air, no blast and no block damage */
+    private void selfDestruct() {
+        if (level() instanceof ServerLevel serverLevel) {
+            serverLevel.sendParticles(ParticleTypes.EXPLOSION, getX(), getY(), getZ(), 1, 0, 0, 0, 0);
+            serverLevel.playSound(null, getX(), getY(), getZ(), SoundEvents.GENERIC_EXPLODE.value(), SoundSource.BLOCKS, 2f, 1.4f);
+        }
+        this.discard();
+    }
+
+    /**
+     * @return true when SAMs already following the missile carry enough damage to bring it down, so another turret
+     * keeps its SAM instead of firing a second one that would lose its target and be wasted
+     */
+    public static boolean isTargetCovered(Entity target) {
+        if (target == null || !(target.level() instanceof ServerLevel level)) {
+            return false;
+        }
+        final int chasing = level.getEntities(EntityTypeTest.forClass(EntitySurfaceToAirMissile.class),
+            sam -> sam.isAlive() && sam.scanLogic.getLockedTarget() == target).size();
+        if (chasing == 0) {
+            return false;
+        }
+        final float health = target instanceof EntityICBM icbm ? icbm.getHealth() : 1;
+        return ConfigMissile.SAM_MISSILE.ATTACK_DAMAGE <= 0 || chasing * ConfigMissile.SAM_MISSILE.ATTACK_DAMAGE >= health;
     }
 
     @Nullable

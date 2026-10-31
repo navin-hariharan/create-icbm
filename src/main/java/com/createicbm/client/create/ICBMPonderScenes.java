@@ -53,7 +53,7 @@ public final class ICBMPonderScenes
 
         scene.overlay().showText(60)
             .attachKeyFrame()
-            .text("Launch Pads hold a missile ready for launch")
+            .text("Launch Pads hold a missile ready for launch. Right-click one with a missile to load it")
             .pointAt(util.vector().topOf(pad))
             .placeNearTarget();
         scene.idle(70);
@@ -85,6 +85,22 @@ public final class ICBMPonderScenes
             .placeNearTarget();
         scene.idle(80);
 
+        final Vec3 padTop = util.vector().topOf(pad);
+        scene.overlay().showControls(padTop, Pointing.DOWN, 50).rightClick();
+        scene.idle(10);
+        scene.overlay().showText(80)
+            .attachKeyFrame()
+            .text("Right-click the pad to set its lock height: how far the missile climbs straight up before it turns towards the target")
+            .pointAt(padTop)
+            .placeNearTarget();
+        scene.idle(90);
+
+        scene.overlay().showText(70)
+            .text("The same menu takes a firing delay in ticks, handy for firing pads one after another")
+            .pointAt(padTop)
+            .placeNearTarget();
+        scene.idle(80);
+
         scene.world().showSection(controllerSide, Direction.SOUTH);
         scene.idle(15);
 
@@ -99,10 +115,16 @@ public final class ICBMPonderScenes
         scene.overlay().showControls(controllerFront, Pointing.DOWN, 50).rightClick();
         scene.idle(10);
         scene.overlay().showText(70)
-            .text("Set a target in the controller and fire every ready pad in the group")
+            .text("Set a target in the controller and fire every ready pad linked to it")
             .pointAt(controllerFront)
             .placeNearTarget();
         scene.idle(80);
+
+        scene.overlay().showText(80)
+            .text("Redstone on the controller fires it too, and so do a Remote Detonator, Laser Designator or Advanced Radar on its radio channel")
+            .pointAt(controllerFront)
+            .placeNearTarget();
+        scene.idle(90);
 
         scene.world().modifyBlockEntity(pad, TileLauncherBase.class, tile -> tile.cachedMissileStack = ItemStack.EMPTY);
         scene.effects().indicateSuccess(pad);
@@ -166,7 +188,21 @@ public final class ICBMPonderScenes
         scene.idle(80);
 
         scene.overlay().showText(70)
-            .text("Once it is on target and fully wound, a radio signal or the menu fires the missile")
+            .text("The menu also takes a firing delay in ticks, counted once the turret is on target and fully wound")
+            .pointAt(top)
+            .placeNearTarget();
+        scene.idle(80);
+
+        scene.overlay().showText(80)
+            .attachKeyFrame()
+            .text("A radar alert on its radio channel, a redstone signal or the menu's launch button then fires the missile")
+            .pointAt(top)
+            .placeNearTarget();
+        scene.idle(90);
+
+        scene.overlay().showText(70)
+            .colored(PonderPalette.RED)
+            .text("Remote Detonators and Laser Designators only fire Launch Controllers, a turret ignores them")
             .pointAt(top)
             .placeNearTarget();
         scene.idle(80);
@@ -226,11 +262,9 @@ public final class ICBMPonderScenes
         scene.world().showSection(util.select().fromTo(1, 1, 2, 1, 2, 2), Direction.EAST);
         scene.idle(15);
         final Vec3 radarTop = util.vector().topOf(radar);
-        scene.overlay().showControls(radarTop, Pointing.DOWN, 40).rightClick().withItem(new ItemStack(Items.REDSTONE));
-        scene.idle(10);
         scene.overlay().showText(70)
             .attachKeyFrame()
-            .text("Right-click it with Redstone to switch on its redstone output")
+            .text("Its redstone output starts switched on. Right-click it with Redstone to turn it off or back on")
             .pointAt(radarTop)
             .placeNearTarget();
         scene.idle(80);
@@ -239,8 +273,22 @@ public final class ICBMPonderScenes
         scene.effects().indicateRedstone(util.grid().at(1, 2, 2));
         scene.overlay().showText(80)
             .colored(PonderPalette.RED)
-            .text("A missile heading into its trigger range now raises a redstone signal, and an alert on its radio channel")
+            .text("A missile flying towards it now raises a redstone signal, and an alert on its radio channel")
             .pointAt(util.vector().blockSurface(util.grid().at(1, 2, 2), Direction.WEST))
+            .placeNearTarget();
+        scene.idle(90);
+
+        scene.overlay().showText(80)
+            .attachKeyFrame()
+            .text("Cruise Turrets on that channel fire at the missile. Missiles launched by machines on the same channel are friendly and ignored")
+            .pointAt(radarTop)
+            .placeNearTarget();
+        scene.idle(90);
+
+        scene.overlay().showText(80)
+            .colored(PonderPalette.GREEN)
+            .text("An Advanced Radar also has the Launch Controllers on its channel strike back at the launch site")
+            .pointAt(radarTop)
             .placeNearTarget();
         scene.idle(90);
         scene.markAsFinished();

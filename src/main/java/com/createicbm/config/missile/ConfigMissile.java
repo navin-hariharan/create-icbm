@@ -61,6 +61,15 @@ public class ConfigMissile
     @Config.Comment("A missile stays a real, visible entity while a player is within the server view distance of it, instead of vanishing into the missile tracker as soon as the chunks ahead stop ticking. The chunks ahead are kept entity-ticking for it (see max_missile_chunk_tickets). Far from every player it is simulated as before.")
     public static boolean KEEP_VISIBLE_IN_FLIGHT = true;
 
+    @Config.Name("stall_rescue")
+    @Config.Comment("A missile that stops ticking for stall_rescue_ticks while it flies (an optimisation mod throttling far entities, a chunk that never starts ticking) is handed to the missile tracker, which flies it to its target without needing loaded chunks. A missile that stalls right above its target goes off there. Turn off only to debug.")
+    public static boolean STALL_RESCUE = true;
+
+    @Config.Name("stall_rescue_ticks")
+    @Config.Comment("Server ticks a flying missile may go without ticking before stall_rescue takes over.")
+    @Config.RangeInt(min = 20, max = 1200)
+    public static int STALL_RESCUE_TICKS = 60;
+
     @Config.Name("max_missile_chunk_tickets")
     @Config.Comment("Most chunks all missiles of one dimension hold loaded and entity-ticking ahead of them together (see direct_fire_chunk_loading).\nOn a server with a big salvo in the air this keeps chunk loading and world generation bounded; each missile always keeps its own chunk and the next one.")
     @Config.RangeInt(min = 2, max = 100000)

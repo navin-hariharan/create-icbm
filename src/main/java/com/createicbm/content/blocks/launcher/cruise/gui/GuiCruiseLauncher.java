@@ -20,6 +20,7 @@ public class GuiCruiseLauncher extends GuiContainerBase<ContainerCruiseLauncher>
     // Localizations
     private static final String LANG_KEY = "gui.launcher.cruise";
     private static final String GUI_NAME = LANG_KEY + ".name";
+    private static final Component FIRING_DELAY_TOOLTIP = Component.translatable("gui.create_icbm:cruiselauncher.firing_delay");
 
     // Texture
     public static final ResourceLocation TEXTURE = ResourceLocation.fromNamespaceAndPath(ICBMConstants.DOMAIN, ICBMConstants.GUI_DIRECTORY + "gui_cruise_launcher.png");
@@ -51,6 +52,10 @@ public class GuiCruiseLauncher extends GuiContainerBase<ContainerCruiseLauncher>
         addComponent(TextInput.textField(componentID++, font, 135, 17, 34, 12,
             tileEntity.radio::getChannel, tileEntity.radio::setChannel, (o) -> TileCruiseLauncher.PACKET_RADIO_HZ.sendToServer(tileEntity)));
 
+        // Firing delay, like the Launch Pad
+        addComponent(TextInput.intField(componentID++, font, 133, 33, 30, 12,
+            tileEntity::getFiringDelay, tileEntity::setFiringDelay, (o) -> TileCruiseLauncher.PACKET_FIRING_DELAY.sendToServer(tileEntity)));
+
         // Launch button
         addComponent(new LaunchButton(0, leftPos + 24, topPos + 38)
             .doDrawDisabledGlass()
@@ -69,6 +74,9 @@ public class GuiCruiseLauncher extends GuiContainerBase<ContainerCruiseLauncher>
         addComponent(new DisableButton(1, leftPos + 119, topPos + 16, tileEntity.radio::isDisabled)
             .setAction(() -> TileCruiseLauncher.PACKET_RADIO_DISABLE.sendToServer(tileEntity))
         );
+
+        // Firing delay tooltip
+        addComponent(new TooltipTranslations(119, 32, 14, 14, FIRING_DELAY_TOOLTIP).withDelay(1));
 
         // Target tooltip
         addComponent(new TooltipTranslations(2, 16, 14, 14, LauncherLangs.TRANSLATION_TOOLTIP_TARGET).withDelay(1));

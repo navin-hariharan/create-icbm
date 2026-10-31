@@ -1,5 +1,7 @@
 package com.createicbm.content.blocks.launcher.screen;
 
+import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
+import it.unimi.dsi.fastutil.longs.LongSet;
 import net.minecraft.world.entity.Entity;
 import com.createicbm.content.missile.logic.source.cause.EntityCause;
 import com.createicbm.ICBMConstants;
@@ -13,6 +15,7 @@ import com.createicbm.api.missiles.parts.IMissileTarget;
 import com.createicbm.config.ConfigMain;
 import com.createicbm.content.blocks.launcher.LauncherLangs;
 import com.createicbm.content.blocks.launcher.LauncherSolution;
+import com.createicbm.content.blocks.launcher.base.TileLauncherBase;
 import com.createicbm.content.blocks.launcher.network.ILauncherComponent;
 import com.createicbm.content.blocks.launcher.network.LauncherEntry;
 import com.createicbm.content.blocks.launcher.network.LauncherNode;
@@ -25,6 +28,7 @@ import com.createicbm.lib.network.lambda.tile.PacketCodexTile;
 import com.createicbm.lib.radio.RadioRegistry;
 import com.createicbm.lib.saving.NbtSaveHandler;
 import com.createicbm.lib.tile.TickAction;
+import com.createicbm.lib.world.MachineChunkLoader;
 import com.createicbm.prefab.gui.IPlayerUsing;
 import com.createicbm.prefab.tile.IGuiTile;
 import com.createicbm.prefab.tile.TileMachine;
@@ -58,7 +62,7 @@ import java.util.stream.Collectors;
  *
  * @author Calclavia
  */
-public class TileLauncherScreen extends TileMachine implements ILauncherComponent, IMachineInfo, IPlayerUsing, IGuiTile, ICapabilityHolderTile
+public class TileLauncherScreen extends TileMachine implements MachineChunkLoader.IRadioMachine, ILauncherComponent, IMachineInfo, IPlayerUsing, IGuiTile, ICapabilityHolderTile
 {
     public static final ResourceLocation REGISTRY_NAME = ResourceLocation.fromNamespaceAndPath(ICBMConstants.DOMAIN, "launcherscreen");
 
@@ -120,6 +124,7 @@ public class TileLauncherScreen extends TileMachine implements ILauncherComponen
                     getNetworkNode().connectToTiles();
                 }
                 RadioRegistry.add(radioCap);
+                syncMachineChunks();
             }
 
             //Only launch if redstone
@@ -341,6 +346,27 @@ public class TileLauncherScreen extends TileMachine implements ILauncherComponen
         {
             RadioRegistry.add(radioCap);
         }
+    }
+
+    /**
+     * Keeps this screen and its launch pads loaded while it listens on a radio channel and a pad holds a missile, so
+     * the Laser Designator, Remote Detonator and radars reach it with no player nearby. Every machine gets a random
+     * channel when placed, so an unarmed site would otherwise stay loaded for nothing.
+     */
+    private void syncMachineChunks()
+    {
+        final LongSet wanted = new LongOpenHashSet();
+        if (!RadioRegistry.EMPTY_HZ.equals(radioCap.getChannel()) && getNetworkNode().getNetwork() != null
+            && getNetworkNode().getNetwork().streamLaunchers(-1).anyMatch(entry -> entry.getHost() instanceof TileLauncherBase pad
+                && !pad.isRemoved() && !pad.getMissileStack().isEmpty()))
+        {
+            MachineChunkLoader.addArea(wanted, getBlockPos());
+            getNetworkNode().getNetwork().streamLaunchers(-1)
+                .map(LauncherEntry::getHost)
+                .filter(host -> host != null && !host.isRemoved())
+                .forEach(host -> MachineChunkLoader.addArea(wanted, host.getBlockPos()));
+        }
+        MachineChunkLoader.sync(this, wanted);
     }
 
     @Override

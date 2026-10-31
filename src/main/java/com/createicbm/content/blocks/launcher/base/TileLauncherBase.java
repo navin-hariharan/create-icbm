@@ -95,11 +95,14 @@ public class TileLauncherBase extends TileKineticMachine implements ILauncherCom
 
     private final LauncherNode launcherNode = new LauncherNode(this, true);
 
+    /** Highest lock height the pad takes, in blocks */
+    public static final int MAX_LOCK_HEIGHT = 256;
+
     /** User defined: Time in ticks to wait before firing a missile */
-    @Getter @Setter
+    @Getter
     private int firingDelay = 0;
     /** User defined: Height to move before changing direction */
-    @Getter @Setter
+    @Getter
     private int lockHeight = 3;
     /** User defined: Group of missiles */
     @Getter @Setter
@@ -260,6 +263,16 @@ public class TileLauncherBase extends TileKineticMachine implements ILauncherCom
         // Restore/reconcile the persisted ticket only after the chunk and block entity are fully loaded.
         PendingLauncherChunkLoader.sync(this, this.firingPackage != null);
         launcherNode.connectToTiles();
+    }
+
+    public void setFiringDelay(int firingDelay)
+    {
+        this.firingDelay = Math.max(0, firingDelay);
+    }
+
+    public void setLockHeight(int lockHeight)
+    {
+        this.lockHeight = Math.max(0, Math.min(MAX_LOCK_HEIGHT, lockHeight));
     }
 
     /** Sets the queued launch and keeps this block entity ticking while a launch is pending. */
