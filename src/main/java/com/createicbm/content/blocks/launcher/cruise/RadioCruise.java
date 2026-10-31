@@ -48,7 +48,6 @@ public class RadioCruise extends RadioTile<TileCruiseLauncher> implements IRadio
             return;
         }
         if (packet instanceof IIncomingMissileMessage incoming) {
-<<<<<<< HEAD
             // Right after a launch the turret leaves the alert to a turret that is ready, the radar repeats it
             if (host.getFiringPackage() == null && host.isOnCooldown()) {
                 return;
@@ -57,8 +56,6 @@ public class RadioCruise extends RadioTile<TileCruiseLauncher> implements IRadio
             if (host.getFiringDelay() <= 0 && EntitySurfaceToAirMissile.isClaimedByOther(incoming.getTargetEntity(), host.getBlockPos())) {
                 return;
             }
-=======
->>>>>>> 8c585e575e0a2341150a0f65876d3e5ffb47e7d5
             // A turret already queued for another missile that is still in the air keeps aiming at that one
             if (host.isQueuedForOtherMissile(incoming.getTargetEntity())) {
                 return;

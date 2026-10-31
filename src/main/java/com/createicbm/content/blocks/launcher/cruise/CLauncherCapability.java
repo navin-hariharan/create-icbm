@@ -101,16 +101,10 @@ public class CLauncherCapability extends LauncherBaseCapability {
         }
 
         // Firing delay like the Launch Pad, skipped when a waiting order is the one firing now
-<<<<<<< HEAD
         // and after a launch the turret waits out its cooldown, the order is queued and fires when it ends
         if (host.getFiringPackage() == null && (host.getFiringDelay() > 0 || host.isOnCooldown())) {
             host.setFiringPackage(new FiringPackage(target, cause, host.getFiringDelay()));
             return new FiringWithDelay(Math.max(host.getFiringDelay(), host.getLaunchCooldown()));
-=======
-        if (host.getFiringPackage() == null && host.getFiringDelay() > 0) {
-            host.setFiringPackage(new FiringPackage(target, cause, host.getFiringDelay()));
-            return new FiringWithDelay(host.getFiringDelay());
->>>>>>> 8c585e575e0a2341150a0f65876d3e5ffb47e7d5
         }
 
         final CausedByBlock selfCause = new CausedByBlock(host.getLevel(), host.getBlockPos(), host.getBlockState());
