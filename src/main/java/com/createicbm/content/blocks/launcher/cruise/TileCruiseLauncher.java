@@ -114,10 +114,15 @@ public class TileCruiseLauncher extends TileKineticMachine implements MachineChu
     @Getter
     private int firingDelay = 0;
 
+<<<<<<< HEAD
     /** Ticks left before the turret may launch again, set after every launch */
     private int launchCooldown = 0;
 
     /** Incoming missile the queued launch is meant for, not saved. Null for any other launch. */
+=======
+    /** Incoming missile the queued launch is meant for, not saved. Null for any other launch. */
+    @Setter
+>>>>>>> 8c585e575e0a2341150a0f65876d3e5ffb47e7d5
     private Entity airDefenceTarget;
 
     private final LauncherNode launcherNode = new LauncherNode(this, true);
@@ -220,10 +225,13 @@ public class TileCruiseLauncher extends TileKineticMachine implements MachineChu
         final boolean wasPending = this.firingPackage != null;
         this.firingPackage = firingPackage;
         // A new or finished launch is not for an incoming missile until a radar alert says so
+<<<<<<< HEAD
         if (this.airDefenceTarget != null)
         {
             EntitySurfaceToAirMissile.releaseClaim(this.airDefenceTarget, getBlockPos());
         }
+=======
+>>>>>>> 8c585e575e0a2341150a0f65876d3e5ffb47e7d5
         this.airDefenceTarget = null;
         // Reconcile every time a pending package is assigned: it is cheap when the ticket already exists, and retries
         // the operation if a prior ticket attempt failed while this launcher was remote from all players.
@@ -278,11 +286,14 @@ public class TileCruiseLauncher extends TileKineticMachine implements MachineChu
         lastRotationUpdate = System.nanoTime();
 
         if(isServer()) {
+<<<<<<< HEAD
             if (launchCooldown > 0)
             {
                 launchCooldown--;
             }
 
+=======
+>>>>>>> 8c585e575e0a2341150a0f65876d3e5ffb47e7d5
             // PERF: offset by position so machines loaded together do not all check on the same tick
             if (Math.floorMod(ticks + getBlockPos().hashCode(), MachineChunkLoader.SYNC_TICKS) == 0)
             {
@@ -326,12 +337,16 @@ public class TileCruiseLauncher extends TileKineticMachine implements MachineChu
                 ICBMDiagnostics.info("CRUISE_AIR_DEFENCE_HOLD pos={} target={} alive={}", getBlockPos(), airDefenceTarget.getUUID(), airDefenceTarget.isAlive());
                 setFiringPackage(null);
             }
+<<<<<<< HEAD
             else if (pending != null && launchCooldown <= 0 && isAimed() && (isCharged() || getAimSpeedFactor() <= 0)) {
                 // Keep the claim on an incoming missile while the order renews it, it is released when the order ends
                 if (airDefenceTarget != null)
                 {
                     EntitySurfaceToAirMissile.claimTarget(airDefenceTarget, getBlockPos(), level.getGameTime() + 20);
                 }
+=======
+            else if (pending != null && isAimed() && (isCharged() || getAimSpeedFactor() <= 0)) {
+>>>>>>> 8c585e575e0a2341150a0f65876d3e5ffb47e7d5
                 pending.setCountDown(pending.getCountDown() - 1);
                 if (pending.getCountDown() <= 0) {
                     ICBMDiagnostics.info("LAUNCHER_PACKAGE_FIRE type=cruise pos={} dim={} target={}", getBlockPos(),
@@ -370,6 +385,7 @@ public class TileCruiseLauncher extends TileKineticMachine implements MachineChu
         return firingPackage != null && airDefenceTarget != null && airDefenceTarget.isAlive() && airDefenceTarget != missile;
     }
 
+<<<<<<< HEAD
     /** Names the incoming missile the queued launch answers and reserves it so other turrets take different ones */
     public void setAirDefenceTarget(Entity target)
     {
@@ -395,6 +411,8 @@ public class TileCruiseLauncher extends TileKineticMachine implements MachineChu
         return launchCooldown;
     }
 
+=======
+>>>>>>> 8c585e575e0a2341150a0f65876d3e5ffb47e7d5
     /** Negative delays from a typed or packet value count as none */
     public void setFiringDelay(int firingDelay)
     {

@@ -8,7 +8,10 @@ import com.createicbm.content.missile.logic.flight.FollowTargetLogic;
 import com.createicbm.content.reg.EntityReg;
 import com.createicbm.content.reg.ItemReg;
 import com.createicbm.prefab.entity.EntityICBM;
+<<<<<<< HEAD
 import net.minecraft.core.BlockPos;
+=======
+>>>>>>> 8c585e575e0a2341150a0f65876d3e5ffb47e7d5
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
@@ -100,6 +103,7 @@ public class EntitySurfaceToAirMissile extends EntityMissile<EntitySurfaceToAirM
         super.tick();
     }
 
+<<<<<<< HEAD
     private record Claim(BlockPos owner, long until) {}
 
     /** Incoming missiles a turret has queued a SAM for, so one alert does not make every turret fire at the same missile */
@@ -133,6 +137,8 @@ public class EntitySurfaceToAirMissile extends EntityMissile<EntitySurfaceToAirM
         return claim != null && !claim.owner().equals(self) && claim.until() >= target.level().getGameTime();
     }
 
+=======
+>>>>>>> 8c585e575e0a2341150a0f65876d3e5ffb47e7d5
     /** Harmless burst in the air, no blast and no block damage */
     private void selfDestruct() {
         if (level() instanceof ServerLevel serverLevel) {

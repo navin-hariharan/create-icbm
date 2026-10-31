@@ -1811,8 +1811,11 @@ All under `/icbm`, for operators (permission level 2).
 - The Advanced Radar now also calls Cruise Turrets to fire Surface to Air Missiles at incoming missiles.
 - Radars can be read by the Remote Detonator and Laser Designator to copy their channel.
 - Cruise Turrets no longer fire on orders from the Remote Detonator or Laser Designator, only radars call them.
+<<<<<<< HEAD
 - Cruise Turrets wait `cruise_turret_launch_cooldown` (20 ticks) after every launch, and a turret that took an incoming
   missile reserves it, so a radar alert is spread over the turrets instead of every turret firing at the same missile.
+=======
+>>>>>>> 8c585e575e0a2341150a0f65876d3e5ffb47e7d5
 - Cruise Turrets only answer air defence alerts while they hold a Surface to Air Missile. Without a firing delay they
   don't fire another SAM at a missile that SAMs already in the air will bring down; turrets with a firing delay always
   fire, for timed salvos.
