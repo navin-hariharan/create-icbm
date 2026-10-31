@@ -1,0 +1,93 @@
+name: Release
+
+# Publishes a GitHub release when mod_version in gradle.properties changes on main.
+# The release notes are the matching "## <version>" section of CHANGELOG.md.
+on:
+  push:
+    branches: [main]
+    paths: [gradle.properties]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Read version
+        id: version
+        run: |
+          read_prop() { grep -E "^$1=" gradle.properties | head -n1 | cut -d= -f2- | tr -d '[:space:]'; }
+          version="$(read_prop mod_version)"
+          minecraft="$(read_prop minecraft_version)"
+          if [ -z "$version" ] || [ -z "$minecraft" ]; then
+            echo "::error::mod_version or minecraft_version missing from gradle.properties"
+            exit 1
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "minecraft=$minecraft" >> "$GITHUB_OUTPUT"
+          echo "tag=v$version" >> "$GITHUB_OUTPUT"
+
+      - name: Skip if this version is already released
+        id: check
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if git ls-remote --exit-code --tags origin "refs/tags/${{ steps.version.outputs.tag }}" > /dev/null; then
+            echo "Tag ${{ steps.version.outputs.tag }} already exists, nothing to release."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Release notes from CHANGELOG.md
+        if: steps.check.outputs.skip == 'false'
+        run: |
+          awk -v v="${{ steps.version.outputs.version }}" '
+            $0 == "## " v { found = 1; next }
+            found && /^## / { exit }
+            found { print }
+          ' CHANGELOG.md | sed -e '/./,$!d' > release-notes.md
+          if [ ! -s release-notes.md ]; then
+            echo "::error::CHANGELOG.md has no '## ${{ steps.version.outputs.version }}' section. Add one and push again."
+            exit 1
+          fi
+          cat release-notes.md
+
+      - uses: actions/setup-java@v4
+        if: steps.check.outputs.skip == 'false'
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - uses: gradle/actions/setup-gradle@v4
+        if: steps.check.outputs.skip == 'false'
+
+      - name: Build
+        if: steps.check.outputs.skip == 'false'
+        # gradlew is stored without the executable bit
+        run: bash ./gradlew build --no-daemon
+
+      - name: Create release
+        if: steps.check.outputs.skip == 'false'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          jar="build/libs/create-icbm-${{ steps.version.outputs.minecraft }}-${{ steps.version.outputs.version }}.jar"
+          if [ ! -f "$jar" ]; then
+            echo "::error::$jar was not built"
+            ls build/libs
+            exit 1
+          fi
+          gh release create "${{ steps.version.outputs.tag }}" "$jar" \
+            --target "$GITHUB_SHA" \
+            --title "ICBM: Create Addon — ${{ steps.version.outputs.tag }} | Minecraft ${{ steps.version.outputs.minecraft }}" \
+            --notes-file release-notes.md \
+            --latest

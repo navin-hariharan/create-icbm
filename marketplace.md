@@ -22,7 +22,7 @@
 
 **Create: ICBM** is an addon for [Create](https://modrinth.com/mod/create) that brings **missiles, explosives, radar and launch networks** into your factory. Launch pads are wound up by shafts, missiles are put together on Mechanical Crafters and Deployers, explosives are mixed in basins over Blaze Burners, and every block looks like it came out of Create itself. Inspired by the classic **ICBM** mod.
 
-> This page is the short version. The **[GitHub README](https://github.com/navin-hariharan/create-icbm#readme)** has the full guide: every machine, all 26 explosives in detail, every crafting recipe, all config options, commands and the changelog.
+> This page is the short version. The **[GitHub README](https://github.com/navin-hariharan/create-icbm#readme)** has the full guide: every machine, all 26 explosives in detail, every crafting recipe, all config options, commands and the [changelog](https://github.com/navin-hariharan/create-icbm/blob/main/CHANGELOG.md).
 
 > **AI usage notice:** AI assistance was used in making Create: ICBM. Every feature is directed, reviewed and tested in game by the author.
 
@@ -173,7 +173,7 @@ Config files are `create_icbm-*.toml` in the `config` folder (main, launcher, ra
 - **New: Advanced Radar**, counter-strikes at the launch site of incoming missiles, and a new circular radar scope.
 - **Fixed counter-strikes:** unanswered strikes retry every second instead of waiting the full cooldown, delayed and aiming launches count as fired, Cruise Turrets turn down orders they can't carry out, and a cancelled target no longer fires at the old one.
 - **Fixed radio:** Launch Controllers reconnect to their network and radio after loading, and removed blocks no longer answer twice.
-- **Optimizer compatibility** now exempts every Create: ICBM entity, including surface-to-air missiles, blast controllers, missile seats, decoys and flying blocks. Diagnostics are opt-in. Full [changelog](https://github.com/navin-hariharan/create-icbm#changelog).
+- **Optimizer compatibility** now exempts every Create: ICBM entity, including surface-to-air missiles, blast controllers, missile seats, decoys and flying blocks. Diagnostics are opt-in. Full [changelog](https://github.com/navin-hariharan/create-icbm/blob/main/CHANGELOG.md).
 
 ## 🙏 Credits
 
