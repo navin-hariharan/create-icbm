@@ -63,7 +63,8 @@ public class CLauncherCapability extends LauncherBaseCapability {
     @Override
     public IActionStatus preCheckLaunch(IMissileTarget targetData, @Nullable IActionCause cause) {
         // Validate target data
-        if (targetData == null || targetData.getPosition() == null) {
+        // No target is stored as 0, 0, 0 (see hasTarget), firing then sent the missile to world origin
+        if (targetData == null || targetData.getPosition() == null || targetData.getPosition().equals(Vec3.ZERO)) {
             return LauncherStatus.ERROR_TARGET_NULL;
         }
         // User safety, yes they will shoot themselves
@@ -82,6 +83,11 @@ public class CLauncherCapability extends LauncherBaseCapability {
         final IActionStatus preCheck = preCheckLaunch(target, cause);
         if (preCheck.isType(ActionStatusTypes.BLOCKING)) {
             return preCheck;
+        }
+        // An order is already waiting (aiming, firing delay or launch cooldown). Only that order may fire, the GUI
+        //  button or a Launch Controller used to fire past it and skip the cooldown.
+        else if (host.getFiringPackage() != null && !host.getFiringPackage().isHasFired()) {
+            return LauncherStatus.ERROR_QUEUED;
         }
         else if (simulate) {
             return LauncherStatus.LAUNCHED;
@@ -109,7 +115,10 @@ public class CLauncherCapability extends LauncherBaseCapability {
 
         final CausedByBlock selfCause = new CausedByBlock(host.getLevel(), host.getBlockPos(), host.getBlockState());
         selfCause.setPreviousCause(cause);
-        final IActionSource missileSource = new ActionSource(getHost().getLevel(), new Vec3(host.getBlockPos().getX() + 0.5, host.getBlockPos().getY() + TileCruiseLauncher.MISSILE__HOLDER_Y, host.getBlockPos().getZ() + 0.5), selfCause);
+        // A turret on a Create Aeronautics ship sits in the ship's plot, the missile starts where the turret is in the
+        //  world. It flies straight at its target from there and doesn't keep the ship's speed, which would push it
+        //  off the line it was aimed along.
+        final IActionSource missileSource = new ActionSource(getHost().getLevel(), host.getMissileHolderWorldPos(), selfCause);
 
         final ItemStack inventoryStack = host.missileHolder.getMissileStack();
 

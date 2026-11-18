@@ -103,7 +103,7 @@ public class BlockRadarStation extends BlockKineticICBM
             {
                 if (tile instanceof TileRadarStation)
                 {
-                    ((TileRadarStation) tile).setOutputRedstone(!((TileRadarStation) tile).isOutputRedstone());
+                    ((TileRadarStation) tile).toggleOutputRedstone(!((TileRadarStation) tile).isOutputRedstone());
                     player.sendSystemMessage(Component.translatable(((TileRadarStation) tile).isOutputRedstone() ? "message.radar.redstone.on" : "message.radar.redstone.off"));
                 }
                 else

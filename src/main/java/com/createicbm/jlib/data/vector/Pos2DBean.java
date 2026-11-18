@@ -28,11 +28,6 @@ public class Pos2DBean implements Cloneable
         return x;
     }
 
-    public float xf()
-    {
-        return (float)x;
-    }
-
     public int xi()
     {
         return (int)Math.floor(x);
@@ -41,11 +36,6 @@ public class Pos2DBean implements Cloneable
     public double y()
     {
         return y;
-    }
-
-    public float yf()
-    {
-        return (float)y;
     }
 
     public int yi()

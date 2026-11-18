@@ -57,6 +57,7 @@ public class ItemReg
     public static final DeferredItem<BlockItem> itemLaunchConnector = blockItem(BlockReg.blockLaunchConnector);
     public static final DeferredItem<BlockItem> itemLaunchScreen = blockItem(BlockReg.blockLaunchScreen);
     public static final DeferredItem<BlockItem> itemCruiseLauncher = blockItem(BlockReg.blockCruiseLauncher);
+    public static final DeferredItem<BlockItem> itemAlarm = blockItem(BlockReg.blockAlarm);
     public static final DeferredItem<BlockItem> itemRadioactiveDirt = blockItem(BlockReg.blockRadioactiveDirt);
     public static final DeferredItem<BlockItem> itemRadioactiveStone = blockItem(BlockReg.blockRadioactiveStone);
 

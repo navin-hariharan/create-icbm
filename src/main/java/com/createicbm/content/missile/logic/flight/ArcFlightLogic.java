@@ -170,7 +170,10 @@ public class ArcFlightLogic extends BuildableObject<ArcFlightLogic, IBuilderRegi
             // TODO split this into two different flight logics. Then have a parent logic object switch which is running
             if(!flightUpAlways) {
 
-                final double motionY = this.acceleration * ((float) missileFlightTime / 2f);
+                // The arc ends level with where it started. A target higher up (a hill, a flying ship) is reached by
+                //  climbing the difference on top, otherwise the missile came down under it and fell past it
+                final double climb = Math.max(0, deltaPathY) / missileFlightTime;
+                final double motionY = this.acceleration * ((float) missileFlightTime / 2f) + climb;
                 final double motionX = this.deltaPathX / missileFlightTime;
                 final double motionZ = this.deltaPathZ / missileFlightTime;
 

@@ -4,7 +4,6 @@ import com.createicbm.api.missiles.parts.IMissileFlightLogic;
 import com.createicbm.content.missile.entity.EntityMissile;
 import com.createicbm.lib.network.packet.PacketSpawnAirParticle;
 import com.createicbm.lib.network.packet.PacketSpawnBlockExplosion;
-import com.createicbm.lib.transform.vector.Pos;
 import com.createicbm.mods.ModInteraction;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.Entity;
@@ -19,25 +18,18 @@ public class CommonProxy
     /** Called from the mod constructor */
     public void preInit(IEventBus modBus)
     {
-        ModInteraction.preInit();
     }
 
     /** Called during common setup */
     public void init()
     {
         ModInteraction.init();
-        ModInteraction.postInit();
     }
 
     /** Only the client knows about the keyboard, servers never see shift held */
     public boolean isShiftHeld()
     {
         return false;
-    }
-
-    public void spawnSmoke(Level world, Pos position, double v, double v1, double v2, float red, float green, float blue, float scale, int age)
-    {
-
     }
 
     public void spawnAirParticle(Level world, double x, double y, double z, double v, double v1, double v2, float red, float green, float blue, float scale, int ticksToLive)

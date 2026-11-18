@@ -1,5 +1,6 @@
 package com.createicbm.content.blocks.launcher.cruise;
 
+import com.createicbm.mods.sable.SableProxy;
 import com.createicbm.ICBMConstants;
 import com.createicbm.api.CreateICBMAPI;
 import com.createicbm.api.CreateICBMHelpers;
@@ -8,6 +9,7 @@ import com.createicbm.config.ConfigMain;
 import com.createicbm.config.machines.ConfigLauncher;
 import com.createicbm.content.blocks.launcher.FiringPackage;
 import com.createicbm.content.blocks.launcher.PendingLauncherChunkLoader;
+import com.createicbm.content.blocks.launcher.base.TileLauncherBase;
 import com.createicbm.content.blocks.launcher.cruise.gui.ContainerCruiseLauncher;
 import com.createicbm.content.blocks.launcher.network.ILauncherComponent;
 import com.createicbm.content.blocks.launcher.network.LauncherNode;
@@ -47,6 +49,7 @@ import net.minecraft.world.phys.shapes.VoxelShape;
 import net.neoforged.neoforge.capabilities.BlockCapability;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.Clearable;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.Connection;
@@ -66,7 +69,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.function.BiConsumer;
 
-public class TileCruiseLauncher extends TileKineticMachine implements MachineChunkLoader.IRadioMachine, IGuiTile, ILauncherComponent, IMachineInfo, IPlayerUsing, ICapabilityHolderTile
+public class TileCruiseLauncher extends TileKineticMachine implements Clearable, MachineChunkLoader.IRadioMachine, IGuiTile, ILauncherComponent, IMachineInfo, IPlayerUsing, ICapabilityHolderTile
 {
     public static final ResourceLocation REGISTRY_NAME = ResourceLocation.fromNamespaceAndPath(ICBMConstants.DOMAIN, "cruiselauncher");
 
@@ -81,6 +84,12 @@ public class TileCruiseLauncher extends TileKineticMachine implements MachineChu
     /** Desired aim angle, updated every tick if target != null */
     @Getter
     protected final EulerAngle aim = new EulerAngle(0, 0, 0); //TODO change UI to only have yaw and pitch, drop xyz but still allow tools to auto fill from xyz
+
+    /** Scratch aim for a turret on a ship, compared with {@link #aim} before it is replaced */
+    private final EulerAngle shipAim = new EulerAngle(0, 0, 0);
+
+    /** Degrees a turret on a ship may drift off its target before it turns again with no order waiting */
+    private static final double SHIP_AIM_TOLERANCE = 1.0;
 
     /** Current aim angle, updated each tick */
     @Getter
@@ -212,6 +221,12 @@ public class TileCruiseLauncher extends TileKineticMachine implements MachineChu
         {
             RadioRegistry.add(radio);
         }
+        // Loading from NBT aims before the level is known, a turret on a Sable ship aims again now that the ship is
+        if (SableProxy.INSTANCE.isOnShip(level, getBlockPos()))
+        {
+            updateAimAngle();
+            currentAim.set(aim);
+        }
     }
 
     /** Sets the queued radio/aiming launch and keeps this block entity ticking until it fires. */
@@ -250,6 +265,16 @@ public class TileCruiseLauncher extends TileKineticMachine implements MachineChu
         super.invalidate();
     }
 
+    /**
+     * Empties the missile slot. Called by whatever moves or replaces the block after it saved the block entity
+     * (Create Aeronautics ship assembly, /setblock), so the old block can't hand out a second missile.
+     */
+    @Override
+    public void clearContent()
+    {
+        inventory.setStackInSlot(0, ItemStack.EMPTY);
+    }
+
     @Override
     public LauncherNode getNetworkNode() {
         return launcherNode;
@@ -264,7 +289,7 @@ public class TileCruiseLauncher extends TileKineticMachine implements MachineChu
         final LongSet wanted = new LongOpenHashSet();
         if (!RadioRegistry.EMPTY_HZ.equals(radio.getChannel()) && !missileHolder.getMissileStack().isEmpty())
         {
-            MachineChunkLoader.addArea(wanted, getBlockPos());
+            MachineChunkLoader.addArea(wanted, this);
         }
         MachineChunkLoader.sync(this, wanted);
     }
@@ -284,15 +309,23 @@ public class TileCruiseLauncher extends TileKineticMachine implements MachineChu
             }
 
             // PERF: offset by position so machines loaded together do not all check on the same tick
-            if (Math.floorMod(ticks + getBlockPos().hashCode(), MachineChunkLoader.SYNC_TICKS) == 0)
+            if (MachineChunkLoader.isSyncTick(this, ticks))
             {
                 syncMachineChunks();
+                // On a Sable ship the waiting order's chunk follows the ship
+                if (firingPackage != null)
+                {
+                    PendingLauncherChunkLoader.sync(this, true);
+                }
             }
 
             // Wind up the launch charge from the shaft
             if (energyStorage.getEnergyStored() < energyStorage.getMaxEnergyStored()) {
                 energyStorage.receiveEnergyInternal(takeRotationCharge(rateFor(getFiringCost(), ConfigLauncher.WIND_UP_SECONDS)), false);
             }
+
+            // On a Create Aeronautics ship the target moves around the turret as the ship turns and travels
+            updateShipAim();
 
             final boolean wasAimed = isAimed();
             final double aimSpeed = ROTATION_SPEED * getAimSpeedFactor();
@@ -349,7 +382,23 @@ public class TileCruiseLauncher extends TileKineticMachine implements MachineChu
                         ICBMDiagnostics.error("LAUNCHER_PACKAGE_FIRE_FAILED type=cruise pos=" + getBlockPos()
                             + " dim=" + level.dimension().location(), exception);
                     } finally {
-                        setFiringPackage(null);
+                        if (firingPackage == pending)
+                        {
+                            setFiringPackage(null);
+                        }
+                        else if (firingPackage != null)
+                        {
+                            // The target moved while the order waited, so the launch turned the turret back to the
+                            // order's target and queued it again. Clearing it here dropped the order without firing.
+                            // The delay was already waited out, it fires once the turret is aimed again.
+                            firingPackage.setCountDown(0);
+                            // The radar's callback sets the SAM's lock when it fires
+                            firingPackage.setOnTriggerCallback(pending.getOnTriggerCallback());
+                            if (answered != null && answered.isAlive())
+                            {
+                                setAirDefenceTarget(answered);
+                            }
+                        }
                         // The SAM needs a moment to lock on, other turrets leave that missile alone until then
                         if (answered != null && loaded && missileHolder.getMissileStack().isEmpty())
                         {
@@ -395,10 +444,10 @@ public class TileCruiseLauncher extends TileKineticMachine implements MachineChu
         return launchCooldown;
     }
 
-    /** Negative delays from a typed or packet value count as none */
+    /** Negative delays from a typed or packet value count as none, long ones are capped like the Launch Pad's */
     public void setFiringDelay(int firingDelay)
     {
-        this.firingDelay = Math.max(0, firingDelay);
+        this.firingDelay = Math.max(0, Math.min(TileLauncherBase.MAX_FIRING_DELAY, firingDelay));
     }
 
     public void setTarget(Vec3 target)
@@ -430,17 +479,57 @@ public class TileCruiseLauncher extends TileKineticMachine implements MachineChu
 
     protected void updateAimAngle()
     {
+        computeAim(aim);
+    }
+
+    /**
+     * Works out the aim at the target in the turret's own frame. Targets are world positions, on a Create
+     * Aeronautics ship the turret is stored (and drawn from) the ship's plot, so the target is first moved into it.
+     */
+    private void computeAim(EulerAngle into)
+    {
         if (hasTarget())
         {
-            final Vec3 aimPoint = getTarget();
+            Vec3 aimPoint = getTarget();
+            final SableProxy.ShipFrame ship = level == null ? null : SableProxy.INSTANCE.getShipFrame(level, Vec3.atCenterOf(getBlockPos()));
+            if (ship != null)
+            {
+                aimPoint = ship.toShip(aimPoint);
+            }
             final Pos center = new Pos(this).add(0.5, MISSILE__HOLDER_Y, 0.5);
-            aim.set(center.toEulerAngle(aimPoint).clampTo360());
-            aim.setYaw(EulerAngle.clampPos360(aim.yaw()));
+            into.set(center.toEulerAngle(aimPoint).clampTo360());
+            into.setYaw(EulerAngle.clampPos360(into.yaw()));
         }
         else
         {
-            aim.set(0, 0, 0);
+            into.set(0, 0, 0);
         }
+    }
+
+    /**
+     * Keeps a turret on a Sable ship aimed while the ship moves. With an order waiting it follows every tick so it
+     * can fire, otherwise only once the aim is off by a degree, so a bobbing ship doesn't resend the turret each tick.
+     */
+    private void updateShipAim()
+    {
+        if (!hasTarget() || !SableProxy.INSTANCE.isOnShip(level, getBlockPos()))
+        {
+            return;
+        }
+        computeAim(shipAim);
+        if (firingPackage != null || !shipAim.isWithin(aim, SHIP_AIM_TOLERANCE))
+        {
+            aim.set(shipAim);
+        }
+    }
+
+    /**
+     * @return where a launched missile starts in the world, also when the turret is on a Create Aeronautics ship
+     */
+    public Vec3 getMissileHolderWorldPos()
+    {
+        final Vec3 holder = new Vec3(getBlockPos().getX() + 0.5, getBlockPos().getY() + MISSILE__HOLDER_Y, getBlockPos().getZ() + 0.5);
+        return level == null ? holder : SableProxy.INSTANCE.toWorld(level, holder);
     }
 
     protected void initFromLoad()
@@ -459,7 +548,7 @@ public class TileCruiseLauncher extends TileKineticMachine implements MachineChu
 
     protected boolean hasTarget()
     {
-        return getTarget() != null && getTarget() != Vec3.ZERO;
+        return getTarget() != null && !getTarget().equals(Vec3.ZERO);
     }
 
     protected boolean canSpawnMissileWithNoCollision()
@@ -472,8 +561,12 @@ public class TileCruiseLauncher extends TileKineticMachine implements MachineChu
                      final BlockPos pos = getBlockPos().offset(x, y, z);
                      final BlockState state = level.getBlockState(pos);
                      if (!state.isAir()) {
+                         // Every block counts, the first one found used to decide alone: a torch next to the turret
+                         //  let the missile spawn inside a block right above it
                          final VoxelShape box = state.getCollisionShape(level, pos);
-                         return box.isEmpty() || box.max(Direction.Axis.Y) < 0.5;
+                         if (!box.isEmpty() && box.max(Direction.Axis.Y) >= 0.5) {
+                             return false;
+                         }
                      }
                  }
              }
@@ -484,7 +577,8 @@ public class TileCruiseLauncher extends TileKineticMachine implements MachineChu
     // Is the target too close?
     public boolean isTooClose(Vec3 target)
     {
-        return new Pos(getBlockPos()).add(0.5).distance(target) < 20; //TODO remove pos usage
+        // From where the turret is in the world, a turret on a ship sits far away in the ship's plot
+        return SableProxy.INSTANCE.worldCenter(level, getBlockPos()).distanceTo(target) < 20;
     }
 
     @Override

@@ -3,6 +3,7 @@ package com.createicbm.client.create;
 import com.simibubi.create.content.kinetics.deployer.DeployerBlockEntity;
 import com.simibubi.create.foundation.ponder.CreateSceneBuilder;
 import com.createicbm.api.refs.ICBMExplosives;
+import com.createicbm.content.blocks.alarm.BlockAlarm;
 import com.createicbm.content.blocks.launcher.base.TileLauncherBase;
 import com.createicbm.content.reg.ItemReg;
 import com.createicbm.lib.explosive.ExplosiveStacks;
@@ -291,6 +292,102 @@ public final class ICBMPonderScenes
             .pointAt(radarTop)
             .placeNearTarget();
         scene.idle(90);
+        scene.markAsFinished();
+    }
+
+    public static void alarm(SceneBuilder builder, SceneBuildingUtil util)
+    {
+        final CreateSceneBuilder scene = new CreateSceneBuilder(builder);
+        scene.title("alarm", "Sounding the Alarm");
+        scene.configureBasePlate(0, 0, 5);
+        scene.showBasePlate();
+        scene.idle(10);
+
+        final BlockPos wallAlarm = util.grid().at(0, 1, 0);
+        final BlockPos lever = util.grid().at(1, 2, 0);
+        final BlockPos radar = util.grid().at(2, 2, 2);
+        final BlockPos radarAlarm = util.grid().at(1, 2, 2);
+        final Selection kinetics = util.select().fromTo(2, 1, 2, 2, 1, 4).add(util.select().position(radar));
+
+        scene.world().showSection(util.select().position(1, 1, 0), Direction.DOWN);
+        scene.idle(5);
+        scene.world().showSection(util.select().position(wallAlarm), Direction.EAST);
+        scene.idle(10);
+
+        scene.overlay().showText(70)
+            .attachKeyFrame()
+            .text("Alarms fix to floors, walls and ceilings like a lever, and need no rotational force")
+            .pointAt(util.vector().blockSurface(wallAlarm, Direction.WEST))
+            .placeNearTarget();
+        scene.idle(80);
+
+        scene.world().showSection(util.select().position(lever), Direction.DOWN);
+        scene.idle(10);
+        scene.world().toggleRedstonePower(util.select().position(lever));
+        scene.effects().indicateRedstone(lever);
+        scene.world().modifyBlock(wallAlarm, s -> s.setValue(BlockAlarm.ACTIVE, true), false);
+        scene.idle(5);
+
+        scene.overlay().showText(70)
+            .colored(PonderPalette.RED)
+            .text("A redstone signal sets it wailing and flashing for as long as the signal lasts")
+            .pointAt(util.vector().blockSurface(wallAlarm, Direction.WEST))
+            .placeNearTarget();
+        scene.idle(80);
+
+        scene.world().toggleRedstonePower(util.select().position(lever));
+        scene.world().modifyBlock(wallAlarm, s -> s.setValue(BlockAlarm.ACTIVE, false), false);
+        scene.idle(20);
+
+        scene.world().showSection(util.select().position(2, 1, 2), Direction.DOWN);
+        scene.idle(5);
+        scene.world().showSection(util.select().position(radar), Direction.DOWN);
+        scene.idle(5);
+        scene.world().showSection(util.select().fromTo(2, 1, 3, 2, 1, 4), Direction.NORTH);
+        scene.idle(5);
+        scene.world().setKineticSpeed(kinetics, 32);
+        scene.world().showSection(util.select().fromTo(1, 1, 2, 1, 2, 2), Direction.EAST);
+        scene.idle(15);
+
+        scene.overlay().showText(70)
+            .attachKeyFrame()
+            .text("An alarm can also listen to a Radar Station or an Advanced Radar")
+            .pointAt(util.vector().topOf(radarAlarm))
+            .placeNearTarget();
+        scene.idle(80);
+
+        scene.overlay().showControls(util.vector().topOf(radar), Pointing.DOWN, 50).rightClick();
+        scene.idle(5);
+        scene.overlay().showText(60)
+            .text("Right-click the radar to see its radio channel")
+            .pointAt(util.vector().topOf(radar))
+            .placeNearTarget();
+        scene.idle(70);
+
+        scene.overlay().showControls(util.vector().topOf(radarAlarm), Pointing.DOWN, 50).rightClick();
+        scene.idle(5);
+        scene.overlay().showText(60)
+            .text("Then right-click the alarm and type the same channel into its screen")
+            .pointAt(util.vector().topOf(radarAlarm))
+            .placeNearTarget();
+        scene.idle(70);
+
+        scene.world().modifyBlock(radarAlarm, s -> s.setValue(BlockAlarm.ACTIVE, true), false);
+        scene.effects().indicateSuccess(radarAlarm);
+        scene.overlay().showText(80)
+            .attachKeyFrame()
+            .colored(PonderPalette.RED)
+            .text("While the radar sees a hostile missile coming, the alarm sounds. It stops a few seconds after the last report")
+            .pointAt(util.vector().topOf(radarAlarm))
+            .placeNearTarget();
+        scene.idle(90);
+
+        scene.world().modifyBlock(radarAlarm, s -> s.setValue(BlockAlarm.ACTIVE, false), false);
+        scene.overlay().showText(70)
+            .text("Clear the channel in its screen to unlink it")
+            .pointAt(util.vector().topOf(radarAlarm))
+            .placeNearTarget();
+        scene.idle(80);
         scene.markAsFinished();
     }
 

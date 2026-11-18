@@ -1,5 +1,6 @@
 package com.createicbm.content.blocks.launcher.base;
 
+import com.createicbm.lib.world.MachineChunkLoader;
 import com.createicbm.ICBMConstants;
 import com.createicbm.api.CreateICBMAPI;
 import com.createicbm.api.CreateICBMHelpers;
@@ -43,6 +44,7 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.Clearable;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
@@ -60,7 +62,7 @@ import java.util.function.BiConsumer;
  *
  * @author Calclavia, DarkGuardsman
  */
-public class TileLauncherBase extends TileKineticMachine implements ILauncherComponent, IMachineInfo, IGuiTile, IPlayerUsing, ICapabilityHolderTile
+public class TileLauncherBase extends TileKineticMachine implements Clearable, ILauncherComponent, IMachineInfo, IGuiTile, IPlayerUsing, ICapabilityHolderTile
 {
     public static final ResourceLocation REGISTRY_NAME = ResourceLocation.fromNamespaceAndPath(ICBMConstants.DOMAIN, "launcherbase");
 
@@ -98,17 +100,20 @@ public class TileLauncherBase extends TileKineticMachine implements ILauncherCom
     /** Highest lock height the pad takes, in blocks */
     public static final int MAX_LOCK_HEIGHT = 256;
 
+    /** Longest firing delay a launcher takes, in ticks (5 minutes). A waiting launch keeps its chunk loaded. */
+    public static final int MAX_FIRING_DELAY = 6000;
+
     /** User defined: Time in ticks to wait before firing a missile */
     @Getter
     private int firingDelay = 0;
     /** User defined: Height to move before changing direction */
     @Getter
     private int lockHeight = 3;
-    /** User defined: Group of missiles */
-    @Getter @Setter
+    /** User defined: Group of missiles, -1 for none */
+    @Getter
     private int groupId = -1;
-    /** User defined: Index in the group, can be shared and works more like priority */
-    @Getter @Setter
+    /** User defined: Index in the group, can be shared and works more like priority, -1 for none */
+    @Getter
     private int groupIndex = -1;
 
     @Setter
@@ -267,7 +272,19 @@ public class TileLauncherBase extends TileKineticMachine implements ILauncherCom
 
     public void setFiringDelay(int firingDelay)
     {
-        this.firingDelay = Math.max(0, firingDelay);
+        this.firingDelay = Math.max(0, Math.min(MAX_FIRING_DELAY, firingDelay));
+    }
+
+    /** Values below -1 from a typed or packet value count as none */
+    public void setGroupId(int groupId)
+    {
+        this.groupId = Math.max(-1, groupId);
+    }
+
+    /** Values below -1 from a typed or packet value count as none */
+    public void setGroupIndex(int groupIndex)
+    {
+        this.groupIndex = Math.max(-1, groupIndex);
     }
 
     public void setLockHeight(int lockHeight)
@@ -303,6 +320,16 @@ public class TileLauncherBase extends TileKineticMachine implements ILauncherCom
         super.invalidate();
     }
 
+    /**
+     * Empties the missile slot. Called by whatever moves or replaces the block after it saved the block entity
+     * (Create Aeronautics ship assembly, /setblock), so the old block can't hand out a second missile.
+     */
+    @Override
+    public void clearContent()
+    {
+        inventory.setStackInSlot(0, ItemStack.EMPTY);
+    }
+
     @Override
     public LauncherNode getNetworkNode() {
         return launcherNode;
@@ -314,6 +341,11 @@ public class TileLauncherBase extends TileKineticMachine implements ILauncherCom
         if (pending == null)
         {
             return;
+        }
+        // On a Create Aeronautics ship the waiting launch's chunk follows the ship
+        if (MachineChunkLoader.isSyncTick(this, ticks))
+        {
+            PendingLauncherChunkLoader.sync(this, true);
         }
         pending.setCountDown(pending.getCountDown() - 1);
         if (pending.getCountDown() <= 0)
@@ -431,8 +463,8 @@ public class TileLauncherBase extends TileKineticMachine implements ILauncherCom
         {
             if (isServer())
             {
-                player.setItemInHand(hand, this.getMissileStack());
-                inventory.extractItem(0, 1, false);
+                // Hand over the stack taken out of the pad, never the one still in its slot
+                player.setItemInHand(hand, inventory.extractItem(0, 1, false));
                 player.inventoryMenu.broadcastChanges();
             }
             return true;

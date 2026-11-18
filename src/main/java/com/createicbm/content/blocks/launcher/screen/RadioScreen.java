@@ -1,5 +1,6 @@
 package com.createicbm.content.blocks.launcher.screen;
 
+import com.createicbm.mods.sable.SableProxy;
 import com.createicbm.api.radio.IRadioMessage;
 import com.createicbm.api.radio.IRadioReceiver;
 import com.createicbm.api.radio.IRadioSender;
@@ -34,7 +35,9 @@ public class RadioScreen extends RadioTile<TileLauncherScreen> implements IRadio
                 final double vel = host.getLaunchersInGroup()
                     .stream().mapToDouble(launcherEntry -> launcherEntry.getLauncher().getPayloadVelocity()).max()
                     .orElse(ConfigMissile.DIRECT_FLIGHT_SPEED);
-                final Vec3 target = ((ITargetMessage) packet).getIntercept(host.getBlockPos().getX() + 0.5, host.getBlockPos().getY() + 0.5, host.getBlockPos().getZ() + 0.5, vel);
+                // From where the controller is in the world, also when it is on a Create Aeronautics ship
+                final Vec3 self = SableProxy.INSTANCE.worldCenter(host.getLevel(), host.getBlockPos());
+                final Vec3 target = ((ITargetMessage) packet).getIntercept(self.x, self.y, self.z, vel);
                 if(target != null) {
                     final Vec3 previous = host.getTarget();
                     host.setTarget(target);
@@ -61,7 +64,7 @@ public class RadioScreen extends RadioTile<TileLauncherScreen> implements IRadio
                 }
                 if (host.fireAllLaunchers(false, sender instanceof FakeRadioSender fake ? fake.player : null)) { // TODO collect all screens and provide a single feedback message
                     final Vec3 target = host.getTarget();
-                    final double distance = Math.sqrt(target.distanceToSqr(host.getBlockPos().getX() + 0.5, host.getBlockPos().getY() + 0.5, host.getBlockPos().getZ() + 0.5)); // TODO base from launcher
+                    final double distance = target.distanceTo(SableProxy.INSTANCE.worldCenter(host.getLevel(), host.getBlockPos())); // TODO base from launcher
                     sender.onMessageCallback(this, new TextMessage(getChannel(), RadioTranslations.RADIO_LAUNCH_SUCCESS, target.x, target.y, target.z, distance));
 
                     //((ILaunchMessage) packet).onLaunchCallback(); TODO implement

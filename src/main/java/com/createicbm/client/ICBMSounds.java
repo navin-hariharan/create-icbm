@@ -47,6 +47,7 @@ public enum ICBMSounds
     PHANTOM_POOF("phantom_poof", SoundSource.HOSTILE),
     DARKNESS("darkness"),
     MAIL_DING("mail_ding", SoundSource.BLOCKS),
+    ALARM_SIREN("alarm_siren", SoundSource.BLOCKS),
     ENDER_SCREAM("ender_scream", SoundSource.HOSTILE),
     ENDER_WARP("ender_warp", SoundSource.HOSTILE),
     EXPLOSION_DISTANT("explosion_distant"),

@@ -62,11 +62,6 @@ public final class MetaTag {
         this.parent = parent;
     }
 
-    @Deprecated
-    public String getDomain() {
-        return getNamespace();
-    }
-
     public static MetaTag find(String key) {
         return TAG_MAP.get(key);
     }

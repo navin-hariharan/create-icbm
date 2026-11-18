@@ -151,9 +151,25 @@ public abstract class GuiContainerBase<T extends AbstractContainerMenu> extends 
     }
 
     @Override
+    public void onClose()
+    {
+        // Esc and the inventory key close the menu on the server before removed() runs, and the server drops packets
+        // for a menu that is no longer open, so a value still being typed is sent here first
+        commitTypedValues();
+        super.onClose();
+    }
+
+    @Override
     public void removed()
     {
-        // Set a value that is still being typed, closing with Esc skipped the focus loss that sends it to the server
+        // Covers screens closed another way, the value may still reach the server if its menu is open
+        commitTypedValues();
+        super.removed();
+    }
+
+    /** Sets a value that is still being typed, the focus loss sends it to the server */
+    private void commitTypedValues()
+    {
         for (IGuiComponent component : components)
         {
             if (component instanceof EditBox && ((EditBox) component).isFocused())
@@ -161,7 +177,6 @@ public abstract class GuiContainerBase<T extends AbstractContainerMenu> extends 
                 ((EditBox) component).setFocused(false);
             }
         }
-        super.removed();
     }
 
     @Override

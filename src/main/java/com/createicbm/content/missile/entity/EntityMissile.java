@@ -107,12 +107,6 @@ public abstract class EntityMissile<E extends EntityMissile<E>> extends EntityPr
         return null;
     }
 
-    public EntityMissile<E> ignore(Entity entity)
-    {
-        collisionIgnoreList.add(entity);
-        return this;
-    }
-
     @Override
     public void tick() {
         super.tick();
@@ -426,11 +420,20 @@ public abstract class EntityMissile<E extends EntityMissile<E>> extends EntityPr
 
     /**
      * Sets the missile off at a position, used when it stopped ticking right above its target
+     *
+     * @param location top surface of the ground, the hit block is the one below it (a Delivery Missile fills it)
      */
     public void forceImpact(Vec3 location)
     {
+        final BlockHitResult hit = new BlockHitResult(location, Direction.UP, BlockPos.containing(location).below(), false);
+        // Same events as a normal impact, so listeners (BlueMap markers, other mods) see rescued missiles too
+        if (ignoreImpact(hit))
+        {
+            return;
+        }
         setPos(location.x, location.y, location.z);
-        onImpact(new BlockHitResult(location, Direction.UP, BlockPos.containing(location), false));
+        onImpact(hit);
+        postImpact(hit);
     }
 
     @Override

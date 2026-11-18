@@ -228,26 +228,6 @@ public class Cube extends Shape3D implements Cloneable, IByteBufWriter
         return isInsideBounds(other.minX, other.minY, other.minZ, other.maxX, other.maxY, other.maxZ);
     }
 
-    public boolean isVecInYZ(Vec3 v)
-    {
-        return isWithinY(v) && isWithinZ(v);
-    }
-
-    public boolean isVecInYZ(IPos3D v)
-    {
-        return isWithinY(v) && isWithinZ(v);
-    }
-
-    public boolean isWithinXZ(Vec3 v)
-    {
-        return isWithinX(v) && isWithinZ(v);
-    }
-
-    public boolean isWithinXZ(IPos3D v)
-    {
-        return isWithinX(v) && isWithinZ(v);
-    }
-
     public boolean isWithinX(double v)
     {
         return isWithinRange(min().x(), max().x(), v);
@@ -667,11 +647,4 @@ public class Cube extends Shape3D implements Cloneable, IByteBufWriter
         return this;
     }
 
-    public Cube expand(int range)
-    {
-        Pos start = min().sub(range);
-        Pos end = max().add(range);
-        set(start, end);
-        return this;
-    }
 }

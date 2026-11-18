@@ -3,6 +3,7 @@ package com.createicbm.lib.world;
 import com.createicbm.ICBMConstants;
 import com.createicbm.config.ConfigMain;
 import com.createicbm.lib.diagnostics.ICBMDiagnostics;
+import com.createicbm.mods.sable.SableProxy;
 import it.unimi.dsi.fastutil.longs.LongIterator;
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import it.unimi.dsi.fastutil.longs.LongSet;
@@ -10,9 +11,11 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.util.Mth;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.phys.Vec3;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.common.world.chunk.TicketController;
@@ -32,6 +35,10 @@ import java.util.concurrent.ConcurrentHashMap;
  * forced ticking tickets, owned by the machine's position: they are saved, so the site is loaded again after a
  * restart and its machines register their radios without a player going there. Each machine reconciles its tickets
  * when it loads and every few seconds after, and drops them when it is broken or loses its channel.
+ * <p>
+ * A machine on a Create Aeronautics (Sable) ship is stored in the ship's plot, far from where the ship is drawn. Its
+ * tickets go on the world chunks under the ship instead (Sable keeps a ship loaded while the world chunk it is in is
+ * loaded) and follow the ship, the machine reconciles them more often while it is on a ship.
  */
 @EventBusSubscriber(modid = ICBMConstants.DOMAIN)
 public final class MachineChunkLoader
@@ -40,6 +47,16 @@ public final class MachineChunkLoader
     private static final int SWEEP_TICKS = 200;
     /** Ticks between machines reconciling the chunks they hold */
     public static final int SYNC_TICKS = 100;
+    /** Ticks between reconciling for machines on a moving ship, the chunks follow the ship */
+    public static final int SHIP_SYNC_TICKS = 20;
+    /**
+     * Ticks a machine on a ship may stay unloaded before its tickets are dropped (5 minutes). Its tickets keep the ship
+     * loaded, so a ship that stays away this long was removed or flew off, and a restart loads it again well before.
+     */
+    public static final long SHIP_GONE_TICKS = 6000;
+
+    /** Game time each owner stored on a ship was first seen unloaded, per level */
+    private static final Map<ResourceKey<Level>, Map<BlockPos, Long>> SHIP_MISSING = new ConcurrentHashMap<>();
 
     /** Chunks each owner holds per level, filled from the saved tickets on load so stale ones can be dropped */
     private static final Map<ResourceKey<Level>, Map<BlockPos, LongSet>> HELD = new ConcurrentHashMap<>();
@@ -82,6 +99,36 @@ public final class MachineChunkLoader
                 into.add(ChunkPos.asLong(cx + x, cz + z));
             }
         }
+    }
+
+    /**
+     * Wanted chunks for a machine: the chunks around where it is in the world, which for a machine on a Sable ship is
+     * where the ship is now and not the ship's plot
+     */
+    public static void addArea(LongSet into, BlockEntity machine)
+    {
+        final Vec3 center = SableProxy.INSTANCE.worldCenter(machine.getLevel(), machine.getBlockPos());
+        addArea(into, BlockPos.containing(center));
+    }
+
+    /**
+     * @return the chunk the machine is in, in the world (the chunk under the ship for a machine on a Sable ship)
+     */
+    public static long worldChunk(BlockEntity machine)
+    {
+        final Vec3 center = SableProxy.INSTANCE.worldCenter(machine.getLevel(), machine.getBlockPos());
+        return ChunkPos.asLong(Mth.floor(center.x) >> 4, Mth.floor(center.z) >> 4);
+    }
+
+    /**
+     * @param ticks the machine's tick counter
+     * @return true on the ticks the machine should reconcile its chunks, offset by position so machines loaded
+     * together do not all check on the same tick
+     */
+    public static boolean isSyncTick(BlockEntity machine, int ticks)
+    {
+        final int every = SableProxy.INSTANCE.isOnShip(machine.getLevel(), machine.getBlockPos()) ? SHIP_SYNC_TICKS : SYNC_TICKS;
+        return Math.floorMod(ticks + machine.getBlockPos().hashCode(), every) == 0;
     }
 
     /**
@@ -186,13 +233,31 @@ public final class MachineChunkLoader
         {
             return;
         }
+        final Map<BlockPos, Long> missing = SHIP_MISSING.computeIfAbsent(level.dimension(), k -> new ConcurrentHashMap<>());
+        missing.keySet().retainAll(held.keySet());
         for (BlockPos pos : new ArrayList<>(held.keySet()))
         {
             // Only judge loaded chunks, a held chunk is loaded unless the server is still starting up
-            if (level.isLoaded(pos) && !(level.getBlockEntity(pos) instanceof IRadioMachine))
+            if (level.isLoaded(pos))
             {
-                ICBMDiagnostics.info("MACHINE_TICKET_STALE pos={} dim={}", pos, level.dimension().location());
-                release(level, pos);
+                missing.remove(pos);
+                if (!(level.getBlockEntity(pos) instanceof IRadioMachine))
+                {
+                    ICBMDiagnostics.info("MACHINE_TICKET_STALE pos={} dim={}", pos, level.dimension().location());
+                    release(level, pos);
+                }
+            }
+            // A machine on a Sable ship holds the world chunks under the ship, not its own, so its chunk is unloaded
+            //  when the ship was removed or got away. Give it time, then drop the tickets.
+            else if (SableProxy.INSTANCE.isOnShip(level, pos))
+            {
+                final long since = missing.computeIfAbsent(pos, k -> level.getGameTime());
+                if (level.getGameTime() - since >= SHIP_GONE_TICKS)
+                {
+                    ICBMDiagnostics.info("MACHINE_TICKET_SHIP_GONE pos={} dim={}", pos, level.dimension().location());
+                    missing.remove(pos);
+                    release(level, pos);
+                }
             }
         }
     }
@@ -206,6 +271,7 @@ public final class MachineChunkLoader
         if (event.getLevel() instanceof ServerLevel level)
         {
             HELD.remove(level.dimension());
+            SHIP_MISSING.remove(level.dimension());
         }
     }
 

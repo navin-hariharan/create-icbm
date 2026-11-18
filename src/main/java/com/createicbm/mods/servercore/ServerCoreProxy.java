@@ -37,13 +37,10 @@ public class ServerCoreProxy extends ModProxy
     @Override
     public void init()
     {
-        if (isModLoaded(MOD_ID))
-        {
-            NeoForge.EVENT_BUS.addListener(ServerAboutToStartEvent.class, event -> exclude());
-            // ServerCore caches its exclusion flag inside Entity during construction. Updating only the config set
-            // is not reliable if its cached value was already initialized; add its documented opt-out tag on join.
-            NeoForge.EVENT_BUS.addListener(EntityJoinLevelEvent.class, this::excludeJoinedEntity);
-        }
+        NeoForge.EVENT_BUS.addListener(ServerAboutToStartEvent.class, event -> exclude());
+        // ServerCore caches its exclusion flag inside Entity during construction. Updating only the config set
+        // is not reliable if its cached value was already initialized; add its documented opt-out tag on join.
+        NeoForge.EVENT_BUS.addListener(EntityJoinLevelEvent.class, this::excludeJoinedEntity);
     }
 
     private void excludeJoinedEntity(EntityJoinLevelEvent event)

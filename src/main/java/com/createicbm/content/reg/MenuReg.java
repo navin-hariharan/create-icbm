@@ -1,6 +1,8 @@
 package com.createicbm.content.reg;
 
 import com.createicbm.ICBMConstants;
+import com.createicbm.content.blocks.alarm.TileAlarm;
+import com.createicbm.content.blocks.alarm.gui.ContainerAlarm;
 import com.createicbm.content.blocks.launcher.base.TileLauncherBase;
 import com.createicbm.content.blocks.launcher.base.gui.ContainerLaunchBase;
 import com.createicbm.content.blocks.launcher.cruise.TileCruiseLauncher;
@@ -38,6 +40,8 @@ public final class MenuReg
         () -> IMenuTypeExtension.create((id, inv, buf) -> new ContainerLaunchScreen(id, inv.player, tile(inv, buf, TileLauncherScreen.class))));
     public static final DeferredHolder<MenuType<?>, MenuType<ContainerRadarStation>> RADAR_STATION = MENUS.register("radarstation",
         () -> IMenuTypeExtension.create((id, inv, buf) -> new ContainerRadarStation(id, inv.player, tile(inv, buf, TileRadarStation.class))));
+    public static final DeferredHolder<MenuType<?>, MenuType<ContainerAlarm>> ALARM = MENUS.register("alarm",
+        () -> IMenuTypeExtension.create((id, inv, buf) -> new ContainerAlarm(id, inv.player, tile(inv, buf, TileAlarm.class))));
     /** Held item menu, the client reads which hand holds the missile */
     public static final DeferredHolder<MenuType<?>, MenuType<ContainerDeliveryMissile>> DELIVERY_MISSILE = MENUS.register("delivery_missile",
         () -> IMenuTypeExtension.create((id, inv, buf) -> new ContainerDeliveryMissile(id, inv, buf.readEnum(InteractionHand.class))));

@@ -1,5 +1,6 @@
 package com.createicbm.content.blocks.radarstation;
 
+import com.createicbm.mods.sable.SableProxy;
 import com.createicbm.CreateICBM;
 import com.createicbm.ICBMConstants;
 import com.createicbm.api.CreateICBMAPI;
@@ -103,6 +104,39 @@ public class TileRadarStation extends TileKineticMachine implements MachineChunk
     @Getter @Setter
     private boolean outputRedstone = true;
 
+    /**
+     * Switches the redstone output from a player's toggle. Saved and passed on to neighbours at once, the output
+     * used to be lost on restart and connected dust stayed on until the radar changed state.
+     */
+    public void toggleOutputRedstone(boolean outputRedstone)
+    {
+        this.outputRedstone = outputRedstone;
+        if (level != null && !level.isClientSide())
+        {
+            setChanged();
+            // Strong signal, so the blocks behind each neighbour are told too, the same as when the radar's state changes
+            final BlockPos selfPos = getBlockPos();
+            for (Direction facing : Direction.values())
+            {
+                final BlockPos targetPos = selfPos.relative(facing);
+                level.neighborChanged(targetPos, getBlockState().getBlock(), selfPos);
+                level.updateNeighborsAtExceptFromFacing(targetPos, getBlockState().getBlock(), facing.getOpposite());
+            }
+        }
+    }
+
+    /** Where the radar was in the world at the last scan, it moves when the radar is on a Sable ship */
+    @Nullable
+    private Vec3 scanCenter;
+
+    /**
+     * @return center of the radar in the world as of the last scan, also when it is on a Create Aeronautics ship
+     */
+    public Vec3 getWorldCenter()
+    {
+        return scanCenter != null ? scanCenter : SableProxy.INSTANCE.worldCenter(level, getBlockPos());
+    }
+
     /** All detected threats in our radar range*/
     @Getter
     private final List<Entity> detectedThreats = new ArrayList<Entity>();
@@ -115,6 +149,12 @@ public class TileRadarStation extends TileKineticMachine implements MachineChunk
 
     @Getter
     private final RadioRadar radio = new RadioRadar(this);
+
+    /** Radars without power for this long drop their chunk tickets, the grace covers a kinetic network still forming after a load */
+    private static final int UNPOWERED_RELEASE_TICKS = 600;
+
+    /** Ticks since the dish last turned fast enough, not saved so a loaded radar starts with the full grace */
+    private int unpoweredTicks = 0;
 
     private EnumRadarState radarVisualState = EnumRadarState.OFF;
     private EnumRadarState preRadarVisualState = EnumRadarState.OFF;
@@ -180,9 +220,11 @@ public class TileRadarStation extends TileKineticMachine implements MachineChunk
     private void syncMachineChunks()
     {
         final LongSet wanted = new LongOpenHashSet();
-        if (!RadioRegistry.EMPTY_HZ.equals(radio.getChannel()))
+        // Every radar has a channel (a random one is made when none is set), so power decides: an unpowered or
+        // decorative radar sees nothing and would only hold chunks
+        if (unpoweredTicks < UNPOWERED_RELEASE_TICKS && !RadioRegistry.EMPTY_HZ.equals(radio.getChannel()))
         {
-            MachineChunkLoader.addArea(wanted, getBlockPos());
+            MachineChunkLoader.addArea(wanted, this);
         }
         MachineChunkLoader.sync(this, wanted);
     }
@@ -195,13 +237,14 @@ public class TileRadarStation extends TileKineticMachine implements MachineChunk
         if (isServer())
         {
             // PERF: offset by position so machines loaded together do not all check on the same tick
-            if (Math.floorMod(ticks + getBlockPos().hashCode(), MachineChunkLoader.SYNC_TICKS) == 0)
+            if (MachineChunkLoader.isSyncTick(this, ticks))
             {
                 syncMachineChunks();
             }
 
             // Scans only while the dish turns fast enough
             final boolean hasPower = isRunning();
+            unpoweredTicks = hasPower ? 0 : Math.min(unpoweredTicks + 1, UNPOWERED_RELEASE_TICKS);
 
             if (hasPower)
             {
@@ -295,7 +338,9 @@ public class TileRadarStation extends TileKineticMachine implements MachineChunk
         // PERF: no description packet per scan, update() calls setChanged (which sends it) when the visual state changes
         this.radarRenderData.clear();
 
-        final List<Entity> entities = RadarRegistry.getAllLivingObjectsWithin(level, getBlockPos().getX() + 0.5, getBlockPos().getY() + 0.5, getBlockPos().getZ() + 0.5, Math.min(detectionRange, ConfigRadar.MAX_RANGE));
+        // Scan around where the radar is in the world, a radar on a ship is stored far away in the ship's plot
+        scanCenter = SableProxy.INSTANCE.worldCenter(level, getBlockPos());
+        final List<Entity> entities = RadarRegistry.getAllLivingObjectsWithin(level, scanCenter.x, scanCenter.y, scanCenter.z, Math.min(detectionRange, ConfigRadar.MAX_RANGE));
 
         // Loop list of contacts to ID threats
         for (Entity entity : entities)
@@ -366,10 +411,10 @@ public class TileRadarStation extends TileKineticMachine implements MachineChunk
     }
 
     private int distance(Entity entity) {
-        final BlockPos pos = getBlockPos();
-        final int deltaX = (int)Math.floor(Math.abs(pos.getX() + 0.5 - entity.getX()));
-        final int deltaY = (int)Math.floor(Math.abs(pos.getY() + 0.5 - entity.getY()));
-        final int deltaZ = (int)Math.floor(Math.abs(pos.getZ() + 0.5 - entity.getZ()));
+        final Vec3 center = getWorldCenter();
+        final int deltaX = (int)Math.floor(Math.abs(center.x - entity.getX()));
+        final int deltaY = (int)Math.floor(Math.abs(center.y - entity.getY()));
+        final int deltaZ = (int)Math.floor(Math.abs(center.z - entity.getZ()));
 
         return deltaX + deltaY + deltaZ;
     }
@@ -400,7 +445,7 @@ public class TileRadarStation extends TileKineticMachine implements MachineChunk
         // Incoming means closing in on the radar. Asking for the landing spot to be inside the trigger range stopped
         // alerts for missiles aimed at anything near the radar but its own spot, and turrets never fired their SAMs.
         final Entity entity = missile.getMissileEntity();
-        final Vec3 radarPos = new Vec3(getBlockPos().getX() + 0.5, getBlockPos().getY() + 0.5, getBlockPos().getZ() + 0.5);
+        final Vec3 radarPos = getWorldCenter();
         final Vec3 missilePos = entity.position();
         final Vec3 nextPos = missilePos.add(entity.getDeltaMovement());
         if (!isFinite(missilePos) || !isFinite(nextPos))
@@ -516,8 +561,9 @@ public class TileRadarStation extends TileKineticMachine implements MachineChunk
             return;
         }
         final double range = Math.min(detectionRange, ConfigRadar.MAX_RANGE);
-        final double radarX = getBlockPos().getX() + 0.5;
-        final double radarZ = getBlockPos().getZ() + 0.5;
+        final Vec3 center = SableProxy.INSTANCE.worldCenter(level, getBlockPos());
+        final double radarX = center.x;
+        final double radarZ = center.z;
         final String channel = radio.getChannel();
         final MissileTrackerData[] closest = new MissileTrackerData[1];
         tracker.forEachSimulated(data -> {
@@ -803,7 +849,7 @@ public class TileRadarStation extends TileKineticMachine implements MachineChunk
 
     public static final PacketCodexTile<TileRadarStation, TileRadarStation> PACKET_REDSTONE_OUTPUT = (PacketCodexTile<TileRadarStation, TileRadarStation>) new PacketCodexTile<TileRadarStation, TileRadarStation>(REGISTRY_NAME, "redstone.output")
         .fromClient()
-        .toggleBoolean(TileRadarStation::isOutputRedstone, TileRadarStation::setOutputRedstone);
+        .toggleBoolean(TileRadarStation::isOutputRedstone, TileRadarStation::toggleOutputRedstone);
 
     public static final PacketCodexTile<TileRadarStation, TileRadarStation> PACKET_GUI = (PacketCodexTile<TileRadarStation, TileRadarStation>) new PacketCodexTile<TileRadarStation, TileRadarStation>(REGISTRY_NAME, "gui")
         .fromServer()

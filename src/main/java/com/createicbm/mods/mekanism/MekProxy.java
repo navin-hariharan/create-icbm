@@ -22,7 +22,7 @@ import java.lang.reflect.Method;
 
 /**
  * Mekanism interaction. Mekanism is not on the compile classpath, everything goes through registry names and
- * reflection, guarded by {@link #isModLoaded(String)}.
+ * reflection. Only started when Mekanism is installed, see {@link com.createicbm.mods.ModInteraction}.
  * <p>
  * Created by Dark(DarkGuardsman, Robin) on 5/22/2018.
  */
@@ -35,8 +35,6 @@ public class MekProxy extends ModProxy
     public static final ResourceLocation TELEPORTER = ResourceLocation.fromNamespaceAndPath(MOD_ID, "teleporter");
     public static final ResourceLocation TELEPORTER_FRAME = ResourceLocation.fromNamespaceAndPath(MOD_ID, "teleporter_frame");
 
-    private boolean isLoaded = false;
-
     public static Block teleporterBlock;
     public static Block teleporterFrameBlock;
 
@@ -46,11 +44,6 @@ public class MekProxy extends ModProxy
     @Override
     public void init()
     {
-        if (!isModLoaded(MOD_ID)) {
-            return;
-        }
-        this.isLoaded = true;
-
         teleporterBlock = BuiltInRegistries.BLOCK.getOptional(TELEPORTER).orElse(null);
         teleporterFrameBlock = BuiltInRegistries.BLOCK.getOptional(TELEPORTER_FRAME).orElse(null);
 

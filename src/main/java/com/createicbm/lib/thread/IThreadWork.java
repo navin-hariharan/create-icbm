@@ -24,24 +24,4 @@ public interface IThreadWork
      */
     void onCompleted();
 
-    /**
-     * Called to get the number of steps required
-     *
-     * @return
-     */
-    default int getStepsRequired()
-    {
-        return 1;
-    }
-
-    /**
-     * Called to get the number of steps left.
-     * Only used for debug.
-     *
-     * @return
-     */
-    default int getStepsLeft()
-    {
-        return -1;
-    }
 }

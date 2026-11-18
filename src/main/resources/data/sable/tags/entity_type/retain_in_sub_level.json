@@ -1,0 +1,7 @@
+{
+  "replace": false,
+  "values": [
+    { "id": "create_icbm:holder.seat", "required": false },
+    { "id": "create_icbm:cart.bomb", "required": false }
+  ]
+}

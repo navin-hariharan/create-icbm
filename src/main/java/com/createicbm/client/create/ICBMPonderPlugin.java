@@ -10,7 +10,7 @@ import net.createmod.ponder.api.registration.PonderTagRegistrationHelper;
 import net.minecraft.resources.ResourceLocation;
 
 /**
- * Ponder scenes (hold W over an item) for the shaft driven machines and for arming missiles and bomb carts. Schematics live in
+ * Ponder scenes (hold W over an item) for the shaft driven machines, the alarm and for arming missiles and bomb carts. Schematics live in
  * {@code assets/create_icbm/ponder/}, scene text in the lang file under {@code create_icbm.ponder.*}.
  */
 public class ICBMPonderPlugin implements PonderPlugin
@@ -31,6 +31,7 @@ public class ICBMPonderPlugin implements PonderPlugin
         helper.addStoryBoard(ItemReg.itemCruiseLauncher.getId(), "cruise_turret", ICBMPonderScenes::cruiseTurret);
         helper.addStoryBoard(ItemReg.itemRadarStation.getId(), "radar_station", ICBMPonderScenes::radarStation);
         helper.addStoryBoard(ItemReg.itemAdvancedRadar.getId(), "radar_station", ICBMPonderScenes::radarStation);
+        helper.addStoryBoard(ItemReg.itemAlarm.getId(), "alarm", ICBMPonderScenes::alarm);
 
         // Warheads are deployed onto missile modules and minecarts
         helper.addStoryBoard(ItemReg.itemExplosiveMissile.getId(), "arming", ICBMPonderScenes::arming);
@@ -47,5 +48,8 @@ public class ICBMPonderPlugin implements PonderPlugin
             .add(BlockReg.blockCruiseLauncher.getId())
             .add(BlockReg.blockRadarStation.getId())
             .add(BlockReg.blockAdvancedRadar.getId());
+        // Next to Create's redstone components: it needs no rotation and is set off by redstone
+        helper.addToTag(AllCreatePonderTags.REDSTONE)
+            .add(BlockReg.blockAlarm.getId());
     }
 }

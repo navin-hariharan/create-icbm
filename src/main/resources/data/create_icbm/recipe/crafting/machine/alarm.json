@@ -1,0 +1,30 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "pattern": [
+    " G ",
+    "BNB",
+    "ATA"
+  ],
+  "key": {
+    "G": {
+      "item": "minecraft:red_stained_glass_pane"
+    },
+    "B": {
+      "tag": "c:plates/brass"
+    },
+    "N": {
+      "item": "minecraft:note_block"
+    },
+    "A": {
+      "item": "create:andesite_alloy"
+    },
+    "T": {
+      "item": "create:electron_tube"
+    }
+  },
+  "result": {
+    "id": "create_icbm:alarm",
+    "count": 1
+  }
+}

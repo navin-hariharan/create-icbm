@@ -22,15 +22,18 @@ import com.createicbm.content.missile.entity.CapabilityMissile;
 import com.createicbm.content.missile.logic.flight.ArcFlightLogic;
 import com.createicbm.content.missile.logic.flight.WarmupFlightLogic;
 import com.createicbm.content.missile.logic.flight.move.MoveByFacingLogic;
+import com.createicbm.content.missile.logic.flight.move.MoveByVec3Logic;
 import com.createicbm.content.missile.logic.source.ActionSource;
 import com.createicbm.content.missile.logic.source.cause.CausedByBlock;
 import com.createicbm.content.missile.logic.targeting.BallisticTargetingData;
 import com.createicbm.content.reg.ItemReg;
 import com.createicbm.lib.transform.rotation.EulerAngle;
+import com.createicbm.mods.sable.SableProxy;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import net.minecraft.core.Direction;
+import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.Vec3;
@@ -114,8 +117,8 @@ public class LauncherCapability extends LauncherBaseCapability {
         final CausedByBlock selfCause = new CausedByBlock(host.getLevel(), host.getBlockPos(), host.getBlockState()); // TODO add more information about launcher
         selfCause.setPreviousCause(cause);
 
-        final Vec3 spawnPosition = SPAWN_OFFSETS[host.getLaunchDirection().ordinal()].add(host.getBlockPos().getX() + 0.5, host.getBlockPos().getY() + 0.5, host.getBlockPos().getZ() + 0.5);
-        final ActionSource source = new ActionSource(host.getLevel(), spawnPosition, selfCause);
+        // On a Create Aeronautics ship the pad sits in the ship's plot, the missile starts where the pad is in the world
+        final ActionSource source = new ActionSource(host.getLevel(), SableProxy.INSTANCE.toWorld(host.getLevel(), getPlotSpawnPosition()), selfCause);
 
         //Allow canceling missile launches
         final LauncherEvent.PreLaunch event = new LauncherEvent.PreLaunch(source, this, host.missileHolder, targetData, simulate);
@@ -141,7 +144,9 @@ public class LauncherCapability extends LauncherBaseCapability {
                 // Check if we have a delay before firing
                 int delay = host.getFiringDelay();
                 if(targetData instanceof IMissileTargetDelayed) {
-                    delay += ((IMissileTargetDelayed) targetData).getFiringDelay();
+                    // Saturating: an overflow to a negative delay used to skip the delay and fire at once
+                    delay = (int) Math.max(0, Math.min(TileLauncherBase.MAX_FIRING_DELAY,
+                        (long) delay + Math.max(0, ((IMissileTargetDelayed) targetData).getFiringDelay())));
                 }
 
                 // If delay, store firing information and return
@@ -177,10 +182,22 @@ public class LauncherCapability extends LauncherBaseCapability {
             return LauncherStatus.ERROR_INVALID_STACK;
         }
 
+        // A pad on a Sable ship faces wherever the ship is turned, the climb and the missile follow that
+        final SableProxy.ShipFrame ship = SableProxy.INSTANCE.getShipFrame(host.getLevel(), Vec3.atCenterOf(host.getBlockPos()));
+        final Vec3 launchDirection = ship == null ? null : ship.directionToWorld(Vec3.atLowerCornerOf(host.getLaunchDirection().getNormal())).normalize();
+
         final Entity entity = missile.getMissileEntity();
-        entity.setXRot(host.getMissilePitch(false));
+        if (launchDirection != null && launchDirection.lengthSqr() > 0.5) {
+            final double horizontal = launchDirection.horizontalDistance();
+            // Straight up or down has no heading, keep the pad's
+            entity.setYRot(horizontal < 1.0E-4 ? host.getMissileYaw(false) : (float) (Mth.atan2(launchDirection.x, launchDirection.z) * Mth.RAD_TO_DEG));
+            entity.setXRot((float) (Mth.atan2(launchDirection.y, horizontal) * Mth.RAD_TO_DEG));
+        }
+        else {
+            entity.setXRot(host.getMissilePitch(false));
+            entity.setYRot(host.getMissileYaw(false));
+        }
         entity.xRotO = entity.getXRot();
-        entity.setYRot(host.getMissileYaw(false));
         entity.yRotO = entity.getYRot();
 
         // TODO raytrace to make sure we don't teleport through the ground
@@ -190,13 +207,18 @@ public class LauncherCapability extends LauncherBaseCapability {
 
         //Trigger launch event
         missile.setTargetData(new BallisticTargetingData(target, 2)); //TODO pull from targeting data
-        missile.setFlightLogic(buildFLightPath());
+        missile.setFlightLogic(launchDirection != null && launchDirection.lengthSqr() > 0.5 ? buildFLightPath(launchDirection) : buildFLightPath());
         missile.setMissileSource(source); //TODO encode player that built launcher, firing method (laser, remote, redstone), and other useful data
         // Friend or foe: radars and SAMs on the launch site's channel leave this missile alone
         if (missile instanceof CapabilityMissile capability && host.getNetworkNode().getNetwork() != null) {
             capability.setRadioChannel(host.getNetworkNode().getNetwork().getRadioChannel());
         }
         missile.launch();
+
+        // It keeps the ship's speed, so it rides along on the pad while the engine warms up
+        if (ship != null) {
+            entity.setDeltaMovement(entity.getDeltaMovement().add(ship.velocityAt(getPlotSpawnPosition())));
+        }
 
         //Spawn entity
         if(!host.getLevel().addFreshEntity(entity)) {
@@ -218,6 +240,54 @@ public class LauncherCapability extends LauncherBaseCapability {
         }
 
         return new LaunchedWithMissile().setMissile(missile);
+    }
+
+    /**
+     * @return where the missile spawns, in the pad's own space (a ship's plot when the pad is on a Sable ship)
+     */
+    private Vec3 getPlotSpawnPosition() {
+        return SPAWN_OFFSETS[host.getLaunchDirection().ordinal()].add(host.getBlockPos().getX() + 0.5, host.getBlockPos().getY() + 0.5, host.getBlockPos().getZ() + 0.5);
+    }
+
+    /**
+     * Flight path for a pad on a Sable ship, the climb follows the pad's facing as the ship is turned in the world.
+     * The climb is measured by the engine's own push, the ship's speed the missile keeps doesn't count towards it.
+     *
+     * @param direction world direction the pad faces, unit length
+     */
+    public IMissileFlightLogic buildFLightPath(Vec3 direction) {
+
+        if(host.getLaunchDirection() != Direction.UP) {
+
+            IMissileFlightLogicStep stepLockHeight = new MoveByVec3Logic()
+                .setDistance(host.getLockHeight())
+                .setRelative(true)
+                .setDirection(direction)
+                .setAcceleration(0.2);
+
+            return new WarmupFlightLogic()
+                .setTimer(PAD_WARM_UP_TIME)
+                .addStep(stepLockHeight)
+                .addStep(new ArcFlightLogic());
+        }
+
+        IMissileFlightLogicStep stepSlowClimb = new MoveByVec3Logic()
+            .setDistance(MISSILE_CLIMB_HEIGHT)
+            .setRelative(true)
+            .setDirection(direction)
+            .setAcceleration(0.005);
+
+        IMissileFlightLogicStep stepLockHeight = new MoveByVec3Logic()
+            .setDistance(host.getLockHeight() - MISSILE_CLIMB_HEIGHT)
+            .setRelative(true)
+            .setDirection(direction)
+            .setAcceleration(0.1);
+
+        return new WarmupFlightLogic()
+            .setTimer(PAD_WARM_UP_TIME)
+            .addStep(stepSlowClimb)
+            .addStep(stepLockHeight)
+            .addStep(new ArcFlightLogic());
     }
 
     public IMissileFlightLogic buildFLightPath() {
@@ -261,7 +331,8 @@ public class LauncherCapability extends LauncherBaseCapability {
 
     @Override
     public float getInaccuracy(Vec3 target, int launcherCount) {
-        final double distance = host.getDistanceSq(target.x, target.y, target.z);
+        // From where the pad is in the world, a pad on a ship sits far away in the ship's plot
+        final double distance = getWorldCenter().distanceToSqr(target);
         return calculateInaccuracy(distance, launcherCount);
     }
 
@@ -310,16 +381,25 @@ public class LauncherCapability extends LauncherBaseCapability {
     public boolean isTargetTooClose(Vec3 target)
     {
         final int minDistance = 10; //TODO config driven and user driven
-        final double deltaX = Math.abs(target.x - (host.getBlockPos().getX() + 0.5));
-        final double  deltaZ = Math.abs(target.z - (host.getBlockPos().getZ() + 0.5));
+        final Vec3 center = getWorldCenter();
+        final double deltaX = Math.abs(target.x - center.x);
+        final double  deltaZ = Math.abs(target.z - center.z);
         return deltaX < minDistance && deltaZ < minDistance;
     }
 
     public boolean isTargetTooFar(Vec3 target)
     {
-        final double deltaX = Math.abs(target.x - (host.getBlockPos().getX() + 0.5));
-        final double  deltaZ = Math.abs(target.z - (host.getBlockPos().getZ() + 0.5));
+        final Vec3 center = getWorldCenter();
+        final double deltaX = Math.abs(target.x - center.x);
+        final double  deltaZ = Math.abs(target.z - center.z);
         return deltaX > ConfigLauncher.RANGE || deltaZ > ConfigLauncher.RANGE;
+    }
+
+    /**
+     * @return center of the pad in the world, also when it is on a Sable ship
+     */
+    private Vec3 getWorldCenter() {
+        return SableProxy.INSTANCE.worldCenter(host.getLevel(), host.getBlockPos());
     }
 
     @Override

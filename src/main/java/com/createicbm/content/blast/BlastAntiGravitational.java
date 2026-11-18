@@ -23,6 +23,15 @@ public class BlastAntiGravitational extends BlastThreaded implements IBlastTicka
 
     int searchIndex = 0;
 
+    /** Its scan thread is its own field, the base class only stops the inherited one */
+    @Override
+    protected void endBlast() {
+        super.endBlast();
+        if (this.thread != null) {
+            this.thread.kill();
+        }
+    }
+
     @Override
     public boolean setupBlast() {
         if (!this.world().isClientSide()) {

@@ -14,7 +14,6 @@ public class NBTConstants
     public static final String DIMENSION = "dimension";
     public static final String DURATION = "duration";
     public static final String EXPLOSION_SIZE = "explosionSize";
-    public static final String EXPLOSIVE_ID = "explosiveID";
     public static final String EXPLOSIVE_STACK = "explosive_stack";
     public static final String EX_ID = "ex_id";
     public static final String FREQUENCY = "frequency";

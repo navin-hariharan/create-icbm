@@ -21,7 +21,6 @@ import java.util.List;
 
 public class BlastSonic extends Blast implements IBlastTickable
 {
-    private boolean hasShockWave = false;
     /** Claim and protection mods were asked about the blocks the thread found, see {@link #filterBlockEdits} */
     private boolean protectionChecked = false;
 

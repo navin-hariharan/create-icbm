@@ -21,13 +21,4 @@ public interface IPos2D
         return (int) Math.floor(y());
     }
 
-    default float xf()
-    {
-        return (float) x();
-    }
-
-    default float yf()
-    {
-        return (float) y();
-    }
 }

@@ -360,11 +360,12 @@ public class TileLauncherScreen extends TileMachine implements MachineChunkLoade
             && getNetworkNode().getNetwork().streamLaunchers(-1).anyMatch(entry -> entry.getHost() instanceof TileLauncherBase pad
                 && !pad.isRemoved() && !pad.getMissileStack().isEmpty()))
         {
-            MachineChunkLoader.addArea(wanted, getBlockPos());
+            // Around where each block is in the world, also when the site is on a Create Aeronautics ship
+            MachineChunkLoader.addArea(wanted, this);
             getNetworkNode().getNetwork().streamLaunchers(-1)
                 .map(LauncherEntry::getHost)
                 .filter(host -> host != null && !host.isRemoved())
-                .forEach(host -> MachineChunkLoader.addArea(wanted, host.getBlockPos()));
+                .forEach(host -> MachineChunkLoader.addArea(wanted, host));
         }
         MachineChunkLoader.sync(this, wanted);
     }
@@ -391,7 +392,7 @@ public class TileLauncherScreen extends TileMachine implements MachineChunkLoade
      */
     public void setTarget(Vec3 target)
     {
-        if(target != this._targetPos) {
+        if(!Objects.equals(target, this._targetPos)) {
 
             // Only fire packet server side to avoid description packet triggering events
             if(isServer()) {

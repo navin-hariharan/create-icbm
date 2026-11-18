@@ -3,6 +3,7 @@ package com.createicbm.content.blocks.radarstation.data;
 import com.createicbm.content.blocks.radarstation.TileRadarStation;
 import io.netty.buffer.ByteBuf;
 import lombok.Getter;
+import net.minecraft.world.phys.Vec3;
 
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -26,7 +27,9 @@ public class RadarRenderData
     public void update()
     {
         dots.clear();
-        addDot(host.getBlockPos().getX() + 0.5, host.getBlockPos().getZ() + 0.5, RadarDotType.MARKER);
+        // Relative to where the radar is in the world, a radar on a Sable ship is stored far away in the ship's plot
+        final Vec3 center = host.getWorldCenter();
+        addDot(center.x, center.z, RadarDotType.MARKER);
         host.getDetectedThreats().forEach(entity -> addDot(entity.getX(), entity.getZ(), RadarDotType.HOSTILE));
         host.getIncomingThreats().forEach(missile -> addDot(missile.x(), missile.z(), RadarDotType.INCOMING));
     }
@@ -34,8 +37,9 @@ public class RadarRenderData
     public void addDot(double ex, double ez, RadarDotType type)
     {
         final double range = Math.max(1, host.getDetectionRange());
-        final double deltaX = ex - (host.getBlockPos().getX() + 0.5);
-        final double deltaZ = ez - (host.getBlockPos().getZ() + 0.5);
+        final Vec3 center = host.getWorldCenter();
+        final double deltaX = ex - center.x;
+        final double deltaZ = ez - center.z;
         double scaledX = deltaX / range * MAP_RADIUS;
         double scaledZ = deltaZ / range * MAP_RADIUS;
         final double length = Math.sqrt(scaledX * scaledX + scaledZ * scaledZ);

@@ -1,0 +1,69 @@
+{
+  "replace": false,
+  "values": [
+    {
+      "id": "#storagedrawers:drawers",
+      "required": false
+    },
+    {
+      "id": "storagedrawers:framed_full_drawers_1",
+      "required": false
+    },
+    {
+      "id": "storagedrawers:framed_full_drawers_2",
+      "required": false
+    },
+    {
+      "id": "storagedrawers:framed_full_drawers_4",
+      "required": false
+    },
+    {
+      "id": "storagedrawers:framed_half_drawers_1",
+      "required": false
+    },
+    {
+      "id": "storagedrawers:framed_half_drawers_2",
+      "required": false
+    },
+    {
+      "id": "storagedrawers:framed_half_drawers_4",
+      "required": false
+    },
+    {
+      "id": "storagedrawers:compacting_drawers_2",
+      "required": false
+    },
+    {
+      "id": "storagedrawers:compacting_drawers_3",
+      "required": false
+    },
+    {
+      "id": "storagedrawers:compacting_half_drawers_2",
+      "required": false
+    },
+    {
+      "id": "storagedrawers:compacting_half_drawers_3",
+      "required": false
+    },
+    {
+      "id": "storagedrawers:framed_compacting_drawers_2",
+      "required": false
+    },
+    {
+      "id": "storagedrawers:framed_compacting_drawers_3",
+      "required": false
+    },
+    {
+      "id": "storagedrawers:framed_compacting_half_drawers_2",
+      "required": false
+    },
+    {
+      "id": "storagedrawers:framed_compacting_half_drawers_3",
+      "required": false
+    },
+    {
+      "id": "storagedrawers:framing_table",
+      "required": false
+    }
+  ]
+}

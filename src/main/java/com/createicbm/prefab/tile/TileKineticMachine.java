@@ -197,11 +197,4 @@ public abstract class TileKineticMachine extends KineticBlockEntity
         return Direction.NORTH;
     }
 
-    public double getDistanceSq(double x, double y, double z)
-    {
-        final double dx = getBlockPos().getX() + 0.5D - x;
-        final double dy = getBlockPos().getY() + 0.5D - y;
-        final double dz = getBlockPos().getZ() + 0.5D - z;
-        return dx * dx + dy * dy + dz * dz;
-    }
 }

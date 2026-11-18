@@ -6,6 +6,97 @@ When `mod_version` in `gradle.properties` changes on `main`, the Release workflo
 GitHub release named after that version, with the matching section below as its notes. Add a section for the new
 version (heading `## <version>`) in the same commit as the version bump, or the release fails.
 
+## 1.0.7
+
+### New
+
+- **Alarm:** a brass siren with a warning light, placed like a lever on floors, walls and ceilings. It wails a
+  civil-defence siren (heard up to 64 blocks away) while it gets a redstone signal, or while a Radar Station or
+  Advanced Radar on its radio channel reports a missile coming in. Right-click it to open its screen and type the
+  radar's channel; the screen also shows whether it is linked and sounding. It needs no rotational force and gives
+  off no redstone signal.
+  Crafted from a red stained glass pane, a note block, brass sheets, andesite alloy and an electron tube. Has its own
+  Ponder scene and works on Create Aeronautics ships.
+
+### Create Aeronautics ships
+
+Launch Pads, Cruise Turrets, Launch Controllers and Radar Stations now work properly on player-built ships, boats and
+balloons from Create Aeronautics (Sable), moving, turning or tilted.
+
+- Launch Pads launch from where the ship is, climb the way the pad faces on a tilted ship, and the missile keeps the
+  ship's speed while it warms up on the pad instead of being left hanging in the air. Range, minimum distance and
+  inaccuracy are measured from the ship's position.
+- The launch seat stays on the ship.
+- Cruise Turrets keep aiming at their target while the ship moves and turns, and launch from where they are.
+- Radar Stations scan around the ship and show contacts relative to it. Their early warnings, counter-strikes and SAM
+  intercepts use the ship's position.
+- Radars, turrets, Launch Controllers and waiting launches on a ship keep the chunks under the ship loaded, and those
+  chunks follow it. They no longer try to load the far-away area where Sable stores the ship's blocks.
+- Bomb carts stay on a ship's rails and explode where the ship is, so the blast reaches players and the world around
+  it.
+- Rockets fired from a ship that is turning now get the right speed.
+- Assembling or taking apart a ship with a loaded Launch Pad or Cruise Turret on it dropped the missile and also kept
+  it on the pad, so every assembly made a free missile. Moved machines now keep their missile and drop nothing, and
+  Mail parcels keep their cargo the same way. Breaking or blowing up a machine still drops what it holds.
+- Wired explosive crates moved by a ship or a Create contraption no longer forget their Remote Detonator channel, and
+  a parcel moved onto a ship no longer leaves a BlueMap pin behind where it stood.
+- Storage Drawers can be built into ships: drawers, compacting drawers, framed drawers and the Framing Table no longer
+  spill a copy of their contents when the ship is assembled or taken apart. Tom's Simple Storage blocks already keep
+  their contents when moved.
+- Drawers built into a ship showed empty fronts (no items, no counts) until the ship was taken apart again. They show
+  their contents on the ship now. Nothing was ever lost, only not drawn.
+- Advanced Radar counter-strikes against a ship that fired while flying came down under the ship and fell to the
+  ground. The strike now goes off at the height the missile was launched from.
+
+### Changed
+
+- The support for each optional mod (Create Aeronautics/Sable, Storage Drawers, BlueMap, Mekanism, ServerCore, Does
+  Potato Tick, Immersive Optimization, Entity Culling) is only loaded and started when that mod is installed. Without
+  it, none of its code runs.
+- Removed unused code (dead classes, methods and imports) left over from the original mod.
+- The firing delay of Launch Pads and Cruise Turrets is limited to 6000 ticks (5 minutes). A launch waiting on its
+  delay keeps its chunk loaded, and a huge delay turned any launcher into a chunk loader.
+- Radar Stations keep their chunks loaded only while they are powered. A radar without power for 30 seconds lets them
+  go, so unpowered or decorative radars no longer load chunks forever.
+- The Laser Detonator only works from the main hand or off hand, not from the inventory or an armour slot.
+- A Cruise Turret with no target refuses to fire instead of sending its missile to 0, 0, 0.
+- Missiles from Launch Pads reach the height of a target above them, instead of arriving level with where they started
+  and falling the rest of the way. An Advanced Radar's strike at a ship that fired while flying now hits the ship if it
+  is still there. A target in open air (at least 4 blocks above anything solid or water) never sets the missile off in
+  empty air: if the ship has moved on, the missile keeps falling and goes off on whatever it hits, ship or ground.
+  Targets on the ground work as before.
+- A Cruise Turret with an order waiting (aiming, firing delay or launch cooldown) turns down other launch orders from
+  its screen or a Launch Controller, which used to fire past the wait and skip the cooldown.
+
+### Fixed
+
+- Closing a machine screen with Esc or the inventory key still threw away the value being typed (lock height, target,
+  channel, firing delay). The value is now sent before the screen closes.
+- A Cruise Turret could lose a waiting order without firing when its target moved while it waited, for example when a
+  radar's early warning turned it. Early warnings no longer turn a turret that has an order waiting, and an order that
+  had to aim again fires once the turret is aimed.
+- A Cruise Turret let its missile spawn inside a block above it when a torch, carpet or other small block was next to
+  it. Every block above the turret is checked now.
+- Long-range missiles lost their launch site when they were saved or handed to the missile tracker, so the Advanced
+  Radar could not strike back at missiles fired from far away.
+- A Delivery Missile arriving where another mod refused to spawn it left a parcel at the target on every retry, up to
+  7 copies of its cargo. The cargo now stays with the missile until it lands or is given up.
+- Punching a moving bomb cart, or setting it on fire, made it explode and also drop the cart item.
+- Blocks thrown by a blast vanished, with their contents, when another mod refused to spawn the flying block. They are
+  put back.
+- A stalled Delivery Missile rescued at its target missed the container under it and left a parcel on top.
+  Rescued missiles also fire the normal impact events now, so BlueMap and other mods see them.
+- After a reload, a Cruise Turret without a target aimed at world origin.
+- The radar's redstone output toggle was not saved and did not update connected redstone at once.
+- The Radar Gun ignored mods that change the traced position.
+- The Launch Controller fired its target event again when the same target was set.
+- Pad group id and index accepted any number below -1.
+- The anti-gravity blast's scan kept running after the blast was ended or removed.
+- Taking a missile off a Launch Pad by hand now always gives you the missile that came out of the pad.
+- A damaged `config/create_icbm/explosive_reg.json` stopped the game from starting. It is now moved aside as
+  `explosive_reg.json.broken-<time>` and rebuilt, and single bad entries are skipped. Worlds and items store
+  explosives by name, so nothing in them changes.
+
 ## 1.0.5
 
 ### New

@@ -226,19 +226,6 @@ public class EulerAngle implements Cloneable, ITransform, IByteBufWriter, IByteB
     }
 
     /**
-     * 1 / angle
-     *
-     * @return this
-     */
-    public EulerAngle reciprocal()
-    {
-        this.yaw = 1 / yaw;
-        this.pitch = 1 / pitch;
-        this.roll = 1 / roll;
-        return this;
-    }
-
-    /**
      * Rounds the angles up
      *
      * @return this
@@ -726,50 +713,6 @@ public class EulerAngle implements Cloneable, ITransform, IByteBufWriter, IByteB
     public double pitch_radian()
     {
         return Math.toRadians(pitch);
-    }
-
-    /**
-     * Is the angle near zero zero zero. Does
-     * not check for exact as 0.00001 != 0.00000
-     *
-     * @return true if values are near zero
-     */
-    public boolean isZero()
-    {
-        return isYawZero() && isPitchZero() && isRollZero();
-    }
-
-    /**
-     * Is the angle near zero. Does
-     * not check for exact as 0.00001 != 0.00000
-     *
-     * @return true if values are near zero
-     */
-    public boolean isYawZero()
-    {
-        return yaw <= 0.00001 && yaw >= -0.00001;
-    }
-
-    /**
-     * Is the angle near zero. Does
-     * not check for exact as 0.00001 != 0.00000
-     *
-     * @return true if values are near zero
-     */
-    public boolean isPitchZero()
-    {
-        return pitch <= 0.00001 && pitch >= -0.00001;
-    }
-
-    /**
-     * Is the angle near zero. Does
-     * not check for exact as 0.00001 != 0.00000
-     *
-     * @return true if values are near zero
-     */
-    public boolean isRollZero()
-    {
-        return roll <= 0.00001 && roll >= -0.00001;
     }
 
     @Deprecated

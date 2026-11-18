@@ -1,0 +1,61 @@
+{
+	"parent": "minecraft:block/block",
+	"textures": {
+		"alarm": "create_icbm:block/alarm/alarm",
+		"plate": "create_icbm:block/alarm/plate",
+		"lamp": "create_icbm:block/alarm/alarm_lamp_on",
+		"particle": "create_icbm:block/alarm/plate"
+	},
+	"elements": [
+		{
+			"name": "plate",
+			"from": [3, 0, 3],
+			"to": [13, 2, 13],
+			"faces": {
+				"north": {"uv": [0, 10, 10, 12], "texture": "#plate"},
+				"east": {"uv": [0, 10, 10, 12], "texture": "#plate"},
+				"south": {"uv": [0, 10, 10, 12], "texture": "#plate"},
+				"west": {"uv": [0, 10, 10, 12], "texture": "#plate"},
+				"up": {"uv": [0, 0, 10, 10], "texture": "#plate"},
+				"down": {"uv": [0, 0, 10, 10], "texture": "#plate", "cullface": "down"}
+			}
+		},
+		{
+			"name": "siren",
+			"from": [4, 2, 4],
+			"to": [12, 6, 12],
+			"faces": {
+				"north": {"uv": [0, 12, 8, 16], "texture": "#alarm"},
+				"east": {"uv": [0, 12, 8, 16], "texture": "#alarm"},
+				"south": {"uv": [0, 12, 8, 16], "texture": "#alarm"},
+				"west": {"uv": [0, 12, 8, 16], "texture": "#alarm"},
+				"up": {"uv": [8, 8, 16, 16], "texture": "#alarm"}
+			}
+		},
+		{
+			"name": "lamp",
+			"from": [5, 6, 5],
+			"to": [11, 10, 11],
+			"faces": {
+				"north": {"uv": [0, 0, 6, 4], "texture": "#lamp"},
+				"east": {"uv": [0, 0, 6, 4], "texture": "#lamp"},
+				"south": {"uv": [0, 0, 6, 4], "texture": "#lamp"},
+				"west": {"uv": [0, 0, 6, 4], "texture": "#lamp"},
+				"up": {"uv": [6, 0, 12, 6], "texture": "#lamp"}
+			},
+			"neoforge_data": {"block_light": 15, "sky_light": 15}
+		},
+		{
+			"name": "cap",
+			"from": [6, 10, 6],
+			"to": [10, 11, 10],
+			"faces": {
+				"north": {"uv": [10, 4, 14, 5], "texture": "#alarm"},
+				"east": {"uv": [10, 4, 14, 5], "texture": "#alarm"},
+				"south": {"uv": [10, 4, 14, 5], "texture": "#alarm"},
+				"west": {"uv": [10, 4, 14, 5], "texture": "#alarm"},
+				"up": {"uv": [10, 0, 14, 4], "texture": "#alarm"}
+			}
+		}
+	]
+}

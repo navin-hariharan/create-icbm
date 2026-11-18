@@ -2,6 +2,7 @@ package com.createicbm.content.blocks.mail;
 
 import com.createicbm.client.ICBMSounds;
 import com.createicbm.content.reg.BlockReg;
+import com.createicbm.mods.sable.SableProxy;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.particles.ParticleTypes;
@@ -9,8 +10,10 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
+import net.minecraft.server.TickTask;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.Clearable;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
@@ -27,7 +30,7 @@ import java.util.UUID;
  * Holds the one stack a delivery missile brought and the name of the player who sent it. Has no item handler on
  * purpose, so hoppers, funnels and pipes can't take the mail, only the player who opens it.
  */
-public class TileMail extends BlockEntity
+public class TileMail extends BlockEntity implements Clearable
 {
     /** Mail nobody has opened starts to ding after 3 minutes */
     private static final int DING_AFTER = 3 * 60 * 20;
@@ -85,10 +88,11 @@ public class TileMail extends BlockEntity
     public void onLoad()
     {
         super.onLoad();
-        // Brings the list of unopened mail in line, mail delivered before it existed is added this way
+        // Brings the list of unopened mail in line, mail delivered before it existed is added this way. Next tick: a
+        //  parcel moved by a Create Aeronautics ship is added to the level before its saved data is loaded into it.
         if (level instanceof ServerLevel server)
         {
-            server.getServer().execute(this::syncUnopened);
+            server.getServer().tell(new TickTask(server.getServer().getTickCount(), this::syncUnopened));
         }
     }
 
@@ -98,7 +102,8 @@ public class TileMail extends BlockEntity
         {
             return;
         }
-        if (delivered && !opened)
+        // Mail on a Create Aeronautics ship sits in the ship's plot, far from where the ship is, so it gets no map pin
+        if (delivered && !opened && !SableProxy.INSTANCE.isOnShip(level, worldPosition))
         {
             UnopenedMail.add(level, worldPosition, senderName);
         }
@@ -142,6 +147,16 @@ public class TileMail extends BlockEntity
             contents.setStackInSlot(0, rest.isEmpty() ? ItemStack.EMPTY : rest);
         }
         return contents.getStackInSlot(0).isEmpty();
+    }
+
+    /**
+     * Empties the parcel. Called by whatever moves or replaces the block after it saved the block entity (Create
+     * Aeronautics ship assembly, /setblock), so the old block can't drop a second copy.
+     */
+    @Override
+    public void clearContent()
+    {
+        contents.setStackInSlot(0, ItemStack.EMPTY);
     }
 
     /** Takes out whatever is left, used when the block is removed some other way */

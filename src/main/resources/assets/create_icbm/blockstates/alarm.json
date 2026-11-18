@@ -1,0 +1,110 @@
+{
+  "variants": {
+    "active=false,face=ceiling,facing=east": {
+      "model": "create_icbm:block/alarm/alarm",
+      "x": 180,
+      "y": 270
+    },
+    "active=true,face=ceiling,facing=east": {
+      "model": "create_icbm:block/alarm/alarm_active",
+      "x": 180,
+      "y": 270
+    },
+    "active=false,face=ceiling,facing=north": {
+      "model": "create_icbm:block/alarm/alarm",
+      "x": 180,
+      "y": 180
+    },
+    "active=true,face=ceiling,facing=north": {
+      "model": "create_icbm:block/alarm/alarm_active",
+      "x": 180,
+      "y": 180
+    },
+    "active=false,face=ceiling,facing=south": {
+      "model": "create_icbm:block/alarm/alarm",
+      "x": 180
+    },
+    "active=true,face=ceiling,facing=south": {
+      "model": "create_icbm:block/alarm/alarm_active",
+      "x": 180
+    },
+    "active=false,face=ceiling,facing=west": {
+      "model": "create_icbm:block/alarm/alarm",
+      "x": 180,
+      "y": 90
+    },
+    "active=true,face=ceiling,facing=west": {
+      "model": "create_icbm:block/alarm/alarm_active",
+      "x": 180,
+      "y": 90
+    },
+    "active=false,face=floor,facing=east": {
+      "model": "create_icbm:block/alarm/alarm",
+      "y": 90
+    },
+    "active=true,face=floor,facing=east": {
+      "model": "create_icbm:block/alarm/alarm_active",
+      "y": 90
+    },
+    "active=false,face=floor,facing=north": {
+      "model": "create_icbm:block/alarm/alarm"
+    },
+    "active=true,face=floor,facing=north": {
+      "model": "create_icbm:block/alarm/alarm_active"
+    },
+    "active=false,face=floor,facing=south": {
+      "model": "create_icbm:block/alarm/alarm",
+      "y": 180
+    },
+    "active=true,face=floor,facing=south": {
+      "model": "create_icbm:block/alarm/alarm_active",
+      "y": 180
+    },
+    "active=false,face=floor,facing=west": {
+      "model": "create_icbm:block/alarm/alarm",
+      "y": 270
+    },
+    "active=true,face=floor,facing=west": {
+      "model": "create_icbm:block/alarm/alarm_active",
+      "y": 270
+    },
+    "active=false,face=wall,facing=east": {
+      "model": "create_icbm:block/alarm/alarm",
+      "x": 90,
+      "y": 90
+    },
+    "active=true,face=wall,facing=east": {
+      "model": "create_icbm:block/alarm/alarm_active",
+      "x": 90,
+      "y": 90
+    },
+    "active=false,face=wall,facing=north": {
+      "model": "create_icbm:block/alarm/alarm",
+      "x": 90
+    },
+    "active=true,face=wall,facing=north": {
+      "model": "create_icbm:block/alarm/alarm_active",
+      "x": 90
+    },
+    "active=false,face=wall,facing=south": {
+      "model": "create_icbm:block/alarm/alarm",
+      "x": 90,
+      "y": 180
+    },
+    "active=true,face=wall,facing=south": {
+      "model": "create_icbm:block/alarm/alarm_active",
+      "x": 90,
+      "y": 180
+    },
+    "active=false,face=wall,facing=west": {
+      "model": "create_icbm:block/alarm/alarm",
+      "x": 90,
+      "y": 270
+    },
+    "active=true,face=wall,facing=west": {
+      "model": "create_icbm:block/alarm/alarm_active",
+      "x": 90,
+      "y": 270
+    }
+  }
+}

@@ -77,10 +77,6 @@ public class BlueMapProxy extends ModProxy
     @Override
     public void init()
     {
-        if (!isModLoaded(MOD_ID))
-        {
-            return;
-        }
         try
         {
             BlueMapMarkers.register(
@@ -134,11 +130,6 @@ public class BlueMapProxy extends ModProxy
                 CreateICBM.logger().debug("BlueMap: " + what + " failed", e);
             }
         }
-    }
-
-    public boolean isLoaded()
-    {
-        return loaded;
     }
 
     private void onServerTick(ServerTickEvent.Post event)

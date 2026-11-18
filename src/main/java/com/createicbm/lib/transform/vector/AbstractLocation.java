@@ -246,21 +246,6 @@ public abstract class AbstractLocation<R extends AbstractLocation> extends Abstr
     }
 
     /**
-     * Gets the tile entity at the location. Will return null if the world is null or the tile is invalid.
-     *
-     * @return tile entity, can be null
-     */
-    public BlockEntity getTileEntity()
-    {
-        if (world != null)
-        {
-            BlockEntity tile = world.getBlockEntity(toBlockPos());
-            return tile == null || tile.isRemoved() ? null : tile;
-        }
-        return null;
-    }
-
-    /**
      * Gets the block's resistance to being mined
      *
      * @return value of resistance

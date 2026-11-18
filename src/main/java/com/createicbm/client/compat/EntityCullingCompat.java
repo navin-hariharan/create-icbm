@@ -6,8 +6,6 @@ import com.createicbm.content.reg.EntityReg;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.level.block.entity.BlockEntityType;
-import net.neoforged.fml.ModList;
-import net.neoforged.neoforge.client.event.ClientTickEvent;
 
 import java.lang.reflect.Method;
 import java.util.Set;
@@ -19,7 +17,7 @@ import java.util.function.Supplier;
  */
 public final class EntityCullingCompat
 {
-    private static final String MOD_ID = "entityculling";
+    public static final String MOD_ID = "entityculling";
     private static boolean complete;
     private static boolean failureLogged;
 
@@ -28,15 +26,11 @@ public final class EntityCullingCompat
     }
 
     @SuppressWarnings("unchecked")
-    public static void onClientTick(ClientTickEvent.Post event)
+    /** Client tick, only listened to when Entity Culling is installed. Retries until Entity Culling is ready. */
+    public static void onClientTick()
     {
         if (complete)
         {
-            return;
-        }
-        if (!ModList.get().isLoaded(MOD_ID))
-        {
-            complete = true; // The loaded mod list is stable for this client session.
             return;
         }
 

@@ -17,20 +17,6 @@ import javax.annotation.Nullable;
 public interface IActionCause extends IBuildableObject {
 
     /**
-     * First cause in the history
-     *
-     * @return first entry
-     */
-    @Nullable
-    default IActionCause getRootCause() {
-        final IActionCause cause = getPreviousCause();
-        if(cause != null) { //TODO add logic to prevent infinite loop
-            return cause.getPreviousCause();
-        }
-        return null;
-    }
-
-    /**
      * Parent cause in the history
      *
      * @return cause

@@ -1,5 +1,6 @@
 package com.createicbm.content.entity;
 
+import com.createicbm.mods.sable.SableProxy;
 import com.createicbm.api.CreateICBMAPI;
 import com.createicbm.content.missile.logic.source.ActionSource;
 import com.createicbm.content.missile.logic.source.cause.EntityCause;
@@ -101,7 +102,10 @@ public class EntityBombCart extends MinecartTNT implements IEntityWithComplexSpa
             // A player who set it off by hitting or shooting it counts over the one who placed it
             final EntityCause trigger = damageSource != null ? Igniter.of(damageSource.getEntity()) : null;
             final EntityCause cause = Igniter.blastCause(this, trigger != null ? trigger : igniter);
-            explosive.doExplosion(this.getX(), this.getY(), this.getZ(), new ActionSource(level(), new Vec3(getX(), getY(), getZ()), cause)); //TODO handle output and include trigger source
+            // A cart on rails on a Create Aeronautics ship stays in the ship's plot, it goes off where the ship is in
+            //  the world so the blast reaches players and the world around the ship, and the ship's blocks too
+            final Vec3 at = SableProxy.INSTANCE.toWorld(level(), position());
+            explosive.doExplosion(at.x, at.y, at.z, new ActionSource(level(), at, cause)); //TODO handle output and include trigger source
         }
         this.discard();
     }
@@ -121,7 +125,13 @@ public class EntityBombCart extends MinecartTNT implements IEntityWithComplexSpa
             final double d0 = motion.x * motion.x + motion.z * motion.z;
 
             final boolean isExplosion = damageSource.is(DamageTypeTags.IS_EXPLOSION);
-            if (!isExplosion && level().getGameRules().getBoolean(GameRules.RULE_DOENTITYDROPS))
+            // Like the vanilla TNT minecart it either goes off or drops, a moving cart that was punched used to do
+            //  both and hand its explosive back
+            if (damageSource.is(DamageTypeTags.IS_FIRE) || isExplosion || d0 >= 0.009999999776482582D)
+            {
+                this.explode(damageSource, d0);
+            }
+            else if (level().getGameRules().getBoolean(GameRules.RULE_DOENTITYDROPS))
             {
                 final ItemStack drop = getPickResult();
                 if (hasCustomName())
@@ -129,11 +139,6 @@ public class EntityBombCart extends MinecartTNT implements IEntityWithComplexSpa
                     drop.set(DataComponents.CUSTOM_NAME, getCustomName());
                 }
                 this.spawnAtLocation(drop, 0.0F);
-            }
-
-            if (damageSource.is(DamageTypeTags.IS_FIRE) || isExplosion || d0 >= 0.009999999776482582D)
-            {
-                this.explode(damageSource, d0);
             }
         }
     }

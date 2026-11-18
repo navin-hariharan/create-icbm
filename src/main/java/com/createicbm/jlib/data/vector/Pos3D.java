@@ -1,10 +1,5 @@
 package com.createicbm.jlib.data.vector;
 
-import com.createicbm.lib.CalculationHelpers;
-import net.minecraft.util.RandomSource;
-
-import java.util.Random;
-
 /**
  * Abstracted positional data
  * @deprecated just use vec3d with helpers
@@ -23,22 +18,6 @@ public abstract class Pos3D<R extends Pos3D> extends Pos2D<R>
     public Pos3D()
     {
         this(0, 0, 0);
-    }
-
-    public R addRandom(Random rand, double r)
-    {
-        double i = CalculationHelpers.randDoubleRange(rand, r);
-        double j = CalculationHelpers.randDoubleRange(rand, r);
-        double k = CalculationHelpers.randDoubleRange(rand, r);
-        return newPos(i + x(), j + y(), k + z());
-    }
-
-    public R addRandom(RandomSource rand, double r)
-    {
-        double i = CalculationHelpers.randDoubleRange(rand, r);
-        double j = CalculationHelpers.randDoubleRange(rand, r);
-        double k = CalculationHelpers.randDoubleRange(rand, r);
-        return newPos(i + x(), j + y(), k + z());
     }
 
     public R add(double x, double y, double z)
@@ -192,12 +171,6 @@ public abstract class Pos3D<R extends Pos3D> extends Pos2D<R>
     }
 
     @Override
-    public boolean isZero()
-    {
-        return x() == 0 && y() == 0 && z() == 0;
-    }
-
-    @Override
     public double magnitudeSquared()
     {
         return x() * x() + y() * y() + z() * z();
@@ -208,36 +181,9 @@ public abstract class Pos3D<R extends Pos3D> extends Pos2D<R>
         return z;
     }
 
-    public float zf()
-    {
-        return (float) z;
-    }
-
     public int zi()
     {
         return (int)Math.floor(z);
-    }
-
-    /**
-     * @return The perpendicular vector to the axis.
-     */
-    public R perpendicular()
-    {
-        if (this.z == 0.0F)
-        {
-            return this.zCross();
-        }
-        return this.xCross();
-    }
-
-    public R xCross()
-    {
-        return newPos(0.0D, this.z(), -this.y());
-    }
-
-    public R zCross()
-    {
-        return newPos(-this.y(), this.x(), 0.0D);
     }
 
     @Override

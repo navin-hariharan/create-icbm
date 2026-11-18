@@ -6,7 +6,7 @@
   <img src="https://img.shields.io/badge/Minecraft-1.21.1-62B47A?style=for-the-badge" alt="Minecraft 1.21.1">
   <img src="https://img.shields.io/badge/NeoForge-21.1.219%2B-E2711D?style=for-the-badge" alt="NeoForge 21.1.219+">
   <img src="https://img.shields.io/badge/Create-6.0.10%2B-C9A45C?style=for-the-badge" alt="Create 6.0.10+">
-  <img src="https://img.shields.io/badge/Release-v1.0.5-22C55E?style=for-the-badge" alt="Release v1.0.5">
+  <img src="https://img.shields.io/badge/Release-v1.0.7-22C55E?style=for-the-badge" alt="Release v1.0.7">
   <img src="https://img.shields.io/badge/License-CC_BY--NC_4.0-3B82F6?style=for-the-badge" alt="CC BY-NC 4.0 licence">
 </p>
 
@@ -35,6 +35,7 @@ It is a new addon, inspired by the classic **ICBM** mod (see [Credits](#credits)
   - [Cruise Turret](#cruise-turret)
   - [Radar Station](#radar-station)
   - [Advanced Radar](#advanced-radar)
+  - [Alarm](#alarm)
 - [Missiles](#missiles)
   - [Missile Casing](#missile-casing)
   - [Missile Module](#missile-module)
@@ -101,7 +102,7 @@ It is a new addon, inspired by the classic **ICBM** mod (see [Credits](#credits)
   player within view distance sees a missile fly smoothly all the way down to the ground before it goes off.
 - **A real launch network:** chain pads, gantries and connectors to one Launch Controller and fire whole salvos.
 - **Air defence:** a spinning Radar Station spots incoming missiles and tells Cruise Turrets loaded with
-  Surface to Air Missiles to shoot them down.
+  Surface to Air Missiles to shoot them down, while Alarms on its channel wail a civil-defence siren.
 - **Delivery Missiles** that drop a stack of items straight into a chest on the other side of the map, or leave it
   in a **Mail** parcel with the sender's name on it.
 - **Made with Create:** every recipe uses only Create and vanilla items, on Create's machines or at a plain crafting
@@ -110,8 +111,9 @@ It is a new addon, inspired by the classic **ICBM** mod (see [Credits](#credits)
 - **Plays well with storage mods:** hoppers, funnels, chutes and Tom's Simple Storage can stock your launchers.
 - **Live on BlueMap:** with [BlueMap](https://bluemap.bluecolored.de/) installed, flying missiles move across its web
   map. Click one to see who launched it, and every impact leaves a mushroom cloud on the map for a minute.
-- **Airship ready:** with Sable (the physics behind Create Aeronautics) installed, missiles hit ships where they
-  fly, launchers work from a moving deck and blasts tear blocks off nearby ships.
+- **Airship ready:** with Sable (the physics behind Create Aeronautics) installed, Launch Pads, Cruise Turrets,
+  Launch Controllers and radars work on player-built ships, boats and balloons, even moving and tilted ones. Missiles
+  hit ships where they fly and blasts tear blocks off nearby ships. See [Create Aeronautics ships](#create-aeronautics-ships).
 - **Big modpack ready:** missiles and blasts remain tickable with Does Potato Tick, Immersive Optimization,
   and ServerCore activation-range optimization enabled.
 - **Built for servers:** big blasts are spread over several ticks with a time budget that shrinks by itself while the
@@ -140,7 +142,7 @@ It is a new addon, inspired by the classic **ICBM** mod (see [Credits](#credits)
 See [Compatibility](#compatibility) for what each optional mod adds.
 
 Drop the `create-icbm` jar into your `mods` folder next to Create. The mod is needed on both the server and every
-client. This is version **1.0.5**.
+client. This is version **1.0.7**.
 
 ## Your first launch
 
@@ -174,6 +176,7 @@ client. This is version **1.0.5**.
 | [Cruise Turret](#cruise-turret) | 6 SU/RPM, shaft below | A turret that aims a missile and fires it straight at the target. |
 | [Radar Station](#radar-station) | 4 SU/RPM at 100 m, shaft below, 16 RPM or more | Tracks missiles with a circular scope; higher range raises stress. |
 | [Advanced Radar](#advanced-radar) | Same range-scaled stress as Radar Station, shaft below, 16 RPM or more | Counter-strikes incoming missiles at their recorded launch coordinates. |
+| [Alarm](#alarm) | none | A siren for floors, walls and ceilings, set off by redstone or a radar alert. |
 
 A machine runs while its shaft turns at or above its minimum speed and the network isn't overstressed. Engineer's
 Goggles show each machine's charge and status, and every machine has a Ponder scene: hold **W** over it in your
@@ -199,7 +202,7 @@ opposite side, so a pad on the ground takes its shaft from below.
   - **Lock Height** (default 3, 0 to 256 blocks): how far the missile climbs straight up before it turns towards the
     target. Raise it to clear walls, trees or a roof around the pad. On the ground the missile always lifts at least
     2 blocks.
-  - **Firing Delay** (in ticks, default 0): a wait before this pad fires, to stagger a salvo.
+  - **Firing Delay** (in ticks, default 0, up to 6000 = 5 minutes): a wait before this pad fires, to stagger a salvo.
   - Typed values are set when you press **Enter**, click elsewhere or close the screen.
   - **Group** and **Index**: labels shown on the goggles. The controller fires every pad on its network together.
   - **Missile Rotation** (top right): **Alt + click** turns the missile clockwise, **Shift + click** the other way.
@@ -213,6 +216,11 @@ above the target before the missile drops onto it. Targets 500 blocks or more aw
 out of sight. It then crosses the map out of sight, through unloaded chunks too (simulated at 20 blocks a second by
 default, so 1,000 blocks take about 50 seconds), and drops back in above the target. A pad reaches **10,000 blocks**
 in each direction and needs targets at least 10 blocks away.
+
+A target higher than the pad (a hill, a flying ship) is reached at its own height. On the ground (or water) the missile
+goes off 2 blocks short of the target. A target in open air, with at least 4 blocks of nothing solid under it, never
+sets the missile off in empty air: it flies through that point and goes off on whatever it hits, a ship that is still
+there or the ground below.
 
 <p align="center">
   <img src="doc/images/lock-height.png" alt="Launch Pad lock height: the missile climbs to the lock height, flies its arc and drops onto the target" width="90%">
@@ -387,6 +395,35 @@ that talks to launch pads.
 
 <p align="center">
   <img src="doc/images/recipes/advanced-radar.png" alt="Advanced Radar recipe" width="80%">
+</p>
+
+### Alarm
+
+<p align="center">
+  <img src="doc/images/machines/alarm.png" alt="Alarm" width="260">
+</p>
+
+A brass siren with a warning light. It is placed like a lever, on the floor, a wall or a ceiling, and takes up only
+part of the block. It needs no rotational force and gives off no redstone signal.
+
+- **Redstone:** it wails and its light flashes for as long as it gets a redstone signal, from a lever, a button, a
+  comparator or anything else that powers it or the block it hangs on. A radar's own redstone output works too.
+- **Radar alerts:** right-click the alarm to open its screen and type the radio channel of a Radar Station or
+  Advanced Radar into the box (press Enter or click away to set it). The alarm sounds as soon as a radar on that
+  channel reports a missile coming in, early warnings included, and stops about 5 seconds after the last report.
+  Missiles launched on that channel are friendly and set off nothing.
+- **Screen:** shows whether the alarm is linked to a radar and whether it is sounding. Clear the channel box to unlink
+  it.
+- **Sound:** a civil-defence siren heard up to 64 blocks away, on the *Blocks* volume slider. It stops the moment the
+  alarm falls silent, is broken or its chunk unloads.
+- Works on Create Aeronautics ships, where the siren follows the ship.
+
+<p align="center">
+  <img src="doc/images/alarm-menu.png" alt="The Alarm screen with its radio channel box" width="70%">
+</p>
+
+<p align="center">
+  <img src="doc/images/recipes/alarm.png" alt="Alarm recipe" width="80%">
 </p>
 
 ## Missiles
@@ -1153,8 +1190,9 @@ makes the vanilla TNT Minecart.
 
 Launch Controllers, Cruise Turrets and radars each have a radio channel. Right-click one of them with a Remote
 Detonator or Laser Designator to tune the tool to the same channel. Explosive crates work the other way round:
-right-click a crate with a Remote Detonator to give the crate the detonator's channel. Radio reaches the whole
-dimension. The tools fire Launch Controllers and crates; Cruise Turrets only answer radars.
+right-click a crate with a Remote Detonator to give the crate the detonator's channel. Alarms have their own screen
+instead: type a radar's channel into it and the alarm sounds when that radar sees a missile. Radio reaches the whole
+dimension. The tools fire Launch Controllers and crates; Cruise Turrets and Alarms only answer radars.
 
 ### Laser Range Finder
 
@@ -1288,7 +1326,8 @@ threshold, the rating is the chance that each dose is blocked: 0.75 blocks three
 3. When a missile carrying a warhead flies towards the radar, it sends an alert at once and again every 2 seconds.
    The turrets swing round and fire, and each SAM locks onto the missile. Turrets don't fire more SAMs than it takes
    to bring the missile down.
-4. The radar's redstone output can sound sirens or close blast doors at the same time.
+4. Type the radar's channel into [Alarms](#alarm) to sound a siren across your base, or use the radar's redstone
+   output to close blast doors at the same time.
 
 Launch Controllers ignore a plain Radar Station's alerts, so silos on the same channel keep their missiles. To hit back
 as well, put an [Advanced Radar](#advanced-radar) on a second channel together with a Launch Controller
@@ -1424,7 +1463,7 @@ Everything here works out of the box; the settings are there to tune it.
 | **Adaptive budget** | The budgets shrink by themselves while the server is slow: when the smoothed tick time stays above 45 ms they drop 3 % a tick, down to 10 % of normal, and they grow back 2 % a tick once it is under 35 ms. A blast always finishes in the end. | `adaptive_budget` (`true`) |
 | **Worker threads** | Blast shapes are calculated off the main thread from a snapshot of the chunks. Results are handed back to the server thread, which only applies them. Edits that fall in chunks which have meanwhile unloaded are skipped instead of force-loading them. | `thread_count` (1, up to 8) |
 | **Missile chunk loading** | A missile only holds the chunks right ahead of it, with short tickets that run out on their own, like a thrown ender pearl. All missiles of one dimension together may hold at most 512 tickets, and a missile always keeps its own chunk and the next one. | `direct_fire_chunk_loading` (`true`), `max_missile_chunk_tickets` (512) |
-| **Radio machines stay loaded** | A Launch Controller (with its pads) or Cruise Turret on a radio channel that holds a missile, a radar on a radio channel, and a crate wired to a Remote Detonator, keep their chunks loaded and ticking with saved NeoForge chunk tickets, like a chunk loader. A launch site thousands of blocks away still answers the Laser Designator, Remote Detonator and radars, also after a restart. Machines with no channel or no missile load nothing, and a machine drops its tickets when it is broken, emptied or its channel is cleared. | `keep_radio_machines_loaded` (`true`), `radio_machine_load_radius` (1 = 3 by 3 chunks) |
+| **Radio machines stay loaded** | A Launch Controller (with its pads) or Cruise Turret on a radio channel that holds a missile, a powered radar (it lets go after 30 seconds without power), and a crate wired to a Remote Detonator, keep their chunks loaded and ticking with saved NeoForge chunk tickets, like a chunk loader. A launch site thousands of blocks away still answers the Laser Designator, Remote Detonator and radars, also after a restart. Machines with no channel or no missile load nothing, and a machine drops its tickets when it is broken, emptied or its channel is cleared. | `keep_radio_machines_loaded` (`true`), `radio_machine_load_radius` (1 = 3 by 3 chunks) |
 | **Stall rescue** | Some optimization and chunk mods stop entities from ticking far from players even in chunks that should tick. A missile that has not ticked for 3 seconds is handed to the missile tracker, which flies it to its target without the entity, or it goes off right there when it stalled above its target. Surface to Air Missiles and ridden missiles are left alone. | `stall_rescue` (`true`), `stall_rescue_ticks` (60) |
 | **Destination preloading** | Simulated missiles begin warming the target chunk and its four cardinal neighbours before arrival with expiring region tickets, giving slow world generation time to finish. They remain queued rather than being spawned into a chunk that still does not tick entities. | `target_chunk_preload_seconds` (15) |
 | **Simulated flight** | A long-range missile that leaves the loaded area stops being an entity. A tracker counts it down once per second at `simulation_flight_speed` and spawns it again above the target. Costs a few numbers per missile. | `simulation_flight_speed` (20 blocks/s), `arc_distance_limit` (500) |
@@ -1451,27 +1490,61 @@ Things worth knowing on a busy server:
 
 ## Compatibility
 
-Create: ICBM only needs **Create** (and the libraries Create brings). Everything else is optional and is only touched
-when it is installed, so a missing or changed mod can never stop the game from starting.
+Create: ICBM only needs **Create** (and the libraries Create brings). Everything else is optional: the support for a
+mod is only loaded when that mod is installed, so without it none of that code runs, and a missing or changed mod can
+never stop the game from starting.
 
 | Mod | What works | How it is reached |
 |---|---|---|
 | **Create** 6.0.10+ (required) | Stress and rotation, Mechanical Crafter / Mixer / Deployer / Millstone recipes, Blaze Burners, goggles, Ponder, tooltips, Kinetic Appliances tag | Directly |
 | **JEI** 19+ | Every explosive, missile, bomb cart and loaded Delivery Missile is its own entry, with info pages for the Missile Module, Delivery Missile and radioactive blocks | JEI's plugin system, off with `disable` in `create_icbm-mods-jei.toml` |
 | **BlueMap** 5.x | Missiles in flight, impact mushroom clouds and Mail parcels on a **Missiles** marker layer | BlueMap's public API, off with `enabled` in `create_icbm-mods-bluemap.toml`. It never touches tiles, textures or settings |
-| **Sable** (Create Aeronautics) | Missiles hit ships where they fly, launchers work on moving decks, blasts tear blocks off nearby ships | Sable's public API through reflection, every call does nothing if it fails |
+| **Sable** (Create Aeronautics) | Every machine works on ships, boats and balloons, moving or tilted. Missiles hit ships where they fly, blasts tear blocks off nearby ships. See [Create Aeronautics ships](#create-aeronautics-ships) | Sable's public API through reflection, every call does nothing if it fails. Entity and block tags in the `sable` namespace |
 | **Mekanism** | Missiles fly through a Teleporter portal and come out of the other one | Registry names and reflection, switched off with a warning if Mekanism's API changes |
 | **Does Potato Tick** | All registered ICBM entities are forced onto the optimizer's per-entity always-tick path, so its distance-based tick cancellation cannot freeze missiles or explosion controllers | Optional `Tickable` interface accessed through reflection; failure logs a fallback config instruction |
 | **ServerCore** | All registered Create ICBM entity types are added to activation-range exclusions when the server starts, so missiles and effects do not freeze far from players | Optional API accessed through reflection; failure only logs a warning |
 | **Immersive Optimization** | The `create_icbm` namespace is added to its entity blacklist. If its optional global block-entity scheduler is enabled, that scheduler is disabled because this version has no per-type block-entity exclusions for launchers/radar stations | Optional config API accessed through reflection; the entity rule is only changed if it is not already blacklisted, and the config change is logged |
 | **Entity Culling** | All registered Create ICBM entities are added to render and tick-culling whitelists, and launchers/radar/block entities to the render whitelist | Optional client API accessed through reflection; updates `config/entityculling.json` only when entries are missing |
-| **Tom's Simple Storage** | An Inventory Hopper in front of a Launch Controller restocks every empty pad in the network. Gantries and controllers are hidden from the Inventory Connector so missiles are not counted twice | Block tags in the `toms_storage` namespace, plain item handlers |
+| **Tom's Simple Storage** | An Inventory Hopper in front of a Launch Controller restocks every empty pad in the network. Gantries and controllers are hidden from the Inventory Connector so missiles are not counted twice. Its blocks keep their contents when a ship is assembled or taken apart | Block tags in the `toms_storage` namespace, plain item handlers |
+| **Storage Drawers** | Drawers, compacting drawers, framed drawers and the Framing Table can be built into Create Aeronautics ships without spilling a copy of their contents on assembly or disassembly, and drawers on a ship show their items and counts | Sable's `silent_assembly_removal` block tag, entries are skipped when Storage Drawers is missing. A small client mixin moves the player onto the ship for the drawer label distance check, applied only when Storage Drawers and Sable are both installed |
 | **Claim and protection mods** (FTB Chunks, Open Parties and Claims...) | Claimed land is spared by blasts | The explosion event those mods already listen to, `protection_events` |
 | **Armour mods** (gas masks, hazmat suits...) | Count as protection against gas and radiation once listed | `protective_armor.item_ratings` |
 | **Hoppers, funnels, chutes, Create vaults** and other item handlers | Load Launch Pads, Cruise Turrets and Launch Controllers, and receive the cargo of a Delivery Missile | NeoForge item handler capability |
 
 Both the server and every client need the mod. Optional mods only need to be installed on the side where they work
 (BlueMap, Does Potato Tick, ServerCore and Immersive Optimization on the server, JEI and Entity Culling on the client).
+
+### Create Aeronautics ships
+
+With Sable installed (it comes with Create Aeronautics), anything you build into a ship, boat or balloon keeps working
+while it flies, sails, turns or tilts:
+
+- **Launch Pads** fire from the deck. The missile starts on the pad where the ship is at that moment, climbs the way
+  the pad faces (a pad on a tilted ship climbs tilted), and keeps the ship's speed while its engine warms up, so it
+  rides along with the ship instead of being left behind. The lock height is measured from the missile's own climb.
+  Range, minimum distance and inaccuracy are measured from where the ship is, not from where Sable stores it.
+- **The launch seat** stays on the ship, and you ride the missile from it as usual.
+- **Cruise Turrets** keep turning towards their target as the ship moves and turns, and fire straight at it from
+  where the ship is. Their missiles don't take on the ship's speed, which would push them off the line they were
+  aimed along.
+- **Launch Controllers, the Laser Detonator, Remote Detonator and Radar Gun** work as on land. Targets are always
+  world coordinates.
+- **Radar Stations** scan around the ship, draw contacts relative to it and warn and strike back as usual.
+- **Counter-strikes on ships:** an Advanced Radar remembers the height a missile was launched from. A strike at a ship
+  that fired while flying climbs to that height and hits the ship if it is still there. If the ship has moved on, the
+  missile doesn't go off in empty air: it keeps falling and goes off on whatever it hits, the ship or the ground.
+- **Chunk loading** follows the ship: a radar, turret, controller or a waiting launch keeps the chunks under the ship
+  loaded, and they move with it. Explosive crates on a ship don't load chunks, they answer a Remote Detonator while
+  the ship is loaded.
+- **Bomb carts** stay on a ship's rails and explode where the ship is. Hand-held rocket launchers fired from a moving
+  ship keep its speed.
+- **Hits and blasts:** missiles, rockets and fragments hit ships where they are, and blasts break the blocks of nearby
+  ships.
+- **Assembling and taking apart:** a Launch Pad or Cruise Turret keeps its missile, a Mail parcel its cargo and a wired
+  crate its channel when the ship is assembled or taken apart, and nothing is dropped, so no missile is ever
+  duplicated. The same goes for Create contraptions. Breaking or blowing up a machine still drops what it holds.
+  Storage Drawers and Tom's Simple Storage blocks on the ship keep their contents too, and drawers show their items
+  while on the ship.
 
 ## Crafting recipes
 
@@ -1511,6 +1584,7 @@ still works. The number after → is the **yield**: how many items one craft or 
 | **Radar Station** | Shaped crafting | `GBG`<br>`ESE`<br>`KCK`<br>`G` Golden Sheet, `B` Brass Sheet, `E` Electron Tube, `S` Launch Controller, `K` Copper Casing, `C` Cogwheel | 1× |
 | **Radar Station** | Create: Mechanical Crafter | `BGB`<br>`PSP`<br>`KHK`<br>`B` Brass Sheet, `G` Golden Sheet, `P` Precision Mechanism, `S` Launch Controller, `K` Copper Casing, `H` Shaft | 1× |
 | **Advanced Radar** | Shaped crafting | `BEB`<br>`PRP`<br>`CBC`<br>`B` Brass Sheet, `E` Electron Tube, `P` Precision Mechanism, `R` Radar Station, `C` Copper Casing | 1× |
+| **Alarm** | Shaped crafting | `·G·`<br>`BNB`<br>`ATA`<br>`G` Red Stained Glass Pane, `B` Brass Sheet, `N` Note Block, `A` Andesite Alloy, `T` Electron Tube | 1× |
 | **Cruise Turret** | Shaped crafting | `BTB`<br>`SLP`<br>`KCK`<br>`B` Brass Sheet, `T` Turntable, `S` Launch Controller, `L` Launch Pad, `P` Precision Mechanism, `K` Copper Sheet, `C` Brass Casing | 1× |
 | **Cruise Turret** | Create: Mechanical Crafter | `CPC`<br>`SLB`<br>`ITI`<br>`C` Copper Sheet, `P` Precision Mechanism, `S` Launch Controller, `L` Launch Pad, `B` Brass Casing, `I` Industrial Iron Block, `T` Turntable | 1× |
 
@@ -1637,8 +1711,9 @@ A plain TNT block still makes the vanilla TNT Minecart.
 - **Ponder scenes** (hold **W** over the item): Launch Pad, Launch Gantry, Launch Connector and Launch Controller share
   a launch scene (charge, lock height, firing delay and every way to fire). The Cruise Turret has its own (aim speed,
   firing delay and which radio orders it takes), and the Radar Station and Advanced Radar share a radar scene
-  (redstone, alerts, friend or foe and counter-strikes). Explosive crates, missiles and bomb carts have an arming scene. The powered machines also appear under Create's *Kinetic
-  Appliances* tag.
+  (redstone, alerts, friend or foe and counter-strikes). The Alarm has its own (redstone and linking it to a radar).
+  Explosive crates, missiles and bomb carts have an arming scene. The powered machines also appear under Create's
+  *Kinetic Appliances* tag, the Alarm under *Redstone Components*.
 - **Engineer's Goggles** show each machine's charge and status: the pad's charge and missile, the turret's aim and the
   radar's status.
 - **Tooltips:** hold **Shift** over any item for a Create-style summary. Machines also list their stress impact.
@@ -1657,7 +1732,7 @@ common configs, so on a server the server's files apply.
 | Option | Default | What it changes |
 |---|---|---|
 | `use_energy` | `true` | Set to `false` to let the machines run without rotation. |
-| `keep_radio_machines_loaded` | `true` | Launch Controllers and their pads and Cruise Turrets that hold a missile, radars on a radio channel, and crates wired to a Remote Detonator, keep their chunks loaded so radio orders reach them from anywhere. |
+| `keep_radio_machines_loaded` | `true` | Launch Controllers and their pads and Cruise Turrets that hold a missile, powered radars, and crates wired to a Remote Detonator, keep their chunks loaded so radio orders reach them from anywhere. |
 | `radio_machine_load_radius` | 1 | Chunks loaded around each such machine (0 = its own chunk, 1 = 3 by 3, 2 = 5 by 5), enough for the shaft that powers it. Wired crates only load their own chunk. |
 | `protective_armor.require_helmet` | `true` | Gas and radiation protection only counts with a helmet on. |
 | `protective_armor.item_ratings` | `[]` | Protection ratings for armour from other mods, as `"mod:item=0.0-1.0"`. |

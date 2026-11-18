@@ -2,7 +2,6 @@ package com.createicbm.api.events;
 
 import com.createicbm.api.actions.IAction;
 import com.createicbm.api.explosion.IBlast;
-import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.Level;
 import net.neoforged.bus.api.Event;
 
@@ -55,18 +54,4 @@ public abstract class BlastEvent<B extends IBlast> extends Event
         return blast.getPosition().z;
     }
 
-    /**
-     * Source of the blast.
-     * <p>
-     * Normally a Missile, Grenade, or Minecraft
-     *
-     * @return entity, can be null in some cases
-     */
-    public Entity getSourceEntity()
-    {
-        if(blast instanceof IBlast) {
-            return ((IBlast) blast).getBlastSource();
-        }
-        return null;
-    }
 }

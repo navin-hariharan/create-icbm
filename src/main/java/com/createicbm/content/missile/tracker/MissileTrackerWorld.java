@@ -352,6 +352,12 @@ public class MissileTrackerWorld extends SavedData
         //Spawn entity
         if (!missile.world().addFreshEntity(missile))
         {
+            // The tracker tries again with the same data, so a delivery missile keeps its cargo there instead of
+            //  packing it into a parcel on every refusal. Only the last try, when the missile is given up, packs it.
+            if (mtd.spawnRefusals < MAX_SPAWN_REFUSALS)
+            {
+                missile.leaveForSimulation();
+            }
             // Nothing flew, take the radar contact and launch sound back
             missile.getMissileCapability().cancelLaunch();
             return false;

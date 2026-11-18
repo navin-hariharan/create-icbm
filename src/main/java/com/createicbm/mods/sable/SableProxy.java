@@ -1,203 +1,119 @@
 package com.createicbm.mods.sable;
 
-import com.createicbm.CreateICBM;
 import com.createicbm.mods.ModProxy;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.Position;
-import net.minecraft.core.particles.ParticleTypes;
-import net.minecraft.server.level.ServerLevel;
-import net.minecraft.sounds.SoundEvents;
-import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.level.BlockGetter;
-import net.minecraft.world.level.Explosion;
-import net.minecraft.world.level.ExplosionDamageCalculator;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 
 import javax.annotation.Nullable;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.Method;
 
 /**
- * Support for Sable (the physics engine behind Create Aeronautics ships). Sable is optional and only reached through
- * its public companion API by reflection, so nothing here can fail when it is missing or changes, every call falls
- * back to doing nothing.
+ * Ship support for Sable (the physics engine behind Create Aeronautics). Sable keeps each ship's blocks in a far away
+ * "plot" of the same level and draws them where the ship is. The helpers here move such positions back to where the
+ * ship is in the world and let blasts damage nearby ships.
  * <p>
- * Sable keeps each ship's blocks in a far away "plot" of the same level and draws them where the ship is. Ray traces
- * that hit a ship return the hit in plot space, so a missile used to jump to the plot and vanish, a launcher on a
- * ship aimed from the plot and a blast at the world position never touched the ship's blocks. The helpers here move
- * such positions back to where the ship is in the world and let blasts damage nearby ships.
+ * Without Sable this class does nothing: every position is in the world and no block is on a ship. The Sable code in
+ * {@link SableCompat} is only loaded when Sable is installed.
  */
-public class SableProxy extends ModProxy
+public class SableProxy
 {
     public static final String MOD_ID = "sable";
 
-    public static final SableProxy INSTANCE = new SableProxy();
+    public static final SableProxy INSTANCE = ModProxy.select(MOD_ID, SableCompat::new, SableProxy::new);
 
-    /** Largest radius used for damaging ships, the vanilla rays used for it get slow past this */
-    private static final float MAX_SHIP_BLAST_RADIUS = 24;
-
-    private boolean resolved = false;
-    private boolean enabled = false;
-
-    private Object companion;
-    private Method projectOutOfSubLevel;
-    private Method isInPlotGrid;
-    private Method getTrackingOrVehicleSubLevel;
-    @Nullable private Method getVelocity;
-    @Nullable private Method getAllIntersecting;
-    @Nullable private Constructor<?> boundingBox;
-
-    @Override
-    public void init()
+    /** Where a ship is in the world at the moment it was looked up, see {@link #getShipFrame(Level, Vec3)} */
+    public interface ShipFrame
     {
-        resolve();
+        /** @return world position of a position on the ship (in its plot) */
+        Vec3 toWorld(Vec3 plotPos);
+
+        /** @return position on the ship (in its plot) of a world position */
+        Vec3 toShip(Vec3 worldPos);
+
+        /** @return world direction of a direction on the ship, same length as the input */
+        Vec3 directionToWorld(Vec3 direction);
+
+        /** @return velocity in meters per tick of a spot on the ship, given in plot space */
+        Vec3 velocityAt(Vec3 plotPos);
     }
 
-    private void resolve()
+    protected SableProxy()
     {
-        if (resolved)
-        {
-            return;
-        }
-        resolved = true;
-        if (!isModLoaded(MOD_ID))
-        {
-            return;
-        }
-        try
-        {
-            final Class<?> companionClass = Class.forName("dev.ryanhcode.sable.companion.SableCompanion");
-            companion = companionClass.getField("INSTANCE").get(null);
-            projectOutOfSubLevel = companionClass.getMethod("projectOutOfSubLevel", Level.class, Position.class);
-            isInPlotGrid = companionClass.getMethod("isInPlotGrid", Level.class, int.class, int.class);
-            getTrackingOrVehicleSubLevel = companionClass.getMethod("getTrackingOrVehicleSubLevel", Entity.class);
-            enabled = companion != null;
-        }
-        catch (Throwable e)
-        {
-            CreateICBM.logger().warn("Sable support: companion API not found, ships are not supported", e);
-            return;
-        }
-
-        // Optional parts, missing ones only turn off what they are for
-        try
-        {
-            final Class<?> subLevelAccess = Class.forName("dev.ryanhcode.sable.companion.SubLevelAccess");
-            getVelocity = companion.getClass().getMethod("getVelocity", Level.class, subLevelAccess, Position.class);
-        }
-        catch (Throwable e)
-        {
-            CreateICBM.logger().warn("Sable support: ship velocity not found, missiles fired from ships won't inherit it", e);
-        }
-        try
-        {
-            final Class<?> boxInterface = Class.forName("dev.ryanhcode.sable.companion.math.BoundingBox3dc");
-            final Class<?> boxClass = Class.forName("dev.ryanhcode.sable.companion.math.BoundingBox3d");
-            getAllIntersecting = companion.getClass().getMethod("getAllIntersecting", Level.class, boxInterface);
-            boundingBox = boxClass.getConstructor(double.class, double.class, double.class, double.class, double.class, double.class);
-        }
-        catch (Throwable e)
-        {
-            // Without it every destructive blast runs the ship pass, which is only slower
-            getAllIntersecting = null;
-            boundingBox = null;
-        }
     }
 
-    /**
-     * @return true when Sable is installed and its API was found
-     */
+    /** @return true when Sable is installed and its API was found */
     public boolean isEnabled()
     {
-        resolve();
-        return enabled;
+        return false;
     }
 
-    private void fail(String what, Throwable e)
-    {
-        CreateICBM.logger().error("Sable support: " + what + " failed, ship support is now off", e);
-        enabled = false;
-    }
-
-    /**
-     * @return true if the position is inside the plot grid where Sable stores ship blocks
-     */
+    /** @return true if the position is inside the plot grid where Sable stores ship blocks */
     public boolean isInPlot(Level level, double x, double z)
     {
-        if (!isEnabled())
-        {
-            return false;
-        }
-        try
-        {
-            return (boolean) isInPlotGrid.invoke(companion, level, Mth.floor(x) >> 4, Mth.floor(z) >> 4);
-        }
-        catch (Throwable e)
-        {
-            fail("plot check", e);
-            return false;
-        }
+        return false;
+    }
+
+    /** @return world position of a position in a ship's plot, the same position if it isn't on a ship */
+    public Vec3 toWorld(Level level, Vec3 pos)
+    {
+        return pos;
+    }
+
+    /** @return velocity (meters per tick) of the ship the entity stands on or rides, zero if none */
+    public Vec3 getShipVelocity(Entity entity)
+    {
+        return Vec3.ZERO;
     }
 
     /**
-     * Moves a position in a ship's plot to where that spot of the ship is in the world
+     * Finds the ship that holds a plot position, for turning positions, directions and speeds between the ship and
+     * the world
      *
-     * @return world position, the same position if it isn't on a ship
+     * @param plotPos any position inside the ship's plot, usually a block of the ship
+     * @return the ship's frame, null when the position is not on a ship
      */
-    public Vec3 toWorld(Level level, Vec3 pos)
+    @Nullable
+    public ShipFrame getShipFrame(Level level, Vec3 plotPos)
     {
-        if (!isInPlot(level, pos.x, pos.z))
-        {
-            return pos;
-        }
-        try
-        {
-            final Object result = projectOutOfSubLevel.invoke(companion, level, pos);
-            return result instanceof Vec3 vec ? vec : pos;
-        }
-        catch (Throwable e)
-        {
-            fail("position conversion", e);
-            return pos;
-        }
+        return null;
+    }
+
+    /**
+     * Blasts edit the world's blocks, ships nearby live in their plots and would come out untouched. Breaks the blocks
+     * of ships near a blast.
+     */
+    public void damageShips(Level level, @Nullable Entity source, double x, double y, double z, float radius)
+    {
     }
 
     /**
      * Block hits on a ship come back from ray traces in plot space. This moves the hit location to the world and keeps
      * the block position, so the block can still be looked up.
      */
-    public BlockHitResult toWorld(Level level, BlockHitResult hit)
+    public final BlockHitResult toWorld(Level level, BlockHitResult hit)
     {
         if (hit.getType() == HitResult.Type.MISS)
         {
             return hit;
         }
         final Vec3 location = toWorld(level, hit.getLocation());
-        if (location == hit.getLocation())
-        {
-            return hit;
-        }
-        return new BlockHitResult(location, hit.getDirection(), hit.getBlockPos(), hit.isInside());
+        return location == hit.getLocation() ? hit : new BlockHitResult(location, hit.getDirection(), hit.getBlockPos(), hit.isInside());
     }
 
-    /**
-     * @see #toWorld(Level, BlockHitResult)
-     */
-    public HitResult toWorld(Level level, HitResult hit)
+    /** @see #toWorld(Level, BlockHitResult) */
+    public final HitResult toWorld(Level level, HitResult hit)
     {
         return hit instanceof BlockHitResult blockHit ? toWorld(level, blockHit) : hit;
     }
 
     /**
-     * Moves an entity created on a ship (a launcher on the deck spawns its missile in plot space) to the world, so its
-     * flight path is worked out from where it really is
+     * Moves an entity created on a ship (in plot space) to the world, so its flight path is worked out from where it
+     * really is. Catches missiles launched by other mods from a ship.
      */
-    public void moveToWorld(Entity entity)
+    public final void moveToWorld(Entity entity)
     {
         final Vec3 pos = entity.position();
         final Vec3 world = toWorld(entity.level(), pos);
@@ -210,105 +126,29 @@ public class SableProxy extends ModProxy
         }
     }
 
-    /**
-     * @return velocity (meters per tick) of the ship the entity stands on or rides, zero if none
-     */
-    public Vec3 getShipVelocity(Entity entity)
+    /** @return true if the block is part of a Sable ship (it lives in a plot) */
+    public final boolean isOnShip(Level level, BlockPos pos)
     {
-        if (!isEnabled() || getVelocity == null)
-        {
-            return Vec3.ZERO;
-        }
-        try
-        {
-            final Object subLevel = getTrackingOrVehicleSubLevel.invoke(companion, entity);
-            if (subLevel == null)
-            {
-                return Vec3.ZERO;
-            }
-            final Object velocity = getVelocity.invoke(companion, entity.level(), subLevel, entity.position());
-            // Sable works in meters per second
-            return velocity instanceof Vec3 vec ? vec.scale(1 / 20.0) : Vec3.ZERO;
-        }
-        catch (Throwable e)
-        {
-            CreateICBM.logger().error("Sable support: ship velocity failed, missiles fired from ships won't inherit it", e);
-            getVelocity = null;
-            return Vec3.ZERO;
-        }
+        return level != null && isInPlot(level, pos.getX() + 0.5, pos.getZ() + 0.5);
+    }
+
+    /** @return where the center of the block is in the world, its own center when it is not on a ship */
+    public final Vec3 worldCenter(Level level, BlockPos pos)
+    {
+        final Vec3 center = Vec3.atCenterOf(pos);
+        return level == null ? center : toWorld(level, center);
     }
 
     /**
-     * Blasts edit the world's blocks, ships nearby live in their plots and would come out untouched. This runs a
-     * vanilla explosion that only breaks ship blocks: Sable maps its rays onto ships, pushes them and claim mods are
-     * asked as for any explosion. Entities are left alone, the blast itself already hit them.
+     * Brings a world position onto the ship a block belongs to, so it can be compared with the block's own position.
+     * Used by renderers of other mods that measure the player's distance to a block: a block on a ship is stored in
+     * the ship's plot, far away from the player.
      *
-     * @param radius of the blast, capped at {@link #MAX_SHIP_BLAST_RADIUS}
+     * @return the position in the ship's plot, the same position if the block isn't on a ship
      */
-    public void damageShips(Level level, @Nullable Entity source, double x, double y, double z, float radius)
+    public final Vec3 toShipOf(Level level, BlockPos blockOnShip, Vec3 worldPos)
     {
-        if (radius <= 0 || !(level instanceof ServerLevel) || !isEnabled() || isInPlot(level, x, z))
-        {
-            // A blast already in a plot edits the ship's blocks directly
-            return;
-        }
-        final float size = Math.min(radius, MAX_SHIP_BLAST_RADIUS);
-        try
-        {
-            if (!hasShipsNear(level, x, y, z, size * 2))
-            {
-                return;
-            }
-            final Explosion explosion = new Explosion(level, source, null, new ShipOnlyDamage(level), x, y, z, size, false,
-                Explosion.BlockInteraction.DESTROY_WITH_DECAY, ParticleTypes.EXPLOSION, ParticleTypes.EXPLOSION_EMITTER, SoundEvents.GENERIC_EXPLODE);
-            explosion.explode();
-            explosion.finalizeExplosion(false);
-        }
-        catch (Throwable e)
-        {
-            CreateICBM.logger().error("Sable support: damaging ships near a blast failed", e);
-        }
-    }
-
-    private boolean hasShipsNear(Level level, double x, double y, double z, double range) throws Exception
-    {
-        if (getAllIntersecting == null || boundingBox == null)
-        {
-            return true;
-        }
-        final Object box = boundingBox.newInstance(x - range, y - range, z - range, x + range, y + range, z + range);
-        final Object ships = getAllIntersecting.invoke(companion, level, box);
-        return !(ships instanceof Iterable<?> iterable) || iterable.iterator().hasNext();
-    }
-
-    /**
-     * Breaks blocks in ship plots only, and never hurts or pushes entities
-     */
-    private class ShipOnlyDamage extends ExplosionDamageCalculator
-    {
-        private final Level level;
-
-        ShipOnlyDamage(Level level)
-        {
-            this.level = level;
-        }
-
-        @Override
-        public boolean shouldBlockExplode(Explosion explosion, BlockGetter reader, BlockPos pos, BlockState state, float power)
-        {
-            return isInPlot(level, pos.getX() + 0.5, pos.getZ() + 0.5) && super.shouldBlockExplode(explosion, reader, pos, state, power);
-        }
-
-        @Override
-        public boolean shouldDamageEntity(Explosion explosion, Entity entity)
-        {
-            return false;
-        }
-
-        @Override
-        public float getKnockbackMultiplier(Entity entity)
-        {
-            return 0;
-        }
+        final ShipFrame frame = getShipFrame(level, Vec3.atCenterOf(blockOnShip));
+        return frame == null ? worldPos : frame.toShip(worldPos);
     }
 }

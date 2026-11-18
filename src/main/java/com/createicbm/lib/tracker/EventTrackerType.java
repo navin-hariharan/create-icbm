@@ -7,7 +7,6 @@ import lombok.Setter;
 import lombok.experimental.Accessors;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.core.BlockPos;
-import net.minecraft.world.phys.Vec3;
 
 import java.lang.reflect.Type;
 import java.util.ArrayList;
@@ -135,10 +134,6 @@ public class EventTrackerType {
             return with(new EventTrackerField<Integer>(key, Integer.class, accessor));
         }
 
-        public Builder withDouble(ResourceLocation key, Function<EventTrackerEntry, Double> accessor) {
-            return with(new EventTrackerField<Double>(key, Double.class, accessor));
-        }
-
         public Builder withBlockPos(ResourceLocation prefix, Function<EventTrackerEntry, BlockPos> accessor) {
             return withInt(suffix(prefix, "x"),
                 (entry) -> Optional.ofNullable(accessor.apply(entry))
@@ -149,18 +144,6 @@ public class EventTrackerType {
                 .withInt(suffix(prefix, "z"),
                     (entry) -> Optional.ofNullable(accessor.apply(entry))
                         .map(BlockPos::getZ).orElse(null));
-        }
-
-        public Builder withVec3d(ResourceLocation prefix, Function<EventTrackerEntry, Vec3> accessor) {
-            return withDouble(suffix(prefix, "x"),
-                (entry) -> Optional.ofNullable(accessor.apply(entry))
-                    .map(v -> v.x).orElse(null))
-                .withDouble(suffix(prefix, "y"),
-                    (entry) -> Optional.ofNullable(accessor.apply(entry))
-                        .map(v -> v.y).orElse(null))
-                .withDouble(suffix(prefix, "z"),
-                    (entry) -> Optional.ofNullable(accessor.apply(entry))
-                        .map(v -> v.z).orElse(null));
         }
 
         private ResourceLocation suffix(ResourceLocation prefix, String suffix) {

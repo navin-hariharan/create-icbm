@@ -91,7 +91,12 @@ public class BlockLauncherBase extends BaseEntityBlock implements IRotate
             {
                 ((ILauncherComponent) tile).getNetworkNode().onTileRemoved();
             }
-            InventoryUtility.dropInventory(world, pos);
+            // Only when destroyed. A moved pad (Create contraption, Create Aeronautics ship assembly) keeps its
+            //  missile in the saved block entity, dropping it here too gave a second missile.
+            if (!movedByPiston)
+            {
+                InventoryUtility.dropInventory(world, pos, state);
+            }
         }
         KineticBlockHooks.onRemove(state, world, pos, newState);
     }

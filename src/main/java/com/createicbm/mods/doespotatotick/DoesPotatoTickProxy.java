@@ -34,11 +34,6 @@ public final class DoesPotatoTickProxy extends ModProxy
     @Override
     public void init()
     {
-        if (!isModLoaded(MOD_ID))
-        {
-            return;
-        }
-
         try
         {
             access = TickableAccess.resolve();

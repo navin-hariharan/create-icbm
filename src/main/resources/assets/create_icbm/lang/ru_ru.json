@@ -20,5 +20,7 @@
   "item.create_icbm:laserDetonator": "Лазерная указка",
   "item.create_icbm:rocketLauncher": "Пусковая установка",
   "tile.create_icbm:radarstation": "Радарная установка",
+  "tile.create_icbm:alarm": "Сирена тревоги",
+  "gui.create_icbm:alarm.name": "Сирена тревоги",
   "tile.create_icbm:cruiselauncher": "Компактная пусковая установка"
 }

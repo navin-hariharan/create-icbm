@@ -192,10 +192,11 @@ public class BlockMail extends BaseEntityBlock
         {
             UnopenedMail.remove(level, pos);
         }
-        if (!state.is(newState.getBlock()) && level.getBlockEntity(pos) instanceof TileMail mail)
+        if (!state.is(newState.getBlock()) && !movedByPiston && level.getBlockEntity(pos) instanceof TileMail mail)
         {
             // Only reached if something other than opening it removes the mail (creative mode, commands), keep the
-            // items rather than deleting them
+            // items rather than deleting them. Not when it is moved (Create Aeronautics ship assembly): the moved
+            // parcel keeps them.
             final ItemStack left = mail.takeContents();
             if (!left.isEmpty())
             {

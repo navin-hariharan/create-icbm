@@ -280,5 +280,16 @@
         "stream": false
       }
     ]
+  },
+  "alarm_siren": {
+    "category": "block",
+    "subtitle": "subtitle.create_icbm:alarm_siren",
+    "sounds": [
+      {
+        "name": "create_icbm:alarm_siren",
+        "stream": true,
+        "attenuation_distance": 64
+      }
+    ]
   }
 }

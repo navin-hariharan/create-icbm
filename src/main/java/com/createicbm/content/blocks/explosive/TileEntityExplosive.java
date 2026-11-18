@@ -1,5 +1,6 @@
 package com.createicbm.content.blocks.explosive;
 
+import com.createicbm.mods.sable.SableProxy;
 import com.createicbm.CreateICBM;
 import com.createicbm.api.CreateICBMAPI;
 import com.createicbm.api.actions.data.ActionFields;
@@ -123,7 +124,21 @@ public class TileEntityExplosive extends BlockEntity implements MachineChunkLoad
     public void onLoad()
     {
         super.onLoad();
-        if (level != null && !level.isClientSide() && radioCap.hasChannel())
+        // Next tick: a crate moved by a Create contraption or a Create Aeronautics ship is added to the level before
+        //  its saved data (the radio channel) is loaded into it, it registered with no channel and stayed deaf
+        if (level instanceof ServerLevel server)
+        {
+            server.getServer().tell(new TickTask(server.getServer().getTickCount(), this::syncRadio));
+        }
+    }
+
+    private void syncRadio()
+    {
+        if (level == null || isRemoved())
+        {
+            return;
+        }
+        if (radioCap.hasChannel())
         {
             RadioRegistry.add(radioCap);
         }
@@ -136,7 +151,9 @@ public class TileEntityExplosive extends BlockEntity implements MachineChunkLoad
     private void syncMachineChunks()
     {
         final LongSet wanted = new LongOpenHashSet();
-        if (radioCap.hasChannel())
+        // A crate on a Create Aeronautics ship holds none: it is stored in the ship's plot, which can't be force
+        //  loaded, and the crate doesn't tick to follow the ship. It answers its detonator while the ship is loaded.
+        if (radioCap.hasChannel() && !SableProxy.INSTANCE.isOnShip(level, getBlockPos()))
         {
             wanted.add(ChunkPos.asLong(getBlockPos()));
         }

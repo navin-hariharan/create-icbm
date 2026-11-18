@@ -8,7 +8,6 @@ import com.createicbm.api.actions.data.ActionField;
 import com.createicbm.api.actions.data.ActionFields;
 import com.createicbm.api.actions.status.IActionStatus;
 import com.createicbm.api.reg.events.*;
-import com.createicbm.content.actions.ActionProvider;
 import com.createicbm.content.blocks.launcher.screen.BlockScreenCause;
 import com.createicbm.content.blocks.launcher.status.LauncherStatus;
 import com.createicbm.content.missile.logic.source.cause.CausedByBlock;
@@ -43,7 +42,6 @@ public final class ActionSystem {
         setupStatusRegistry();
         setupActionRegistry();
         setupActionPotentialRegistry();
-        ActionProvider.register();
     }
 
     private static void setupActionFields() {

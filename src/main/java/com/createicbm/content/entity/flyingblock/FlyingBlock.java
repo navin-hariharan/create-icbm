@@ -5,7 +5,12 @@ import com.createicbm.config.util.BlockStateConfigListOld;
 import net.minecraft.world.level.block.LiquidBlock;
 import net.minecraft.world.level.block.BaseFireBlock;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.BlockEntityType;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.world.Container;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.Level;
 
@@ -121,7 +126,36 @@ public class FlyingBlock {
             //TODO add event logging
             return true;
         }
+        // The world refused the entity (an entity limit or spawn protection mod) after the block was taken out, put
+        //  it back as it was so the block and its contents are not deleted
+        if (removeBlock != null)
+        {
+            restoreBlock(world, BlockPos.containing(x, y, z), blockCaptureData);
+        }
         return false;
+    }
+
+    private static void restoreBlock(Level world, BlockPos pos, BlockCaptureData data)
+    {
+        if (world.getBlockState(pos).canBeReplaced() && world.setBlock(pos, data.getBlockState(), Block.UPDATE_ALL))
+        {
+            final CompoundTag tileData = data.getTileEntityData();
+            final BlockEntity tile = tileData != null ? world.getBlockEntity(pos) : null;
+            // A container dropped its contents when the block was taken out, loading them back would duplicate them
+            if (tile != null && !(tile instanceof Container) && tileData.getString("id").equals(BlockEntityType.getKey(tile.getType()) == null ? "" : BlockEntityType.getKey(tile.getType()).toString()))
+            {
+                final CompoundTag save = tileData.copy();
+                save.putInt("x", pos.getX());
+                save.putInt("y", pos.getY());
+                save.putInt("z", pos.getZ());
+                tile.loadWithComponents(save, world.registryAccess());
+                tile.setChanged();
+            }
+        }
+        else if (!data.getSourceStack().isEmpty())
+        {
+            Block.popResource(world, pos, data.getSourceStack().copy());
+        }
     }
 
     public static void loadFromConfig() {

@@ -88,16 +88,4 @@ public interface IBuildableObject {
         return Component.translatable(getTranslationKey());
     }
 
-    /**
-     * Tooltip information to show in GUIs or on an item
-     * <p>
-     * Calling systems often use {@link com.createicbm.lib.LanguageUtility#buildToolTipString(Component)}
-     * to add extra features such as line splitting, indents, and colors
-     *
-     * @return text component for display
-     */
-    @Nonnull
-    default Component getTooltip() {
-        return getDisplayName();
-    }
 }

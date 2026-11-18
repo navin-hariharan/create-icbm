@@ -25,10 +25,7 @@ public final class ImmersiveOptimizationProxy extends ModProxy
     @Override
     public void init()
     {
-        if (isModLoaded(MOD_ID))
-        {
-            NeoForge.EVENT_BUS.addListener(ServerAboutToStartEvent.class, event -> exclude());
-        }
+        NeoForge.EVENT_BUS.addListener(ServerAboutToStartEvent.class, event -> exclude());
     }
 
     @SuppressWarnings("unchecked")

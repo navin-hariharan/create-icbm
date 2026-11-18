@@ -726,12 +726,6 @@ public abstract class Blast implements IBlastInit, IBlastRestore
         return this.location.z();
     }
 
-    @Override
-    public Entity getBlastSource()
-    {
-        return exploder;
-    }
-
     protected void createAndStartThread(ThreadExplosion thread)
     {
         //Debug
@@ -892,15 +886,6 @@ public abstract class Blast implements IBlastInit, IBlastRestore
     }
 
     @Override
-    public Blast scaleBlast(double scale)
-    {
-        checkBuilt();
-        this.size *= scale;
-        this.vanillaExplosion = null;
-        return this;
-    }
-
-    @Override
     public Blast setBlastWorld(Level world)
     {
         checkBuilt();
@@ -922,12 +907,6 @@ public abstract class Blast implements IBlastInit, IBlastRestore
     {
         checkBuilt();
         this.explosiveData = data;
-        return this;
-    }
-
-    @Override
-    public IBlastInit setCustomData(@Nonnull CompoundTag customData)
-    {
         return this;
     }
 

@@ -85,15 +85,30 @@ public abstract class BlockICBM extends BaseEntityBlock
     @Override
     protected void onRemove(BlockState state, Level world, BlockPos pos, BlockState newState, boolean movedByPiston)
     {
-        if (dropInventory && !state.is(newState.getBlock()))
-        {
-            InventoryUtility.dropInventory(world, pos);
-        }
-        if (!state.is(newState.getBlock()))
-        {
-            // A radio machine's chunks stay loaded only while it stands
-            MachineChunkLoader.release(world, pos);
-        }
+        onMachineRemoved(state, world, pos, newState, movedByPiston);
         super.onRemove(state, world, pos, newState, movedByPiston);
+    }
+
+    /**
+     * Shared clean up when the block goes away or is replaced by another block, call before the block entity is
+     * removed.
+     * <p>
+     * The inventory is dropped only when the block is destroyed (broken, blown up, replaced). A block that is moved
+     * (movedByPiston: Create contraptions, Create Aeronautics ship assembly and disassembly) keeps it: the mover has
+     * already saved the block entity with its contents and puts it back at the new spot, dropping here as well gave
+     * a copy. Movers that save the block entity also clear it first ({@link net.minecraft.world.Clearable}).
+     */
+    protected void onMachineRemoved(BlockState state, Level world, BlockPos pos, BlockState newState, boolean movedByPiston)
+    {
+        if (state.is(newState.getBlock()))
+        {
+            return;
+        }
+        if (dropInventory && !movedByPiston)
+        {
+            InventoryUtility.dropInventory(world, pos, state);
+        }
+        // A radio machine's chunks stay loaded only while it stands here
+        MachineChunkLoader.release(world, pos);
     }
 }

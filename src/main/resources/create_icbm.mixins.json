@@ -1,0 +1,14 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "com.createicbm.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "plugin": "com.createicbm.mods.mixin.CompatMixinPlugin",
+  "mixins": [],
+  "client": [
+    "compat.storagedrawers.DrawersRendererMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 0
+  }
+}

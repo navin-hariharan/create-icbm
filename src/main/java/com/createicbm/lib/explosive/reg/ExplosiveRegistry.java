@@ -228,21 +228,32 @@ public class ExplosiveRegistry implements IExplosiveRegistry
 
         if (file.exists())
         {
+            // The numeric IDs only live in memory (worlds and items store explosives by name), so a broken file is
+            // set aside and rebuilt instead of stopping the game from starting
             try (Reader reader = Files.newBufferedReader(file.toPath(), StandardCharsets.UTF_8))
             {
-                JsonElement element = JsonParser.parseReader(reader);
-                if (element.isJsonObject())
+                final JsonElement element = JsonParser.parseReader(reader);
+                if (element == null || !element.isJsonObject())
                 {
-                    loadReg(element.getAsJsonObject());
+                    throw new IllegalStateException("not a JSON object");
                 }
-                else
-                {
-                    throw new RuntimeException("ExplosiveRegistry: Failed to load registry save file as JSON object, File: " + file);
-                }
+                loadReg(element.getAsJsonObject());
             }
             catch (Exception e)
             {
-                throw new RuntimeException("ExplosiveRegistry: Unexpected error reading explosive registry save, File: " + file, e);
+                id_to_name.clear();
+                name_to_id.clear();
+                final Path broken = file.toPath().resolveSibling(file.getName() + ".broken-" + System.currentTimeMillis());
+                try
+                {
+                    Files.move(file.toPath(), broken, StandardCopyOption.REPLACE_EXISTING);
+                    CreateICBM.logger().error("ExplosiveRegistry: the registry save could not be read and was moved to " + broken
+                        + ". A new one is written, nothing in worlds is lost. File: " + file, e);
+                }
+                catch (Exception moveError)
+                {
+                    CreateICBM.logger().error("ExplosiveRegistry: the registry save could not be read, a new one is written over it. File: " + file, e);
+                }
             }
         }
         else
@@ -257,26 +268,32 @@ public class ExplosiveRegistry implements IExplosiveRegistry
         {
             if (entry.getValue().isJsonPrimitive())
             {
-                //Get data
-                String key = entry.getKey().trim().toLowerCase();
-                int id = entry.getValue().getAsInt();
-
-                //Duplicate check, values in map take priority over saved values
-                checkDuplicate(id, key);
-
-                //Store value
-                setReg(ResourceLocation.parse(key), id);
+                // A hand-edited or damaged entry is skipped, the explosive then gets a fresh ID
+                final String key = entry.getKey().trim().toLowerCase(Locale.ROOT);
+                final ResourceLocation name = ResourceLocation.tryParse(key);
+                final int id;
+                try
+                {
+                    id = entry.getValue().getAsInt();
+                }
+                catch (NumberFormatException | UnsupportedOperationException e)
+                {
+                    CreateICBM.logger().warn("ExplosiveRegistry: skipping '{}' in the registry save, its ID is not a number", key);
+                    continue;
+                }
+                if (name == null || id < 0)
+                {
+                    CreateICBM.logger().warn("ExplosiveRegistry: skipping invalid entry '{}' = {} in the registry save", key, id);
+                    continue;
+                }
+                // Two names on one ID: the first one keeps it
+                if (id_to_name.containsKey(id) && !name.equals(id_to_name.get(id)))
+                {
+                    CreateICBM.logger().warn("ExplosiveRegistry: skipping '{}' in the registry save, ID {} already belongs to {}", key, id, id_to_name.get(id));
+                    continue;
+                }
+                setReg(name, id);
             }
-        }
-    }
-
-    protected void checkDuplicate(int id, String key)
-    {
-        if (id_to_name.containsKey(id) && id_to_name.get(id) != null && !key.equals(id_to_name.get(id).toString()))
-        {
-            throw new RuntimeException("ExplosiveRegistry: Duplicate registry detected with mismatching registry names for ID[" + id + "]. "
-                    + "  Current: " + id_to_name.get(id)
-                    + "  New: " + key);
         }
     }
 

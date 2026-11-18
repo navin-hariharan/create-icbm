@@ -14,6 +14,10 @@ description='''${mod_description}'''
 [[accessTransformers]]
 file="META-INF/accesstransformer.cfg"
 
+# Compatibility fixes for other mods' blocks on Create Aeronautics ships, each applied only when that mod is installed
+[[mixins]]
+config="create_icbm.mixins.json"
+
 [[dependencies.${mod_id}]]
     modId="neoforge"
     type="required"

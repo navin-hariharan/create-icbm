@@ -3,10 +3,7 @@ package com.createicbm.api.explosion;
 import com.createicbm.api.actions.cause.IActionSource;
 import com.createicbm.api.reg.IExplosiveData;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.level.Level;
-
-import javax.annotation.Nonnull;
 
 /**
  * Separate interface for blasts that can be built from {@link IBlastFactory}
@@ -29,16 +26,6 @@ public interface IBlastInit extends IBlast
      * @return this
      */
     default IBlastInit setBlastSize(double size) {
-        return this;
-    }
-
-    /**
-     * Scales the size of the blast
-     * @param scale - multiplier to apply
-     * @return this
-     */
-    @Deprecated
-    default IBlastInit scaleBlast(double scale) {
         return this;
     }
 
@@ -83,18 +70,6 @@ public interface IBlastInit extends IBlast
      */
     @Deprecated
     IBlastInit setBlastPosition(double x, double y, double z);
-
-    /**
-     * Sets the custom data to change properties of the blast
-     * not part of the normal blast chain of calls.
-     *
-     * @param customData - nbt save data
-     * @return this
-     */
-    @Deprecated
-    default IBlastInit setCustomData(@Nonnull CompoundTag customData) {
-        return this;
-    }
 
     /**
      * Sets the entity that will control this blast.

@@ -22,5 +22,7 @@
   "item.create_icbm:laserDetonator": "激光指示器",
   "item.create_icbm:rocketLauncher": "火箭发射器",
   "tile.create_icbm:radarstation": "雷达站",
+  "tile.create_icbm:alarm": "警报器",
+  "gui.create_icbm:alarm.name": "警报器",
   "tile.create_icbm:cruiselauncher": "巡航发射器"
 }

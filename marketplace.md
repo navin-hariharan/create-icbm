@@ -5,7 +5,7 @@
 <h3 align="center">Missiles, radar and launch networks, built the Create way.</h3>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Version-1.0.5-8B5CF6?style=for-the-badge" alt="Version 1.0.5">
+  <img src="https://img.shields.io/badge/Version-1.0.7-8B5CF6?style=for-the-badge" alt="Version 1.0.7">
   <img src="https://img.shields.io/badge/Minecraft-1.21.1-62B47A?style=for-the-badge" alt="Minecraft 1.21.1">
   <img src="https://img.shields.io/badge/NeoForge-21.1.219%2B-E2711D?style=for-the-badge" alt="NeoForge 21.1.219+">
   <img src="https://img.shields.io/badge/Create-6.0.10%2B-C9A45C?style=for-the-badge" alt="Create 6.0.10+">
@@ -38,7 +38,7 @@
 - **Ender missile abduction:** a giant Enderman drags players through a purple warp tunnel to a spot far away.
 - **Long-range missiles** that fly a ballistic arc up to 10,000 blocks, stay visible and fly smoothly all the way to the ground.
 - **A real launch network:** chain pads, gantries and connectors to one Launch Controller and fire whole salvos.
-- **Air defence:** a Radar Station spots incoming missiles and Cruise Turrets shoot them down with Surface to Air Missiles.
+- **Air defence:** a Radar Station spots incoming missiles, Cruise Turrets shoot them down with Surface to Air Missiles and Alarms wail a siren.
 - **Strike back:** the new **Advanced Radar** sends your Launch Controllers and Cruise Turrets to the launch site of every incoming missile.
 - **Delivery Missiles** drop a stack of items into a chest across the map, or leave a **Mail** parcel with the sender's name.
 - **Made with Create:** every recipe uses only Create and vanilla items, on Create's machines or at a plain crafting table. Ponder scenes, goggles, tooltips and JEI included.
@@ -80,6 +80,7 @@ Something above the pad? Raise its **Lock Height** in the pad's screen (0 to 256
 | Cruise Turret | 6 SU/RPM | Aims and fires a missile in a straight line, also fires Surface to Air Missiles. |
 | Radar Station | 4 SU/RPM at 100 m, 16 RPM+ | Tracks incoming missiles up to 500 blocks and calls Cruise Turrets to shoot them down. Longer range, more stress. |
 | Advanced Radar | Same as Radar Station | Sends launchers on its channel to the launch site of incoming missiles. |
+| Alarm | none | A siren placed like a lever on floors, walls and ceilings. Sounds on redstone or when a radar on its channel sees a missile. |
 
 ## 🚀 Missiles
 
@@ -137,11 +138,11 @@ Cruise Turrets only answer radars: the Remote Detonator and Laser Designator fir
 
 ## 🖥️ Server performance
 
-Paced block edits with a time budget that shrinks while the server lags, a blast worker thread (1 to 8), a cap of 512 missile chunk tickets per dimension, stall rescue for missiles that an optimization mod stops from ticking, armed launch sites and radars on a radio channel kept loaded so they answer from anywhere, half the position updates with client-side smoothing, capped debris effects and clean-up on unload. Ops get `/icbm lag` and `/icbm remove`. Details in the [README](https://github.com/navin-hariharan/create-icbm#server-performance).
+Paced block edits with a time budget that shrinks while the server lags, a blast worker thread (1 to 8), a cap of 512 missile chunk tickets per dimension, stall rescue for missiles that an optimization mod stops from ticking, armed launch sites and powered radars kept loaded so they answer from anywhere, half the position updates with client-side smoothing, capped debris effects and clean-up on unload. Ops get `/icbm lag` and `/icbm remove`. Details in the [README](https://github.com/navin-hariharan/create-icbm#server-performance).
 
 ## 🔌 Compatibility
 
-**JEI** (all recipes), **BlueMap** (missiles, impact clouds and Mail on a map layer), **Sable** (hit and fire from airships), **Mekanism** (Teleporter portals), **ServerCore** and **Immersive Optimization** (missiles keep flying far from players), **Tom's Simple Storage** (auto-stock launchers), claim mods like FTB Chunks (claimed land is spared). Everything optional is only touched when installed. See the [README](https://github.com/navin-hariharan/create-icbm#compatibility).
+**JEI** (all recipes), **BlueMap** (missiles, impact clouds and Mail on a map layer), **Sable** (launch pads, turrets and radars work on Create Aeronautics ships, boats and balloons, and missiles hit them), **Mekanism** (Teleporter portals), **ServerCore** and **Immersive Optimization** (missiles keep flying far from players), **Tom's Simple Storage** (auto-stock launchers, safe on ships), **Storage Drawers** (drawers keep and show their contents on ships), claim mods like FTB Chunks (claimed land is spared). Support for an optional mod is only loaded when that mod is installed. See the [README](https://github.com/navin-hariharan/create-icbm#compatibility).
 
 ## 🔨 Crafting recipes
 
@@ -153,7 +154,19 @@ Almost everything can be made two ways: on Create's machines (Mechanical Craftin
 
 Config files are `create_icbm-*.toml` in the `config` folder (main, launcher, radar, missile, blast, client, thread, jei, bluemap). Commands are under `/icbm` (operators): `help`, `remove`, `lag`, `blast list`, `blast trigger`, `blast spread`. Every option is in the [README](https://github.com/navin-hariharan/create-icbm#configuration).
 
-## 📝 Latest: 1.0.5
+## 📝 Latest: 1.0.7
+
+- **New Alarm:** a brass siren with a warning light, placed like a lever. It wails on a redstone signal or when a radar on its channel sees a missile coming; type the radar's channel into its own screen. No rotation needed.
+- **No duplicated missiles on ships:** assembling or taking apart a Create Aeronautics ship keeps the missile on its Launch Pad or Cruise Turret without dropping a copy. Parcels, wired crates, Storage Drawers and Tom's Simple Storage blocks keep their contents and channels too.
+- **Counter-strikes reach flying ships:** the Advanced Radar's strike climbs to the height a ship fired from and hits the ship if it is still there. If the ship has moved, the missile doesn't explode in empty air, it falls on and goes off on whatever it hits.
+- **Typed values stick:** closing a machine screen with Esc no longer throws away a lock height, target or firing delay you were typing.
+- **Cruise Turret fixes:** waiting orders no longer vanish when the target moves, missiles no longer spawn inside blocks above the turret, a turret without a target doesn't fire at 0, 0, 0, and the launch cooldown can't be skipped.
+- **Counter-strikes reach far launch sites:** long-range missiles keep their launch site through saves and the missile tracker.
+- **No duplicated cargo or bomb carts:** a refused Delivery Missile no longer leaves a parcel on every retry, and a punched moving bomb cart no longer explodes and drops itself.
+- **Fewer loaded chunks:** radars only keep chunks loaded while powered, and firing delays are capped at 5 minutes.
+- Smaller fixes for the radar's redstone toggle, the Radar Gun, thrown blocks and the Laser Detonator. Full [changelog](https://github.com/navin-hariharan/create-icbm/blob/main/CHANGELOG.md).
+
+**1.0.5**
 
 - **Turrets answer radars only:** the Remote Detonator and Laser Designator no longer fire Cruise Turrets.
 - **No more wasted SAMs:** turrets without a firing delay hold fire when SAMs already in the air will bring the missile down, and a SAM that loses its target retargets or blows up harmlessly instead of flying off.
@@ -165,7 +178,7 @@ Config files are `create_icbm-*.toml` in the `config` folder (main, launcher, ra
 - **Updated Ponder scenes** for lock height, firing delays, friend or foe and the Advanced Radar.
 - **Fixed block rendering:** no more see-through gaps between machines placed side by side, and no black faces or flicker on explosive crates and Launch Controllers.
 - **Only the Advanced Radar sends launch pads;** a plain Radar Station calls Cruise Turrets only.
-- **Far launch sites answer:** armed Launch Controllers and Cruise Turrets, radars on a radio channel and wired crates keep their chunks loaded, so the Laser Designator, Remote Detonator, radars and counter-strikes reach them from anywhere, also after a restart.
+- **Far launch sites answer:** armed Launch Controllers and Cruise Turrets, powered radars and wired crates keep their chunks loaded, so the Laser Designator, Remote Detonator, radars and counter-strikes reach them from anywhere, also after a restart.
 - **Missiles always arrive:** a missile that an optimization or chunk mod stops from ticking is flown on to its target by the missile tracker.
 
 **1.0.4**

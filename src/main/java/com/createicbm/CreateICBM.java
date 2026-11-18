@@ -16,6 +16,7 @@ import com.createicbm.config.blocks.ConfigBlocks;
 import com.createicbm.config.machines.ConfigLauncher;
 import com.createicbm.config.machines.ConfigRadar;
 import com.createicbm.config.missile.ConfigMissile;
+import com.createicbm.content.blocks.alarm.TileAlarm;
 import com.createicbm.content.blocks.launcher.base.TileLauncherBase;
 import com.createicbm.content.blocks.launcher.cruise.TileCruiseLauncher;
 import com.createicbm.content.blocks.launcher.screen.TileLauncherScreen;
@@ -124,6 +125,7 @@ public class CreateICBM
         TileCruiseLauncher.register();
         EntityMissile.register();
         CapSpaceChicken.register();
+        TileAlarm.register();
 
         // Mod bus listeners
         modBus.addListener(CapabilityReg::registerCapabilities);

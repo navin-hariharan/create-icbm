@@ -66,6 +66,8 @@
   "item.create_icbm:laserDetonator": "Laser-Zielerfasser",
   "item.create_icbm:rocketLauncher": "Raketenwerfer",
   "tile.create_icbm:radarstation": "Radarstation",
+  "tile.create_icbm:alarm": "Alarmsirene",
+  "gui.create_icbm:alarm.name": "Alarmsirene",
   "tile.create_icbm:cruiselauncher": "Mobile Abschussrampe",
   "explosive.create_icbm:condensed": "Verdichteter Sprengstoff",
   "explosive.create_icbm:shrapnel": "Schrapnellsprengstoff",

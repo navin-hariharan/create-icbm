@@ -72,17 +72,6 @@ public interface IBlast extends IWorldPosition, IAction
     }
 
     /**
-     * Gets the entity that the blast originated from during detonation.
-     *
-     * @return entity, can be null
-     */
-    @Nullable
-    default Entity getBlastSource()
-    {
-        return getEntity();
-    }
-
-    /**
      * Called to clear the blast from the world. This
      * should only be used by server utilities and commands.
      */

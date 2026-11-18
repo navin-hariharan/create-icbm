@@ -95,60 +95,6 @@ public class Pos extends AbstractPos<Pos> implements IPos3D
         return new Pos(x, y, z);
     }
 
-    public static Pos getLook(Entity entity, double distance)
-    {
-        double f1 = 0D;
-        double f2 = 0D;
-        double f3 = 0D;
-        double f4 = 0D;
-
-        if (distance == 1.0F)
-        {
-            f1 = Math.cos(-entity.getYRot() * 0.017453292F - Math.PI);
-            f2 = Math.sin(-entity.getYRot() * 0.017453292F - Math.PI);
-            f3 = -Math.cos(-entity.getXRot() * 0.017453292F);
-            f4 = Math.sin(-entity.getXRot() * 0.017453292F);
-            return new Pos((f2 * f3), f4, (f1 * f3));
-        }
-        else
-        {
-            f1 = entity.xRotO + (entity.getXRot() - entity.xRotO) * distance;
-            f2 = entity.yRotO + (entity.getYRot() - entity.yRotO) * distance;
-            f3 = Math.cos(-f2 * 0.017453292F - Math.PI);
-            f4 = Math.sin(-f2 * 0.017453292F - Math.PI);
-            double f5 = -Math.cos(-f1 * 0.017453292F);
-            double f6 = Math.sin(-f1 * 0.017453292F);
-            return new Pos((f4 * f5), f6, (f3 * f5));
-        }
-    }
-
-    public static Pos getLook(double yaw, double pitch, double distance)
-    {
-        double f1 = 0D;
-        double f2 = 0D;
-        double f3 = 0D;
-        double f4 = 0D;
-
-        if (distance == 1.0F)
-        {
-            f1 = Math.cos(-yaw * 0.017453292F - Math.PI);
-            f2 = Math.sin(-yaw * 0.017453292F - Math.PI);
-            f3 = -Math.cos(-pitch * 0.017453292F);
-            f4 = Math.sin(-pitch * 0.017453292F);
-            return new Pos((f2 * f3), f4, (f1 * f3));
-        }
-        else
-        {
-            f1 = pitch * distance;
-            f2 = yaw * distance;
-            f3 = Math.cos(-f2 * 0.017453292F - Math.PI);
-            f4 = Math.sin(-f2 * 0.017453292F - Math.PI);
-            double f5 = -Math.cos(-f1 * 0.017453292F);
-            double f6 = Math.sin(-f1 * 0.017453292F);
-            return new Pos((f4 * f5), f6, (f3 * f5));
-        }
-    }
-
     @Override
     public boolean equals(Object object)
     {

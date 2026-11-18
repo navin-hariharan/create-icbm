@@ -6,6 +6,7 @@ import com.createicbm.client.fx.ScreenFlash;
 import com.createicbm.client.sound.MissileEngineSound;
 import com.createicbm.client.sound.TrackedSounds;
 import com.createicbm.client.compat.EntityCullingCompat;
+import com.createicbm.mods.ModProxy;
 import net.neoforged.neoforge.client.event.RegisterGuiLayersEvent;
 import com.createicbm.ICBMConstants;
 import com.createicbm.content.blocks.mail.TESRMail;
@@ -32,6 +33,7 @@ import com.createicbm.content.blocks.launcher.cruise.TESRCruiseLauncher;
 import com.createicbm.content.blocks.launcher.cruise.gui.GuiCruiseLauncher;
 import com.createicbm.content.blocks.launcher.screen.gui.GuiLauncherScreen;
 import com.createicbm.content.blocks.radarstation.gui.GuiRadarStation;
+import com.createicbm.content.blocks.alarm.gui.GuiAlarm;
 import com.createicbm.content.missile.entity.delivery.gui.GuiDeliveryMissile;
 import com.createicbm.content.entity.flyingblock.RenderEntityBlock;
 import com.createicbm.content.items.ItemRocketLauncher;
@@ -85,12 +87,17 @@ public final class ClientReg
         modBus.addListener(ClientReg::registerGuiLayers);
         // The HUD is drawn under open screens, so the flash is drawn over them again
         NeoForge.EVENT_BUS.addListener(ScreenEvent.Render.Post.class, event -> ScreenFlash.render(event.getGuiGraphics()));
-        NeoForge.EVENT_BUS.addListener(ClientTickEvent.Post.class, event -> MissileEngineSound.onClientTick());
-        // Ender missile cutscene
-        NeoForge.EVENT_BUS.addListener(ClientTickEvent.Post.class, event -> EnderAbductionFx.onClientTick());
-        NeoForge.EVENT_BUS.addListener(ClientTickEvent.Post.class, event -> MushroomCloudFx.onClientTick());
-        // Entity Culling is optional and client-side; the compatibility hook registers the ICBM entities on first tick.
-        NeoForge.EVENT_BUS.addListener(ClientTickEvent.Post.class, EntityCullingCompat::onClientTick);
+        NeoForge.EVENT_BUS.addListener(ClientTickEvent.Post.class, event -> {
+            MissileEngineSound.onClientTick();
+            // Ender missile cutscene
+            EnderAbductionFx.onClientTick();
+            MushroomCloudFx.onClientTick();
+        });
+        // Entity Culling is optional and client-side, its support is only loaded when it is installed
+        if (ModProxy.isModLoaded(EntityCullingCompat.MOD_ID))
+        {
+            NeoForge.EVENT_BUS.addListener(ClientTickEvent.Post.class, event -> EntityCullingCompat.onClientTick());
+        }
         NeoForge.EVENT_BUS.addListener(ViewportEvent.ComputeCameraAngles.class, EnderAbductionFx::onCameraAngles);
         NeoForge.EVENT_BUS.addListener(ViewportEvent.ComputeFov.class, EnderAbductionFx::onFov);
         NeoForge.EVENT_BUS.addListener(MovementInputUpdateEvent.class, EnderAbductionFx::onMovementInput);
@@ -200,5 +207,6 @@ public final class ClientReg
         event.register(MenuReg.LAUNCHER_SCREEN.get(), GuiLauncherScreen::new);
         event.register(MenuReg.RADAR_STATION.get(), GuiRadarStation::new);
         event.register(MenuReg.DELIVERY_MISSILE.get(), GuiDeliveryMissile::new);
+        event.register(MenuReg.ALARM.get(), GuiAlarm::new);
     }
 }

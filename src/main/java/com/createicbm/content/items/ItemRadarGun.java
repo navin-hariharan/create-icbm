@@ -217,7 +217,8 @@ public class ItemRadarGun extends ItemBase implements IPacketIDReceiver, ICapabi
             final IGPSData gpsData = CreateICBMHelpers.getGPSData(stack);
             if (gpsData != null)
             {
-                gpsData.setPosition(posIn);
+                // A listener may move the position, see RadarGunTraceEvent
+                gpsData.setPosition(event.pos);
                 gpsData.setWorld(player.level());
                 player.sendSystemMessage(Component.translatable("gps.pos.set.name"));
             }

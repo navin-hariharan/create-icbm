@@ -69,12 +69,6 @@ public class BlastRedmatterWrapper implements IBlast
         return host;
     }
 
-    @Override
-    @Nullable
-    public Entity getBlastSource()
-    {
-        return host;
-    }
     //</editor-fold>
 
     //<editor-fold desc="position-data">

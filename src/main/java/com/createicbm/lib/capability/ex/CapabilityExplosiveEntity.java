@@ -18,7 +18,6 @@ import com.createicbm.lib.actions.status.ActionResponses;
 import com.createicbm.lib.explosive.ExplosiveStacks;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 
@@ -188,13 +187,6 @@ public class CapabilityExplosiveEntity implements IExplosive
             stack = ItemStack.EMPTY;
         }
         return stack;
-    }
-
-    @Override
-    public void onDefuse()
-    {
-        entity.level().addFreshEntity(new ItemEntity(entity.level(), entity.getX(), entity.getY(), entity.getZ(), toStack().copy()));
-        entity.discard();
     }
 
     public void setStack(@Nonnull ItemStack stack)

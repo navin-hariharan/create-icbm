@@ -1,5 +1,6 @@
 package com.createicbm.content.blocks.launcher.cruise;
 
+import com.createicbm.mods.sable.SableProxy;
 import com.createicbm.api.radio.IRadioMessage;
 import com.createicbm.api.radio.IRadioReceiver;
 import com.createicbm.api.radio.IRadioSender;
@@ -15,6 +16,7 @@ import com.createicbm.content.reg.ItemReg;
 import com.createicbm.lib.radio.imp.RadioTile;
 import com.createicbm.lib.radio.messages.CounterstrikeMessage;
 import com.createicbm.lib.radio.messages.IAirDefenceMessage;
+import com.createicbm.lib.radio.messages.IncomingMissileWarningMessage;
 import com.createicbm.lib.radio.messages.RadioTranslations;
 import com.createicbm.lib.radio.messages.TextMessage;
 import com.createicbm.prefab.FakeRadioSender;
@@ -47,6 +49,11 @@ public class RadioCruise extends RadioTile<TileCruiseLauncher> implements IRadio
         if (packet instanceof IAirDefenceMessage && host.missileHolder.getMissileStack().getItem() != ItemReg.itemSAM.get()) {
             return;
         }
+        // An early warning only aims the turret. A turret with a queued order keeps aiming at that order's target,
+        //  turning away made it fire at the old target after aiming twice, or not at all.
+        if (packet instanceof IncomingMissileWarningMessage && host.getFiringPackage() != null) {
+            return;
+        }
         if (packet instanceof IIncomingMissileMessage incoming) {
             // Right after a launch the turret leaves the alert to a turret that is ready, the radar repeats it
             if (host.getFiringPackage() == null && host.isOnCooldown()) {
@@ -74,7 +81,9 @@ public class RadioCruise extends RadioTile<TileCruiseLauncher> implements IRadio
             if(packet instanceof ITargetMessage) {
                 targetApplied = false;
                 final double vel = host.launcher.getPayloadVelocity();
-                final Vec3 target = ((ITargetMessage) packet).getIntercept(host.getBlockPos().getX() + 0.5, host.getBlockPos().getY() + 0.5, host.getBlockPos().getZ() + 0.5, vel);
+                // From where the turret is in the world, a turret on a Sable ship sits far away in the ship's plot
+                final Vec3 self = SableProxy.INSTANCE.worldCenter(host.getLevel(), host.getBlockPos());
+                final Vec3 target = ((ITargetMessage) packet).getIntercept(self.x, self.y, self.z, vel);
                 if(target != null) {
                     final Vec3 previous = host.getTarget();
                     host.setTarget(target);

@@ -220,11 +220,6 @@ public class RadarMap
         }
     }
 
-    protected final ChunkPos getChunkValue(int x, int z)
-    {
-        return new ChunkPos(x >> 4, z >> 4);
-    }
-
     public void unloadAll()
     {
         if(accessingData) {

@@ -7,9 +7,7 @@ import com.createicbm.CommonProxy;
 import com.createicbm.api.missiles.parts.IMissileFlightLogic;
 import com.createicbm.client.fx.ParticleAirICBM;
 import com.createicbm.client.fx.ParticleLauncherSmoke;
-import com.createicbm.client.fx.ParticleSmokeICBM;
 import com.createicbm.config.ConfigClient;
-import com.createicbm.lib.transform.vector.Pos;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.ParticleStatus;
 import net.minecraft.client.gui.screens.Screen;
@@ -49,18 +47,6 @@ public class ClientProxy extends CommonProxy
     public boolean isShiftHeld()
     {
         return Screen.hasShiftDown();
-    }
-
-    @Override
-    public void spawnSmoke(Level world, Pos position, double v, double v1, double v2, float red, float green, float blue, float scale, int ticksToLive)
-    {
-        if (world instanceof ClientLevel clientLevel)
-        {
-            ParticleSmokeICBM particleSmokeICBM = new ParticleSmokeICBM(clientLevel, position, v, v1, v2, scale);
-            particleSmokeICBM.setColor(red, green, blue, true);
-            particleSmokeICBM.setAge(ticksToLive);
-            Minecraft.getInstance().particleEngine.add(particleSmokeICBM);
-        }
     }
 
     @Override

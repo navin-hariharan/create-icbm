@@ -108,23 +108,6 @@ public abstract class Pos2D<R extends Pos2D> extends Pos2DBean
         return (R)add(other).divide(2);
     }
 
-    public boolean isZero()
-    {
-        return x() == 0 && y() == 0;
-    }
-
-    /**
-     * Gets the slow or ratio of change between
-     * two points
-     *
-     * @param other - point to use
-     * @return slope
-     */
-    public double slope(IPos2D other)
-    {
-        return (y() - other.y()) / (x() - other.x());
-    }
-
     /**
      * Rounds down
      *
@@ -173,16 +156,6 @@ public abstract class Pos2D<R extends Pos2D> extends Pos2DBean
     public R min(IPos2D other)
     {
         return newPos(Math.min(x(), other.x()), Math.min(y(), other.y()));
-    }
-
-    /**
-     * Gets the reciprocal or the value of 1 over (x, y)
-     *
-     * @return new Pos
-     */
-    public R reciprocal()
-    {
-        return newPos(1 / x(), 1 / y());
     }
 
     @Override

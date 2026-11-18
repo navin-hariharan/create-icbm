@@ -134,16 +134,6 @@ public abstract class AbstractPos<R extends AbstractPos> extends Pos3D<R> implem
         return null;
     }
 
-    /**
-     * Calls {@link Math#abs(double)} on each term of the pos data
-     *
-     * @return abs
-     */
-    public R absolute()
-    {
-        return newPos(Math.abs(x()), Math.abs(y()), Math.abs(z()));
-    }
-
     //=========================
     //======Math Operators=====
     //=========================
@@ -441,15 +431,6 @@ public abstract class AbstractPos<R extends AbstractPos> extends Pos3D<R> implem
         }
     }
 
-    public BlockEntity getTileEntity(BlockGetter world)
-    {
-        if (world != null) //TODO check if chunk is loaded
-        {
-            return world.getBlockEntity(toBlockPos());
-        }
-        return null;
-    }
-
     public float getHardness(Level world)
     {
         BlockState state = getBlockState(world);
@@ -471,26 +452,6 @@ public abstract class AbstractPos<R extends AbstractPos> extends Pos3D<R> implem
     public float getResistance(Entity cause)
     {
         return getResistance(cause.level(), cause, x(), y(), z());
-    }
-
-    /**
-     * Gets the resistance of a block using block.getResistance method
-     *
-     * @param cause - entity that triggered/is the explosion
-     */
-    public float getResistanceToEntity(Entity cause)
-    {
-        return getBlock(cause.level()).getExplosionResistance();
-    }
-
-    /**
-     * Gets the resistance of a block using block.getResistance method
-     *
-     * @param cause - entity that triggered/is the explosion
-     */
-    public float getResistanceToEntity(Level world, Entity cause)
-    {
-        return getBlock(world).getExplosionResistance();
     }
 
     /**

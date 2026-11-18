@@ -108,10 +108,11 @@ public class ItemLaserDetonator extends ItemRadio implements IPacketIDReceiver
         {
             return false;
         }
-        // Use the slot the packet was sent for, off hand included
-        final ItemStack stack = packet instanceof PacketPlayerItem itemPacket && itemPacket.slotId >= 0
-            ? player.getInventory().getItem(itemPacket.slotId)
-            : player.getInventory().getSelected();
+        // Use the hand the packet was sent for. Only the held slot and the off hand count, a detonator stored in the
+        //  inventory or an armour slot can't designate.
+        final ItemStack stack = packet instanceof PacketPlayerItem itemPacket && itemPacket.slotId == Inventory.SLOT_OFFHAND
+            ? player.getOffhandItem()
+            : player.getMainHandItem();
         if (stack.getItem() == this && !player.level().isClientSide())
         {
             final double x = buf.readDouble();

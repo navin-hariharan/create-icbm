@@ -1,5 +1,6 @@
 package com.createicbm.content.missile.entity;
 
+import com.createicbm.content.missile.logic.source.ActionSource;
 import com.createicbm.CreateICBM;
 import com.createicbm.content.missile.tracker.MissileChunkLoader;
 import com.createicbm.api.CreateICBMAPI;
@@ -184,7 +185,8 @@ public class CapabilityMissile implements IMissile, INBTSerializable<CompoundTag
     @Override
     public void launch()
     {
-        // A launcher on a Sable ship spawns its missile in the ship's plot, the flight path has to start from the world
+        // The launchers here already start missiles in the world. A launcher from another mod on a Sable ship may spawn
+        //  its missile in the ship's plot, the flight path has to start from the world
         if (!world().isClientSide())
         {
             SableProxy.INSTANCE.moveToWorld(missile);
@@ -308,7 +310,8 @@ public class CapabilityMissile implements IMissile, INBTSerializable<CompoundTag
         .mainRoot()
         /* */.nodeBuildableObject("target", () -> CreateICBMAPI.MISSILE_TARGET_DATA_REGISTRY, CapabilityMissile::getTargetData, CapabilityMissile::setTargetData)
         /* */.nodeBuildableObject("flight", () -> CreateICBMAPI.MISSILE_FLIGHT_LOGIC_REGISTRY, CapabilityMissile::getFlightLogic, CapabilityMissile::setFlightLogic)
-        /* */.nodeINBTSerializable("source", CapabilityMissile::getMissileSource)
+        // Built on load, a loaded missile has no source object to read into and lost its launch site
+        /* */.nodeINBTSerializable("source", CapabilityMissile::getMissileSource, CapabilityMissile::setMissileSource, ActionSource::new)
         /* */.nodeUUID("flightId", (cap) -> cap.flightId, (cap, id) -> cap.flightId = id)
         /* */.nodeCompoundTag("sender", CapabilityMissile::saveSender, CapabilityMissile::loadSender)
         /* */.nodeString("radioChannel", cap -> cap.radioChannel.isEmpty() ? null : cap.radioChannel, CapabilityMissile::setRadioChannel)

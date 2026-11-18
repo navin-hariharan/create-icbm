@@ -30,7 +30,7 @@ public interface ICondition extends IBuildableObject {
      *
      * <br><br>
      *
-     * In cases of {@link IConditionLayer} this will not be called every tick if condition is behaving using <a href="https://en.wikipedia.org/wiki/Short-circuit_evaluation">short-circuit evaluation</a>.
+     * In cases of a condition made of other conditions this will not be called every tick if condition is behaving using <a href="https://en.wikipedia.org/wiki/Short-circuit_evaluation">short-circuit evaluation</a>.
      *
      * <br><br>
      *
@@ -47,7 +47,7 @@ public interface ICondition extends IBuildableObject {
      *  tick(2) : impact gets ticked and isMet is true,  timer is never ticked resulting in timer=1 and isMet false, combined value from OR is true
      * </pre>
      *
-     * Though this can not always be assumed. As {@link IConditionLayer} has the option to use any rules for ticking. As it uses composition pattern
+     * Though this can not always be assumed. As a condition made of other conditions has the option to use any rules for ticking. As it uses composition pattern
      * to abstract away as a single condition. Even though it could contain layers of conditions with nesting and different behaivor.
      *
      * <br><br>

@@ -10,11 +10,6 @@ public interface IPos3D extends IPos2D
 {
     double z();
 
-    default float zf()
-    {
-        return (float) z();
-    }
-
     default int zi()
     {
         return (int) Math.floor(z());

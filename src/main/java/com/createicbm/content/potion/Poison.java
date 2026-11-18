@@ -26,16 +26,6 @@ public abstract class Poison extends MobEffect
 
     protected String name;
 
-    public static Poison getPoison(String name)
-    {
-        return poisons.get(name);
-    }
-
-    public static Poison getPoison(int id)
-    {
-        return poisons.get(getName(id));
-    }
-
     public static String getName(int fluidID)
     {
         return poisonIDs.inverse().get(fluidID);
